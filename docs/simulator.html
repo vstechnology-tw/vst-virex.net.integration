@@ -89,68 +89,101 @@
       <section class="section" id="ui">
         <h2><span data-lang="zh">App UI 說明</span><span data-lang="en">App UI</span></h2>
         <p class="section-intro">
-          <span data-lang="zh">Simulator 主畫面分成四個區域：Connection Settings、WaferInfo、State 與 Event Log。</span>
-          <span data-lang="en">The simulator main window is divided into four areas: Connection Settings, WaferInfo, State, and Event Log.</span>
+          <span data-lang="zh">下圖是實際 Simulator App 介面。請依照標號了解各區用途與操作順序。</span>
+          <span data-lang="en">The image below is the actual Simulator App interface. Use the markers to understand each area and the operating order.</span>
         </p>
-        <div class="manual-layout">
-          <div class="app-window" aria-label="Simulator UI map">
-            <div class="app-titlebar">Virex.NET Integration Simulator</div>
-            <div class="app-content">
-              <section class="app-panel">
-                <h3>Connection Settings</h3>
-                <div class="field-list">
-                  <div class="field-row"><span>REST prefix</span><span class="field-value">http://127.0.0.1:5088/</span></div>
-                  <div class="field-row"><span>TCP port</span><span class="field-value">5089</span></div>
-                  <div class="field-row"><span>MQTT host</span><span class="field-value">127.0.0.1</span></div>
-                  <div class="field-row"><span>MQTT topic</span><span class="field-value">Virex.NET</span></div>
-                  <div class="field-row"><span>Result prefix</span><span class="field-value">optional</span></div>
-                </div>
-              </section>
-              <section class="app-panel">
-                <h3>WaferInfo</h3>
-                <div class="field-list">
-                  <div class="field-row"><span>Lot ID</span><span class="field-value">LOT-001</span></div>
-                  <div class="field-row"><span>Wafer ID</span><span class="field-value">W01</span></div>
-                  <div class="field-row"><span>Recipe ID</span><span class="field-value">RCP-A</span></div>
-                  <div class="field-row"><span>Slot</span><span class="field-value">1</span></div>
-                  <div class="field-row"><span>FOUP ID</span><span class="field-value">FOUP-A</span></div>
-                  <div class="field-row"><span>Chamber ID</span><span class="field-value">CH-1</span></div>
-                  <span class="app-button">Apply WaferInfo</span>
-                </div>
-              </section>
-              <section class="app-panel">
-                <h3>State</h3>
-                <span class="field-value">initialized=false, processState=ready</span>
-                <span class="app-button">Start Servers</span>
-                <span class="app-button">Stop Servers</span>
-                <span class="app-button">Initialize</span>
-                <span class="app-button">Terminate</span>
-                <span class="app-button">Start Cycle</span>
-                <span class="app-button">Stop</span>
-                <span class="app-button">Emit Fake Result</span>
-                <span class="app-button">Emit Error</span>
-              </section>
-              <section class="app-log">[10:15:02] Servers started.<br>[10:15:10] WaferInfo updated from UI.<br>[10:15:18] Result emitted.</section>
-            </div>
+        <figure class="screenshot-guide">
+          <div class="screenshot-stage">
+            <img src="assets/simulator-main-window.png" alt="Virex.NET Integration Simulator main window">
+            <span class="shot-marker" style="left: 3%; top: 12%;">1</span>
+            <span class="shot-marker" style="left: 42%; top: 12%;">2</span>
+            <span class="shot-marker" style="left: 82%; top: 12%;">3</span>
+            <span class="shot-marker" style="left: 4%; top: 58%;">4</span>
+            <span class="shot-marker callout-wide" style="left: 89%; top: 20%;">5</span>
+            <span class="shot-marker callout-wide" style="left: 60%; top: 32%;">6</span>
+            <span class="shot-marker callout-wide" style="left: 89%; top: 38%;">7</span>
+            <span class="shot-marker callout-wide" style="left: 89%; top: 47%;">8</span>
           </div>
-          <div class="grid">
-            <article class="card">
-              <h3><span data-lang="zh">Connection Settings</span><span data-lang="en">Connection Settings</span></h3>
-              <p><span data-lang="zh">設定 simulator 對外提供的 REST prefix、TCP port、MQTT broker/topic，以及 result path prefix。</span><span data-lang="en">Configure the REST prefix, TCP port, MQTT broker/topic, and result path prefix exposed by the simulator.</span></p>
-            </article>
-            <article class="card">
-              <h3>WaferInfo</h3>
-              <p><span data-lang="zh">輸入測試用 wafer context，按 <strong>Apply WaferInfo</strong> 後 simulator 會更新狀態並對外發布 wafer-info event。</span><span data-lang="en">Enter test wafer context. After pressing <strong>Apply WaferInfo</strong>, the simulator updates state and publishes a wafer-info event.</span></p>
-            </article>
-            <article class="card">
-              <h3>State</h3>
-              <p><span data-lang="zh">啟停 server、切換 initialized 狀態、啟動/停止 cycle、手動產生 result 或 error。</span><span data-lang="en">Start and stop servers, change initialized state, start/stop cycles, and manually emit result or error events.</span></p>
-            </article>
-            <article class="card">
-              <h3>Event Log</h3>
-              <p><span data-lang="zh">顯示 simulator 目前執行紀錄。若操作沒有預期效果，請先查看這裡的訊息。</span><span data-lang="en">Shows simulator activity. If an operation does not behave as expected, check this log first.</span></p>
-            </article>
-          </div>
+          <figcaption class="screenshot-caption">
+            <span data-lang="zh">實際 App 畫面由目前 WPF Simulator 介面產生；標號用來對照下方說明與 SOP。</span>
+            <span data-lang="en">This actual app image is generated from the current WPF Simulator interface. Markers correspond to the descriptions and SOP below.</span>
+          </figcaption>
+        </figure>
+        <div class="marker-grid">
+          <article class="marker-card">
+            <h3><span class="marker-badge">1</span> Connection Settings</h3>
+            <p><span data-lang="zh">設定 REST prefix、TCP port、MQTT host/port/topic，以及 result prefix。測試前先確認這區。</span><span data-lang="en">Configure REST prefix, TCP port, MQTT host/port/topic, and result prefix. Confirm this area before testing.</span></p>
+          </article>
+          <article class="marker-card">
+            <h3><span class="marker-badge">2</span> WaferInfo</h3>
+            <p><span data-lang="zh">輸入 Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID。</span><span data-lang="en">Enter Lot ID, Wafer ID, Recipe ID, Slot, FOUP ID, and Chamber ID.</span></p>
+          </article>
+          <article class="marker-card">
+            <h3><span class="marker-badge">3</span> State</h3>
+            <p><span data-lang="zh">顯示 initialized、processState 與 recipe，並提供主要操作按鈕。</span><span data-lang="en">Shows initialized, processState, and recipe, and contains the main operation buttons.</span></p>
+          </article>
+          <article class="marker-card">
+            <h3><span class="marker-badge">4</span> Event Log</h3>
+            <p><span data-lang="zh">顯示 server 啟動、WaferInfo 更新、cycle、result、error 等執行紀錄。</span><span data-lang="en">Shows server start, WaferInfo updates, cycle events, results, errors, and other activity.</span></p>
+          </article>
+          <article class="marker-card">
+            <h3><span class="marker-badge">5</span> Start Servers</h3>
+            <p><span data-lang="zh">第一個要按的按鈕。按下後 REST/TCP/MQTT 才會開始對外服務。</span><span data-lang="en">The first button to press. REST/TCP/MQTT services are available only after this step.</span></p>
+          </article>
+          <article class="marker-card">
+            <h3><span class="marker-badge">6</span> Apply WaferInfo</h3>
+            <p><span data-lang="zh">修改 WaferInfo 後按下，讓 simulator 套用目前測試 wafer context。</span><span data-lang="en">Press after editing WaferInfo so the simulator applies the current test wafer context.</span></p>
+          </article>
+          <article class="marker-card">
+            <h3><span class="marker-badge">7</span> Start Cycle</h3>
+            <p><span data-lang="zh">用來模擬完整 cycle，狀態會依序變化並產生 result summary。</span><span data-lang="en">Simulates a full cycle, state transitions, and a result summary.</span></p>
+          </article>
+          <article class="marker-card">
+            <h3><span class="marker-badge">8</span> Emit Fake Result / Error</h3>
+            <p><span data-lang="zh">手動產生 result 或 error，適合測試客戶端事件處理與 UI 顯示。</span><span data-lang="en">Manually emits a result or error to test client event handling and UI display.</span></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="flows">
+        <h2><span data-lang="zh">不同測試情境的操作流程</span><span data-lang="en">Test Flows by Scenario</span></h2>
+        <div class="flow-grid">
+          <article class="flow-card">
+            <h3><span data-lang="zh">情境 A：第一次確認 SDK 能連線</span><span data-lang="en">Scenario A: First SDK Connection Check</span></h3>
+            <ol>
+              <li><span data-lang="zh">確認標號 1 的連線設定保留預設值。</span><span data-lang="en">Keep the default connection settings in marker 1.</span></li>
+              <li><span data-lang="zh">按標號 5 <strong>Start Servers</strong>。</span><span data-lang="en">Press marker 5, <strong>Start Servers</strong>.</span></li>
+              <li><span data-lang="zh">執行 <code>samples/csharp-sdk</code>。</span><span data-lang="en">Run <code>samples/csharp-sdk</code>.</span></li>
+              <li><span data-lang="zh">確認標號 4 Event Log 有收到 WaferInfo、Start、Result 相關紀錄。</span><span data-lang="en">Confirm marker 4 Event Log shows WaferInfo, Start, and Result activity.</span></li>
+            </ol>
+          </article>
+          <article class="flow-card">
+            <h3><span data-lang="zh">情境 B：手動測試指定 WaferInfo</span><span data-lang="en">Scenario B: Manual WaferInfo Test</span></h3>
+            <ol>
+              <li><span data-lang="zh">在標號 2 輸入測試 wafer context。</span><span data-lang="en">Enter test wafer context in marker 2.</span></li>
+              <li><span data-lang="zh">按標號 6 <strong>Apply WaferInfo</strong>。</span><span data-lang="en">Press marker 6, <strong>Apply WaferInfo</strong>.</span></li>
+              <li><span data-lang="zh">按 <strong>Initialize</strong>。</span><span data-lang="en">Press <strong>Initialize</strong>.</span></li>
+              <li><span data-lang="zh">按標號 7 <strong>Start Cycle</strong>，等待 result summary。</span><span data-lang="en">Press marker 7, <strong>Start Cycle</strong>, then wait for the result summary.</span></li>
+            </ol>
+          </article>
+          <article class="flow-card">
+            <h3><span data-lang="zh">情境 C：測試 result event 處理</span><span data-lang="en">Scenario C: Result Event Handling</span></h3>
+            <ol>
+              <li><span data-lang="zh">按標號 5 啟動 servers。</span><span data-lang="en">Press marker 5 to start servers.</span></li>
+              <li><span data-lang="zh">啟動您的 TCP 或 MQTT event listener。</span><span data-lang="en">Start your TCP or MQTT event listener.</span></li>
+              <li><span data-lang="zh">按標號 8 的 <strong>Emit Fake Result</strong>。</span><span data-lang="en">Press marker 8, <strong>Emit Fake Result</strong>.</span></li>
+              <li><span data-lang="zh">確認客戶端收到 result summary，且 Event Log 有紀錄。</span><span data-lang="en">Confirm the client receives the result summary and Event Log records the event.</span></li>
+            </ol>
+          </article>
+          <article class="flow-card">
+            <h3><span data-lang="zh">情境 D：測試 error handling</span><span data-lang="en">Scenario D: Error Handling</span></h3>
+            <ol>
+              <li><span data-lang="zh">按標號 5 啟動 servers。</span><span data-lang="en">Press marker 5 to start servers.</span></li>
+              <li><span data-lang="zh">啟動您的 TCP 或 MQTT event listener。</span><span data-lang="en">Start your TCP or MQTT event listener.</span></li>
+              <li><span data-lang="zh">按標號 8 的 <strong>Emit Error</strong>。</span><span data-lang="en">Press marker 8, <strong>Emit Error</strong>.</span></li>
+              <li><span data-lang="zh">確認客戶端顯示或記錄 error message。</span><span data-lang="en">Confirm the client displays or logs the error message.</span></li>
+            </ol>
+          </article>
         </div>
       </section>
 
