@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Virex.NET Integration Kit Documentation</title>
+  <meta name="description" content="Customer documentation for the Virex.NET public integration SDK, REST API, TCP socket protocol, MQTT events, and simulator workflow.">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#top" aria-label="Virex.NET documentation home">
+        <span class="brand-mark">VX</span>
+        <span>Virex.NET Integration Kit</span>
+      </a>
+      <nav class="nav" aria-label="Primary navigation">
+        <a href="#overview">Overview</a>
+        <a href="#scenarios">Scenarios</a>
+        <a href="#interfaces">Interfaces</a>
+        <a href="#sdk">SDK</a>
+        <a href="#simulator">Simulator</a>
+        <a href="#deploy">GitHub Pages</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow">Customer integration documentation</p>
+          <h1>Build against the Virex.NET public communication surface.</h1>
+          <p class="lead">
+            The Virex.NET Integration Kit provides public contracts, a C# client SDK, protocol references,
+            samples, and a simulator so host systems, MES software, and equipment-side applications can
+            validate their integration before connecting to a production-compatible service.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="#sdk">Start with the SDK</a>
+            <a class="button secondary" href="#references">View protocol references</a>
+          </div>
+        </div>
+        <aside class="hero-panel" aria-label="Default simulator endpoints">
+          <div class="hero-panel-header">Default simulator endpoints</div>
+          <dl class="endpoint-list">
+            <div>
+              <dt>REST</dt>
+              <dd>http://127.0.0.1:5088</dd>
+            </div>
+            <div>
+              <dt>TCP</dt>
+              <dd>127.0.0.1:5089</dd>
+            </div>
+            <div>
+              <dt>MQTT</dt>
+              <dd>127.0.0.1:1883 / Virex.NET</dd>
+            </div>
+            <div>
+              <dt>SDK</dt>
+              <dd>Virex.NET.Client</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    <div class="page">
+      <section class="section" id="overview">
+        <h2>Repository Overview</h2>
+        <p class="section-intro">
+          This repository is a public integration kit. It contains only the externally visible communication
+          contracts and tooling required to develop a Virex.NET-compatible integration.
+        </p>
+        <div class="grid three">
+          <article class="card">
+            <span class="tag">Contracts</span>
+            <h3>Virex.NET.Contracts</h3>
+            <p>
+              Public DTOs, route constants, MQTT topic helpers, JSON settings, TCP/NDJSON frame formatters,
+              and protocol parsers shared by the SDK, simulator, tests, and samples.
+            </p>
+          </article>
+          <article class="card">
+            <span class="tag">Client SDK</span>
+            <h3>Virex.NET.Client</h3>
+            <p>
+              A C# SDK for REST commands and queries, TCP socket event handling, and MQTT event subscription.
+              The SDK targets <code>netstandard2.0</code> for broad application compatibility.
+            </p>
+          </article>
+          <article class="card">
+            <span class="tag">Simulator</span>
+            <h3>Virex.NET.Simulator.WPF</h3>
+            <p>
+              A local simulator for validating host and equipment integrations against REST, TCP, and MQTT
+              behavior without requiring access to a production system.
+            </p>
+          </article>
+        </div>
+        <div class="callout warning">
+          <strong>Public boundary</strong>
+          This documentation describes public communication contracts only. It does not include private
+          application internals, inspection algorithms, camera control, recipe internals, storage internals,
+          credentials, customer data, or production hostnames.
+        </div>
+      </section>
+
+      <section class="section" id="scenarios">
+        <h2>Common Integration Scenarios</h2>
+        <p class="section-intro">
+          The kit is designed for customer teams that need a stable contract for exchanging wafer context,
+          control commands, status, result summaries, and error state with a Virex.NET-compatible service.
+        </p>
+        <div class="grid two">
+          <article class="card">
+            <h3>Send wafer context from a host or MES</h3>
+            <p>
+              Use REST or TCP to send <code>WaferInfo</code> before starting an inspection cycle. The public
+              fields are <code>lotId</code>, <code>waferId</code>, <code>recipeId</code>, <code>slot</code>,
+              <code>foupId</code>, and <code>chamberId</code>.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Control a simulated inspection cycle</h3>
+            <p>
+              Use REST control endpoints or TCP command frames to initialize, start, stop, and terminate a
+              cycle while validating client-side error handling and state transitions.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Subscribe to operational events</h3>
+            <p>
+              Use TCP when the integration expects a direct socket connection. Use MQTT when another system
+              needs outbound event distribution through a broker.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Query summary results</h3>
+            <p>
+              Use REST to query result summaries by <code>lotId</code>, <code>waferId</code>, and
+              <code>recipeId</code>. Result payloads are summary-only and intentionally exclude large
+              inspection data.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="interfaces">
+        <h2>Choose an Interface</h2>
+        <p class="section-intro">
+          REST, TCP, and MQTT are all supported, but they are intended for different integration styles.
+          Choose the narrowest interface that matches the customer's system boundary.
+        </p>
+        <div class="table-scroll">
+          <table class="comparison">
+            <thead>
+              <tr>
+                <th>Interface</th>
+                <th>Best fit</th>
+                <th>Direction</th>
+                <th>Typical use</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>REST</strong></td>
+                <td>Request/response commands and queries</td>
+                <td>Client to service</td>
+                <td>Read status, send wafer info, initialize, start, stop, terminate, and query results.</td>
+              </tr>
+              <tr>
+                <td><strong>TCP / NDJSON</strong></td>
+                <td>Direct socket integration</td>
+                <td>Bidirectional</td>
+                <td>Send wafer info or command frames and receive status, wafer info, result, and error events.</td>
+              </tr>
+              <tr>
+                <td><strong>MQTT</strong></td>
+                <td>Brokered event subscription</td>
+                <td>Outbound events only</td>
+                <td>Subscribe to status, wafer info, result, and error topics. MQTT is not used for command/control.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="sdk">
+        <h2>C# SDK Quick Start</h2>
+        <p class="section-intro">
+          The SDK wraps the public communication APIs with a small C# surface. Applications can use the
+          aggregate <code>VirexClient</code> or the lower-level REST, TCP, and MQTT clients directly.
+        </p>
+        <pre><code class="language-csharp">using Virex.NET.Client;
+using Virex.NET.Contracts;
+
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "Virex.NET",
+    TimeoutMs = 5000,
+});
+
+var status = await client.GetStatusAsync();
+
+await client.SetWaferInfoAsync(new WaferInfo
+{
+    LotId = "LOT-001",
+    WaferId = "W01",
+    RecipeId = "RCP-A",
+    Slot = "1",
+    FoupId = "FOUP-A",
+    ChamberId = "CH-1",
+});
+
+await client.InitializeAsync();
+await client.StartAsync();
+
+var results = await client.QueryResultsAsync(lotId: "LOT-001");</code></pre>
+
+        <div class="grid two">
+          <article class="card">
+            <h3>REST convenience methods</h3>
+            <p>
+              <code>VirexClient</code> exposes <code>GetStatusAsync</code>,
+              <code>SetWaferInfoAsync</code>, <code>InitializeAsync</code>, <code>TerminateAsync</code>,
+              <code>StartAsync</code>, <code>StopAsync</code>, and <code>QueryResultsAsync</code>.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Error handling</h3>
+            <p>
+              Non-success HTTP responses throw <code>VirexClientException</code>, including the numeric
+              status code and response body so customer applications can log or display the service response.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="events">
+        <h2>Event Subscription</h2>
+        <p class="section-intro">
+          Event clients expose a common <code>EventReceived</code> pattern. The parsed event contains the
+          original raw JSON plus the typed payload for supported event types.
+        </p>
+        <pre><code class="language-csharp">using var cts = new CancellationTokenSource();
+
+client.MqttEvents.EventReceived += (_, ev) =>
+{
+    if (ev.Status is not null)
+        Console.WriteLine($"State: {ev.Status.ProcessState}");
+
+    if (ev.Result is not null)
+        Console.WriteLine($"Result: {ev.Result.ResultId} {ev.Result.OverallResult}");
+};
+
+await client.MqttEvents.RunAsync(cts.Token);</code></pre>
+        <div class="callout">
+          <strong>MQTT topic behavior</strong>
+          MQTT messages are published under the configured base topic. The default child topics are
+          <code>status</code>, <code>wafer-info</code>, <code>result</code>, and <code>error</code>.
+          The MQTT client attaches the event type from the topic when the payload does not include a
+          <code>type</code> field.
+        </div>
+      </section>
+
+      <section class="section" id="contracts">
+        <h2>Data Contract Summary</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>WaferInfo</h3>
+            <p>
+              Identifies the wafer and surrounding production context. Required validation for TCP wafer
+              info frames includes non-empty <code>lotId</code>, <code>waferId</code>, <code>slot</code>,
+              <code>foupId</code>, and <code>chamberId</code>.
+            </p>
+          </article>
+          <article class="card">
+            <h3>StatusDto</h3>
+            <p>
+              Reports whether the service is initialized, the current process state, and the active recipe
+              label. Public process states are <code>ready</code>, <code>capturing</code>,
+              <code>inspecting</code>, and <code>saving</code>.
+            </p>
+          </article>
+          <article class="card">
+            <h3>ResultSummaryDto</h3>
+            <p>
+              Provides fixed-size result summaries such as result id, timestamp, wafer context, overall
+              result, defect count, die count, and relative output paths.
+            </p>
+          </article>
+          <article class="card">
+            <h3>ErrorStatusDto</h3>
+            <p>
+              Reports the current error message together with initialized state, process state, and recipe
+              so clients can show actionable operational context.
+            </p>
+          </article>
+        </div>
+        <div class="callout warning">
+          <strong>Result payload boundary</strong>
+          Result responses and result events are summary-only. They do not include defect lists, die lists,
+          crop lists, image binaries, or private inspection details.
+        </div>
+      </section>
+
+      <section class="section" id="simulator">
+        <h2>Simulator Workflow</h2>
+        <p class="section-intro">
+          Use the WPF simulator to validate integration code before connecting to a Virex.NET-compatible
+          service. The simulator exposes the same public REST, TCP, and MQTT communication surfaces.
+        </p>
+        <ol class="steps">
+          <li>
+            <h3>Build and test the repository</h3>
+            <pre><code class="language-powershell">dotnet test Virex.NET.Integration.slnx</code></pre>
+          </li>
+          <li>
+            <h3>Start the simulator</h3>
+            <pre><code class="language-powershell">dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj</code></pre>
+          </li>
+          <li>
+            <h3>Run the C# SDK sample</h3>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
+          </li>
+          <li>
+            <h3>Validate customer integration behavior</h3>
+            <p>
+              Confirm that the customer application can send wafer context, control the simulated cycle,
+              receive status/result/error events, and query result summaries using the chosen interface.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="references">
+        <h2>Protocol References</h2>
+        <p class="section-intro">
+          Use these references when integrating from non-C# clients or when validating the raw wire contract.
+        </p>
+        <div class="reference-list">
+          <a href="rest-api.md">REST API Reference</a>
+          <a href="tcp-socket.md">TCP Socket Protocol</a>
+          <a href="mqtt-events.md">MQTT Events</a>
+          <a href="protocol-versioning.md">Protocol Versioning</a>
+        </div>
+      </section>
+
+      <section class="section" id="troubleshooting">
+        <h2>Troubleshooting</h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>REST request fails</h3>
+            <p>
+              Verify <code>RestBaseUrl</code>, firewall rules, simulator status, and the HTTP response body
+              carried by <code>VirexClientException</code>.
+            </p>
+          </article>
+          <article class="card">
+            <h3>TCP client does not receive events</h3>
+            <p>
+              Confirm the TCP host and port, ensure frames are UTF-8 NDJSON, and keep the event loop running
+              with a live cancellation token.
+            </p>
+          </article>
+          <article class="card">
+            <h3>MQTT events are missing</h3>
+            <p>
+              Confirm broker connectivity, port <code>1883</code>, base topic <code>Virex.NET</code>, and
+              subscription to the configured topic tree.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Result query is empty</h3>
+            <p>
+              Verify the simulator has emitted a result and that <code>lotId</code>, <code>waferId</code>,
+              and <code>recipeId</code> filters match the submitted wafer context.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="deploy">
+        <h2>Publish with GitHub Pages</h2>
+        <p class="section-intro">
+          This documentation site is intentionally static. It can be published directly from the repository
+          without a separate website build step.
+        </p>
+        <ol class="steps">
+          <li>
+            <h3>Merge documentation changes to main</h3>
+            <pre><code class="language-powershell">git checkout -b codex/customer-docs-github-pages
+git add docs README.md
+git commit -m "Add customer documentation website"
+git push -u origin codex/customer-docs-github-pages</code></pre>
+          </li>
+          <li>
+            <h3>Create and merge a pull request</h3>
+            <p>
+              Open a pull request into <code>main</code>. Include the test result from
+              <code>dotnet test Virex.NET.Integration.slnx</code> in the PR description.
+            </p>
+          </li>
+          <li>
+            <h3>Enable GitHub Pages</h3>
+            <p>
+              In GitHub, open repository <strong>Settings</strong>, then <strong>Pages</strong>. Under
+              <strong>Build and deployment</strong>, select <strong>Deploy from a branch</strong>, choose
+              branch <code>main</code>, folder <code>/docs</code>, and save.
+            </p>
+          </li>
+          <li>
+            <h3>Visit the published site</h3>
+            <p>
+              After deployment completes, the site is available at
+              <code>https://&lt;owner&gt;.github.io/&lt;repository&gt;/</code>.
+            </p>
+          </li>
+        </ol>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      Virex.NET Integration Kit documentation. Public communication contracts, SDK usage, simulator workflow,
+      and protocol references for customer integrations.
+    </div>
+  </footer>
+</body>
+</html>
