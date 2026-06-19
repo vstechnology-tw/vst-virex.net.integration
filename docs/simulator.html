@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-Hant" data-current-lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Virex.NET Simulator User Manual</title>
+  <meta name="description" content="Simulator user manual for the Virex.NET Integration Kit, including app UI areas, operating SOP, validation workflow, and troubleshooting.">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html" aria-label="Virex.NET documentation home">
+        <img class="brand-logo" src="assets/vst-logo.png" alt="VS Technology">
+        <span class="brand-title">Virex.NET Integration Kit</span>
+      </a>
+      <div class="header-actions">
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="index.html"><span data-lang="zh">產品手冊</span><span data-lang="en">Product Guide</span></a>
+          <a href="#ui"><span data-lang="zh">App UI</span><span data-lang="en">App UI</span></a>
+          <a href="#sop"><span data-lang="zh">操作 SOP</span><span data-lang="en">SOP</span></a>
+          <a href="#verify"><span data-lang="zh">驗證</span><span data-lang="en">Validation</span></a>
+          <a href="#troubleshooting"><span data-lang="zh">疑難排解</span><span data-lang="en">Troubleshooting</span></a>
+        </nav>
+        <div class="language-toggle" role="group" aria-label="Language">
+          <button type="button" class="lang-button" data-set-lang="zh" aria-pressed="true">中文</button>
+          <button type="button" class="lang-button" data-set-lang="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow">
+            <span data-lang="zh">Simulator 操作手冊</span>
+            <span data-lang="en">Simulator User Manual</span>
+          </p>
+          <h1>
+            <span data-lang="zh">使用 Virex.NET Integration Simulator 驗證 SDK 與通訊流程</span>
+            <span data-lang="en">Validate SDK and Protocol Behavior with the Virex.NET Integration Simulator</span>
+          </h1>
+          <p class="lead">
+            <span data-lang="zh">
+              Simulator 是客戶端整合開發時的本機測試工具。它提供 REST、TCP 與 MQTT 端點，
+              並可模擬 WaferInfo、狀態變化、result summary 與 error event。
+            </span>
+            <span data-lang="en">
+              The simulator is the local test tool for customer-side integration development. It exposes REST,
+              TCP, and MQTT endpoints and can simulate WaferInfo, state transitions, result summaries, and error events.
+            </span>
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="#sop"><span data-lang="zh">查看操作 SOP</span><span data-lang="en">View SOP</span></a>
+            <a class="button secondary" href="index.html"><span data-lang="zh">返回產品手冊</span><span data-lang="en">Back to Product Guide</span></a>
+          </div>
+        </div>
+        <aside class="hero-panel" aria-label="Launch command">
+          <div class="hero-panel-header">
+            <span data-lang="zh">啟動指令</span>
+            <span data-lang="en">Launch Command</span>
+          </div>
+          <pre><code class="language-powershell">dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj</code></pre>
+        </aside>
+      </div>
+    </section>
+
+    <div class="page">
+      <section class="section" id="purpose">
+        <h2><span data-lang="zh">用途</span><span data-lang="en">Purpose</span></h2>
+        <div class="grid three">
+          <article class="card">
+            <h3><span data-lang="zh">驗證 SDK</span><span data-lang="en">Validate the SDK</span></h3>
+            <p><span data-lang="zh">確認 <code>VirexClient</code> 可以讀取狀態、送出 WaferInfo、啟動流程並查詢 result summary。</span><span data-lang="en">Confirm that <code>VirexClient</code> can read status, submit WaferInfo, start a cycle, and query result summaries.</span></p>
+          </article>
+          <article class="card">
+            <h3><span data-lang="zh">驗證 raw protocol</span><span data-lang="en">Validate Raw Protocols</span></h3>
+            <p><span data-lang="zh">讓非 C# 系統測試 REST payload、TCP/NDJSON frame 與 MQTT topic。</span><span data-lang="en">Allow non-C# systems to test REST payloads, TCP/NDJSON frames, and MQTT topics.</span></p>
+          </article>
+          <article class="card">
+            <h3><span data-lang="zh">模擬事件</span><span data-lang="en">Simulate Events</span></h3>
+            <p><span data-lang="zh">在本機模擬 status、wafer-info、result、error，方便客戶端先完成處理邏輯。</span><span data-lang="en">Simulate status, wafer-info, result, and error events locally so client handling logic can be completed early.</span></p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="ui">
+        <h2><span data-lang="zh">App UI 說明</span><span data-lang="en">App UI</span></h2>
+        <p class="section-intro">
+          <span data-lang="zh">Simulator 主畫面分成四個區域：Connection Settings、WaferInfo、State 與 Event Log。</span>
+          <span data-lang="en">The simulator main window is divided into four areas: Connection Settings, WaferInfo, State, and Event Log.</span>
+        </p>
+        <div class="manual-layout">
+          <div class="app-window" aria-label="Simulator UI map">
+            <div class="app-titlebar">Virex.NET Integration Simulator</div>
+            <div class="app-content">
+              <section class="app-panel">
+                <h3>Connection Settings</h3>
+                <div class="field-list">
+                  <div class="field-row"><span>REST prefix</span><span class="field-value">http://127.0.0.1:5088/</span></div>
+                  <div class="field-row"><span>TCP port</span><span class="field-value">5089</span></div>
+                  <div class="field-row"><span>MQTT host</span><span class="field-value">127.0.0.1</span></div>
+                  <div class="field-row"><span>MQTT topic</span><span class="field-value">Virex.NET</span></div>
+                  <div class="field-row"><span>Result prefix</span><span class="field-value">optional</span></div>
+                </div>
+              </section>
+              <section class="app-panel">
+                <h3>WaferInfo</h3>
+                <div class="field-list">
+                  <div class="field-row"><span>Lot ID</span><span class="field-value">LOT-001</span></div>
+                  <div class="field-row"><span>Wafer ID</span><span class="field-value">W01</span></div>
+                  <div class="field-row"><span>Recipe ID</span><span class="field-value">RCP-A</span></div>
+                  <div class="field-row"><span>Slot</span><span class="field-value">1</span></div>
+                  <div class="field-row"><span>FOUP ID</span><span class="field-value">FOUP-A</span></div>
+                  <div class="field-row"><span>Chamber ID</span><span class="field-value">CH-1</span></div>
+                  <span class="app-button">Apply WaferInfo</span>
+                </div>
+              </section>
+              <section class="app-panel">
+                <h3>State</h3>
+                <span class="field-value">initialized=false, processState=ready</span>
+                <span class="app-button">Start Servers</span>
+                <span class="app-button">Stop Servers</span>
+                <span class="app-button">Initialize</span>
+                <span class="app-button">Terminate</span>
+                <span class="app-button">Start Cycle</span>
+                <span class="app-button">Stop</span>
+                <span class="app-button">Emit Fake Result</span>
+                <span class="app-button">Emit Error</span>
+              </section>
+              <section class="app-log">[10:15:02] Servers started.<br>[10:15:10] WaferInfo updated from UI.<br>[10:15:18] Result emitted.</section>
+            </div>
+          </div>
+          <div class="grid">
+            <article class="card">
+              <h3><span data-lang="zh">Connection Settings</span><span data-lang="en">Connection Settings</span></h3>
+              <p><span data-lang="zh">設定 simulator 對外提供的 REST prefix、TCP port、MQTT broker/topic，以及 result path prefix。</span><span data-lang="en">Configure the REST prefix, TCP port, MQTT broker/topic, and result path prefix exposed by the simulator.</span></p>
+            </article>
+            <article class="card">
+              <h3>WaferInfo</h3>
+              <p><span data-lang="zh">輸入測試用 wafer context，按 <strong>Apply WaferInfo</strong> 後 simulator 會更新狀態並對外發布 wafer-info event。</span><span data-lang="en">Enter test wafer context. After pressing <strong>Apply WaferInfo</strong>, the simulator updates state and publishes a wafer-info event.</span></p>
+            </article>
+            <article class="card">
+              <h3>State</h3>
+              <p><span data-lang="zh">啟停 server、切換 initialized 狀態、啟動/停止 cycle、手動產生 result 或 error。</span><span data-lang="en">Start and stop servers, change initialized state, start/stop cycles, and manually emit result or error events.</span></p>
+            </article>
+            <article class="card">
+              <h3>Event Log</h3>
+              <p><span data-lang="zh">顯示 simulator 目前執行紀錄。若操作沒有預期效果，請先查看這裡的訊息。</span><span data-lang="en">Shows simulator activity. If an operation does not behave as expected, check this log first.</span></p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="sop">
+        <h2><span data-lang="zh">標準操作 SOP</span><span data-lang="en">Standard Operating Procedure</span></h2>
+        <ol class="steps">
+          <li>
+            <h3><span data-lang="zh">啟動 Simulator App</span><span data-lang="en">Start the Simulator App</span></h3>
+            <pre><code class="language-powershell">dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj</code></pre>
+          </li>
+          <li>
+            <h3><span data-lang="zh">確認連線設定</span><span data-lang="en">Confirm Connection Settings</span></h3>
+            <p><span data-lang="zh">第一次使用建議保留預設值：REST <code>http://127.0.0.1:5088/</code>、TCP <code>5089</code>、MQTT <code>127.0.0.1:1883</code>、topic <code>Virex.NET</code>。</span><span data-lang="en">For first use, keep the defaults: REST <code>http://127.0.0.1:5088/</code>, TCP <code>5089</code>, MQTT <code>127.0.0.1:1883</code>, topic <code>Virex.NET</code>.</span></p>
+          </li>
+          <li>
+            <h3><span data-lang="zh">按下 Start Servers</span><span data-lang="en">Press Start Servers</span></h3>
+            <p><span data-lang="zh">成功後 Event Log 會顯示 <code>Servers started.</code>，SDK 或 sample code 才能連線。</span><span data-lang="en">When successful, Event Log shows <code>Servers started.</code>. SDK and sample clients can connect after this step.</span></p>
+          </li>
+          <li>
+            <h3><span data-lang="zh">輸入並套用 WaferInfo</span><span data-lang="en">Enter and Apply WaferInfo</span></h3>
+            <p><span data-lang="zh">填入 Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID，按 <strong>Apply WaferInfo</strong>。</span><span data-lang="en">Enter Lot ID, Wafer ID, Recipe ID, Slot, FOUP ID, and Chamber ID, then press <strong>Apply WaferInfo</strong>.</span></p>
+          </li>
+          <li>
+            <h3><span data-lang="zh">執行 Initialize 與 Start Cycle</span><span data-lang="en">Run Initialize and Start Cycle</span></h3>
+            <p><span data-lang="zh">按 <strong>Initialize</strong> 後狀態變成 initialized，再按 <strong>Start Cycle</strong> 模擬 capturing、inspecting、saving 等流程。</span><span data-lang="en">Press <strong>Initialize</strong> to set initialized state, then press <strong>Start Cycle</strong> to simulate capturing, inspecting, and saving states.</span></p>
+          </li>
+          <li>
+            <h3><span data-lang="zh">產生測試事件</span><span data-lang="en">Emit Test Events</span></h3>
+            <p><span data-lang="zh">使用 <strong>Emit Fake Result</strong> 測試 result handling；使用 <strong>Emit Error</strong> 測試 error handling。</span><span data-lang="en">Use <strong>Emit Fake Result</strong> to test result handling and <strong>Emit Error</strong> to test error handling.</span></p>
+          </li>
+          <li>
+            <h3><span data-lang="zh">結束測試</span><span data-lang="en">End the Test</span></h3>
+            <p><span data-lang="zh">測試完成後按 <strong>Stop Servers</strong>，或直接關閉視窗讓 simulator 停止服務。</span><span data-lang="en">After testing, press <strong>Stop Servers</strong> or close the window to stop simulator services.</span></p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="section" id="verify">
+        <h2><span data-lang="zh">客戶端驗證方式</span><span data-lang="en">Client Validation</span></h2>
+        <div class="grid three">
+          <article class="card">
+            <h3><span data-lang="zh">SDK sample</span><span data-lang="en">SDK Sample</span></h3>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
+          </article>
+          <article class="card">
+            <h3><span data-lang="zh">Raw REST sample</span><span data-lang="en">Raw REST Sample</span></h3>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj</code></pre>
+          </article>
+          <article class="card">
+            <h3><span data-lang="zh">Raw TCP sample</span><span data-lang="en">Raw TCP Sample</span></h3>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj</code></pre>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="troubleshooting">
+        <h2><span data-lang="zh">疑難排解</span><span data-lang="en">Troubleshooting</span></h2>
+        <ul class="checklist">
+          <li><strong><span data-lang="zh">Start Servers 失敗</span><span data-lang="en">Start Servers fails</span></strong><br><span data-lang="zh">檢查 REST prefix 是否被占用、TCP port 是否已被其他程式使用、MQTT broker 是否可連線。</span><span data-lang="en">Check whether the REST prefix or TCP port is already in use and whether the MQTT broker is reachable.</span></li>
+          <li><strong><span data-lang="zh">SDK 連不上</span><span data-lang="en">SDK cannot connect</span></strong><br><span data-lang="zh">確認 Simulator 已按 Start Servers，且 SDK 的 <code>RestBaseUrl</code>、TCP host/port、MQTT host/port/topic 與 UI 一致。</span><span data-lang="en">Confirm Start Servers was pressed and SDK <code>RestBaseUrl</code>, TCP host/port, and MQTT host/port/topic match the UI.</span></li>
+          <li><strong><span data-lang="zh">沒有收到 event</span><span data-lang="en">No events received</span></strong><br><span data-lang="zh">先看 Event Log 是否有產生事件，再確認 client 是否已訂閱 TCP 或 MQTT。</span><span data-lang="en">First check Event Log for emitted events, then confirm the client is subscribed through TCP or MQTT.</span></li>
+          <li><strong><span data-lang="zh">查不到 result</span><span data-lang="en">No result returned</span></strong><br><span data-lang="zh">先按 Start Cycle 或 Emit Fake Result，再確認查詢 filter 與目前 WaferInfo 一致。</span><span data-lang="en">Run Start Cycle or Emit Fake Result first, then confirm query filters match the current WaferInfo.</span></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span data-lang="zh">Virex.NET Integration Simulator 操作手冊。</span>
+      <span data-lang="en">Virex.NET Integration Simulator user manual.</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-set-lang]"));
+      function setLanguage(lang) {
+        root.setAttribute("data-current-lang", lang);
+        root.setAttribute("lang", lang === "zh" ? "zh-Hant" : "en");
+        buttons.forEach(function (button) {
+          button.setAttribute("aria-pressed", button.getAttribute("data-set-lang") === lang ? "true" : "false");
+        });
+        try {
+          window.localStorage.setItem("virex-doc-lang", lang);
+        } catch (error) {
+        }
+      }
+      buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          setLanguage(button.getAttribute("data-set-lang"));
+        });
+      });
+      var saved = "zh";
+      try {
+        saved = window.localStorage.getItem("virex-doc-lang") || "zh";
+      } catch (error) {
+      }
+      setLanguage(saved === "en" ? "en" : "zh");
+    }());
+  </script>
+</body>
+</html>
