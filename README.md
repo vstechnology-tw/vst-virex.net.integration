@@ -68,6 +68,24 @@ await client.StartAsync();
 
 More examples are under `samples/`.
 
+## Customer Documentation Website
+
+The customer-facing SDK and protocol documentation is available as a static GitHub Pages site from the `docs` folder.
+
+To publish it after merging documentation changes to `main`, configure the repository in GitHub:
+
+```text
+Settings > Pages > Build and deployment > Deploy from a branch
+Branch: main
+Folder: /docs
+```
+
+The published URL will use the standard project Pages format:
+
+```text
+https://<owner>.github.io/<repository>/
+```
+
 ## License
 
 This repository is licensed under the MIT License. See [LICENSE](LICENSE).
