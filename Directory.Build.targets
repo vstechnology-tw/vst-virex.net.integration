@@ -1,0 +1,6 @@
+﻿<Project>
+  <Target Name="ValidateIntegrationKitBuild" BeforeTargets="BeforeBuild">
+    <Message Importance="High"
+             Text="Virex.NET build: Project=$(MSBuildProjectName), Configuration=$(Configuration), Target=$(TargetFramework)" />
+  </Target>
+</Project>

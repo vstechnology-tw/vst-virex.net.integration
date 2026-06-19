@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/samples/" />
+  <Folder Name="/samples/csharp-raw-rest/">
+    <Project Path="samples/csharp-raw-rest/CSharpRawRestSample.csproj" />
+  </Folder>
+  <Folder Name="/samples/csharp-raw-tcp/">
+    <Project Path="samples/csharp-raw-tcp/CSharpRawTcpSample.csproj" />
+  </Folder>
+  <Folder Name="/samples/csharp-sdk/">
+    <Project Path="samples/csharp-sdk/CSharpSdkSample.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Virex.NET.Client/Virex.NET.Client.csproj" />
+    <Project Path="src/Virex.NET.Contracts/Virex.NET.Contracts.csproj" />
+    <Project Path="src/Virex.NET.Simulator.WPF/Virex.NET.Simulator.WPF.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Virex.NET.Contracts.Tests/Virex.NET.Contracts.Tests.csproj" />
+  </Folder>
+</Solution>

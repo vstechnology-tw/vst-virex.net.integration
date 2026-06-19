@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net48;net8.0-windows;net10.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Virex.NET.Simulator.WPF</RootNamespace>
+    <AssemblyName>Virex.NET.Simulator.WPF</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MQTTnet" />
+    <PackageReference Include="System.Text.Json" />
+    <ProjectReference Include="..\Virex.NET.Contracts\Virex.NET.Contracts.csproj" />
+  </ItemGroup>
+</Project>
