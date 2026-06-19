@@ -260,6 +260,10 @@ h3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.grid.offset {
+  margin-top: 18px;
+}
+
 .card {
   min-width: 0;
   border: 1px solid var(--line);

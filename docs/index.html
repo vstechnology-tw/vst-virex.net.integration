@@ -19,8 +19,9 @@
         <a href="#scenarios">Scenarios</a>
         <a href="#interfaces">Interfaces</a>
         <a href="#sdk">SDK</a>
+        <a href="#samples">Samples</a>
         <a href="#simulator">Simulator</a>
-        <a href="#deploy">GitHub Pages</a>
+        <a href="#references">References</a>
       </nav>
     </div>
   </header>
@@ -32,13 +33,13 @@
           <p class="eyebrow">Customer integration documentation</p>
           <h1>Build against the Virex.NET public communication surface.</h1>
           <p class="lead">
-            The Virex.NET Integration Kit provides public contracts, a C# client SDK, protocol references,
-            samples, and a simulator so host systems, MES software, and equipment-side applications can
-            validate their integration before connecting to a production-compatible service.
+            Use this guide to find the SDK, sample code, protocol references, and simulator workflow needed
+            to build a Virex.NET-compatible integration. Start with the C# SDK when possible, use the raw
+            protocol samples when integrating from another platform, and validate behavior with the simulator.
           </p>
           <div class="hero-actions">
             <a class="button" href="#sdk">Start with the SDK</a>
-            <a class="button secondary" href="#references">View protocol references</a>
+            <a class="button secondary" href="#samples">Run the samples</a>
           </div>
         </div>
         <aside class="hero-panel" aria-label="Default simulator endpoints">
@@ -67,34 +68,52 @@
 
     <div class="page">
       <section class="section" id="overview">
-        <h2>Repository Overview</h2>
+        <h2>Find the Right Starting Point</h2>
         <p class="section-intro">
-          This repository is a public integration kit. It contains only the externally visible communication
-          contracts and tooling required to develop a Virex.NET-compatible integration.
+          This repository is organized around the files a customer integration developer needs most often:
+          the SDK, runnable samples, protocol references, and a local simulator.
         </p>
         <div class="grid three">
           <article class="card">
             <span class="tag">Contracts</span>
             <h3>Virex.NET.Contracts</h3>
             <p>
-              Public DTOs, route constants, MQTT topic helpers, JSON settings, TCP/NDJSON frame formatters,
-              and protocol parsers shared by the SDK, simulator, tests, and samples.
+              Public DTOs, route constants, MQTT topic helpers, JSON settings, TCP/NDJSON formatters, and
+              protocol parsers. Look here when you need the exact field names and payload shapes.
             </p>
           </article>
           <article class="card">
             <span class="tag">Client SDK</span>
             <h3>Virex.NET.Client</h3>
             <p>
-              A C# SDK for REST commands and queries, TCP socket event handling, and MQTT event subscription.
-              The SDK targets <code>netstandard2.0</code> for broad application compatibility.
+              C# client wrappers for REST commands and queries, TCP socket events, and MQTT event
+              subscription. Start here for .NET applications.
             </p>
           </article>
+          <article class="card">
+            <span class="tag">Samples</span>
+            <h3>samples</h3>
+            <p>
+              Runnable examples for the C# SDK, raw REST calls, and raw TCP frames. Use these as the quickest
+              way to confirm your environment and copy a working request flow.
+            </p>
+          </article>
+        </div>
+        <div class="grid two offset">
           <article class="card">
             <span class="tag">Simulator</span>
             <h3>Virex.NET.Simulator.WPF</h3>
             <p>
-              A local simulator for validating host and equipment integrations against REST, TCP, and MQTT
-              behavior without requiring access to a production system.
+              Local simulator for validating REST, TCP, and MQTT behavior before connecting to a
+              production-compatible service.
+            </p>
+          </article>
+          <article class="card">
+            <span class="tag">Documentation</span>
+            <h3>docs</h3>
+            <p>
+              Protocol references for REST endpoints, TCP/NDJSON frames, MQTT topics, and compatibility
+              expectations.
             </p>
           </article>
         </div>
@@ -189,8 +208,8 @@
       <section class="section" id="sdk">
         <h2>C# SDK Quick Start</h2>
         <p class="section-intro">
-          The SDK wraps the public communication APIs with a small C# surface. Applications can use the
-          aggregate <code>VirexClient</code> or the lower-level REST, TCP, and MQTT clients directly.
+          Use the SDK when the integrating application is written in C#. It wraps the public communication
+          APIs with a small surface and targets <code>netstandard2.0</code> for broad application compatibility.
         </p>
         <pre><code class="language-csharp">using Virex.NET.Client;
 using Virex.NET.Contracts;
@@ -310,6 +329,43 @@ await client.MqttEvents.RunAsync(cts.Token);</code></pre>
         </div>
       </section>
 
+      <section class="section" id="samples">
+        <h2>Sample Code Guide</h2>
+        <p class="section-intro">
+          The sample projects are intended to be the fastest way to verify setup and understand the expected
+          request and event flow. Choose the sample that matches the integration style you plan to use.
+        </p>
+        <div class="grid three">
+          <article class="card">
+            <span class="tag">Recommended for C#</span>
+            <h3>samples/csharp-sdk</h3>
+            <p>
+              Uses <code>VirexClient</code> to read status, submit wafer information, start a cycle, and
+              query result summaries. Start here for most .NET applications.
+            </p>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
+          </article>
+          <article class="card">
+            <span class="tag">Raw REST</span>
+            <h3>samples/csharp-raw-rest</h3>
+            <p>
+              Shows the REST payloads and endpoint flow without using the SDK wrapper. Use it when another
+              language or system will call the REST API directly.
+            </p>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj</code></pre>
+          </article>
+          <article class="card">
+            <span class="tag">Raw TCP</span>
+            <h3>samples/csharp-raw-tcp</h3>
+            <p>
+              Shows TCP/NDJSON framing for direct socket integrations. Use it to verify connection handling
+              and line-delimited JSON frames.
+            </p>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj</code></pre>
+          </article>
+        </div>
+      </section>
+
       <section class="section" id="simulator">
         <h2>Simulator Workflow</h2>
         <p class="section-intro">
@@ -384,45 +440,6 @@ await client.MqttEvents.RunAsync(cts.Token);</code></pre>
             </p>
           </article>
         </div>
-      </section>
-
-      <section class="section" id="deploy">
-        <h2>Publish with GitHub Pages</h2>
-        <p class="section-intro">
-          This documentation site is intentionally static. It can be published directly from the repository
-          without a separate website build step.
-        </p>
-        <ol class="steps">
-          <li>
-            <h3>Merge documentation changes to main</h3>
-            <pre><code class="language-powershell">git checkout -b codex/customer-docs-github-pages
-git add docs README.md
-git commit -m "Add customer documentation website"
-git push -u origin codex/customer-docs-github-pages</code></pre>
-          </li>
-          <li>
-            <h3>Create and merge a pull request</h3>
-            <p>
-              Open a pull request into <code>main</code>. Include the test result from
-              <code>dotnet test Virex.NET.Integration.slnx</code> in the PR description.
-            </p>
-          </li>
-          <li>
-            <h3>Enable GitHub Pages</h3>
-            <p>
-              In GitHub, open repository <strong>Settings</strong>, then <strong>Pages</strong>. Under
-              <strong>Build and deployment</strong>, select <strong>Deploy from a branch</strong>, choose
-              branch <code>main</code>, folder <code>/docs</code>, and save.
-            </p>
-          </li>
-          <li>
-            <h3>Visit the published site</h3>
-            <p>
-              After deployment completes, the site is available at
-              <code>https://&lt;owner&gt;.github.io/&lt;repository&gt;/</code>.
-            </p>
-          </li>
-        </ol>
       </section>
     </div>
   </main>
