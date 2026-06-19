@@ -8,7 +8,6 @@ Minimal Windows C++ client for the public Virex.NET REST API. It uses WinHTTP an
 - CMake 3.20 or newer.
 - Visual Studio Build Tools or Visual Studio with the C++ desktop workload.
 - The Virex.NET simulator running with REST enabled at `http://127.0.0.1:5088`.
-- Until the embedded MQTT broker is added, the simulator also expects a local MQTT broker on `127.0.0.1:1883` when **Start Servers** is clicked.
 
 ## Build
 

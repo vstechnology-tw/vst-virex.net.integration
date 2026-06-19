@@ -11,6 +11,7 @@ public partial class MainWindow : Window
     private readonly SimulatorSession _session = new SimulatorSession();
     private RestSimulatorServer? _rest;
     private TcpSimulatorServer? _tcp;
+    private EmbeddedMqttBroker? _mqttBroker;
     private MqttSimulatorPublisher? _mqtt;
 
     public MainWindow()
@@ -31,6 +32,10 @@ public partial class MainWindow : Window
             _tcp = new TcpSimulatorServer(_session, int.Parse(TcpPortBox.Text));
             await _tcp.StartAsync();
 
+            _mqttBroker = new EmbeddedMqttBroker(MqttHostBox.Text, int.Parse(MqttPortBox.Text));
+            await _mqttBroker.StartAsync();
+            AppendLog($"MQTT broker listening at {MqttHostBox.Text}:{MqttPortBox.Text}.");
+
             _mqtt = new MqttSimulatorPublisher(
                 _session,
                 MqttHostBox.Text,
@@ -42,6 +47,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            await StopServersAsync();
             AppendLog("Start failed: " + ex.Message);
         }
     }
@@ -103,11 +109,14 @@ public partial class MainWindow : Window
     {
         if (_mqtt is not null)
             await _mqtt.StopAsync();
+        if (_mqttBroker is not null)
+            await _mqttBroker.StopAsync();
         if (_tcp is not null)
             await _tcp.StopAsync();
         if (_rest is not null)
             await _rest.StopAsync();
         _mqtt = null;
+        _mqttBroker = null;
         _tcp = null;
         _rest = null;
     }

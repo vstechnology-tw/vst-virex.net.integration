@@ -6,6 +6,9 @@
   <Folder Name="/samples/csharp-raw-tcp/">
     <Project Path="samples/csharp-raw-tcp/CSharpRawTcpSample.csproj" />
   </Folder>
+  <Folder Name="/samples/csharp-raw-mqtt/">
+    <Project Path="samples/csharp-raw-mqtt/CSharpRawMqttSample.csproj" />
+  </Folder>
   <Folder Name="/samples/csharp-sdk/">
     <Project Path="samples/csharp-sdk/CSharpSdkSample.csproj" />
   </Folder>

@@ -5,8 +5,7 @@ Minimal C# client that uses `Virex.NET.Client` instead of raw protocol calls.
 ## Prerequisites
 
 - .NET SDK.
-- The Virex.NET simulator running with REST enabled at `http://127.0.0.1:5088`.
-- Until the embedded MQTT broker is added, the simulator also expects a local MQTT broker on `127.0.0.1:1883` when **Start Servers** is clicked.
+- The Virex.NET simulator running with REST enabled at `http://127.0.0.1:5088` and MQTT enabled on `127.0.0.1:1883`.
 
 ## Run
 
@@ -34,6 +33,7 @@ Expected result:
 Reading status...
 False ready recipe=Default
 Updating wafer info...
+MQTT waferInfo: {"type":"waferInfo",...}
 Starting inspection cycle...
 Querying latest results...
 Result count: 0
