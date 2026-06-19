@@ -70,21 +70,9 @@ More examples are under `samples/`.
 
 ## Customer Documentation Website
 
-The customer-facing SDK and protocol documentation is available as a static GitHub Pages site from the `docs` folder.
+Customer-facing SDK usage, sample code guidance, simulator workflow, and protocol references are available at:
 
-To publish it after merging documentation changes to `main`, configure the repository in GitHub:
-
-```text
-Settings > Pages > Build and deployment > Deploy from a branch
-Branch: main
-Folder: /docs
-```
-
-The published URL will use the standard project Pages format:
-
-```text
-https://<owner>.github.io/<repository>/
-```
+https://vstechnology-tw.github.io/vst-virex.net.integration/
 
 ## License
 
