@@ -7,7 +7,6 @@ Minimal Python client for the public Virex.NET REST API.
 - Python 3.8 or newer.
 - The Virex.NET simulator running with REST enabled at `http://127.0.0.1:5088`.
 - No third-party Python packages are required.
-- Until the embedded MQTT broker is added, the simulator also expects a local MQTT broker on `127.0.0.1:1883` when **Start Servers** is clicked.
 
 ## Run
 

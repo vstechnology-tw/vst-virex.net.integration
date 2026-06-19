@@ -7,7 +7,7 @@ This repository contains:
 - `Virex.NET.Contracts`: public DTOs, routes, topic names, TCP/NDJSON formatters, and parsers.
 - `Virex.NET.Client`: C# SDK for REST, TCP socket events, and MQTT events.
 - `Virex.NET.Simulator.WPF`: WPF simulator that behaves like the Virex.NET communication surface.
-- `samples`: small client examples using the C# SDK or raw REST/TCP calls from C#, Python, and C++.
+- `samples`: small client examples using the C# SDK or raw REST/TCP/MQTT calls from C#, Python, and C++.
 - `docs`: protocol documentation for non-C# clients.
 
 The private Virex.NET application is not included. This repository only contains public communication contracts and integration tooling.
@@ -37,7 +37,7 @@ MQTT: 127.0.0.1:1883, base topic Virex.NET
 
 The simulator lets you configure IP/port settings, update WaferInfo, run simulated state transitions, emit results, and emit errors.
 
-Current MQTT note: until the embedded MQTT broker is added, **Start Servers** also attempts to connect to an MQTT broker at `127.0.0.1:1883`. Start a local broker first if you want the simulator startup to complete without an MQTT connection error.
+The simulator starts an embedded MQTT broker when you click **Start Servers**, so no external broker is required for local testing.
 
 ## Run Samples
 
@@ -49,16 +49,16 @@ Current MQTT note: until the embedded MQTT broker is added, **Start Servers** al
 
 2. In the simulator window, keep the default endpoints and click **Start Servers**.
 
-   If the simulator reports an MQTT broker connection error, start a local broker on `127.0.0.1:1883` and click **Start Servers** again. This requirement will be removed when the embedded MQTT broker is added.
-
 3. Open a second terminal from the repository root and run one sample:
 
    ```powershell
    dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj
    dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj
+   dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj
    dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj
    python samples\python-raw-rest\main.py
    python samples\python-raw-tcp\main.py
+   python samples\python-raw-mqtt\main.py
    ```
 
 4. For C++ samples, build first from a Visual Studio Developer PowerShell:
@@ -71,9 +71,13 @@ Current MQTT note: until the embedded MQTT broker is added, **Start Servers** al
    cmake -S samples\cpp-raw-tcp -B samples\cpp-raw-tcp\build
    cmake --build samples\cpp-raw-tcp\build --config Release
    samples\cpp-raw-tcp\build\Release\cpp-raw-tcp.exe
+
+   cmake -S samples\cpp-raw-mqtt -B samples\cpp-raw-mqtt\build
+   cmake --build samples\cpp-raw-mqtt\build --config Release
+   samples\cpp-raw-mqtt\build\Release\cpp-raw-mqtt.exe
    ```
 
-The raw REST samples read `/api/status` and then update `/api/wafer-info`. The raw TCP samples connect to port `5089`, read the initial status and wafer info frames, send a `waferInfo` NDJSON frame, and print the update event returned by the simulator.
+The raw REST samples read `/api/status` and then update `/api/wafer-info`. The raw TCP samples connect to port `5089`, read the initial status and wafer info frames, send a `waferInfo` NDJSON frame, and print the update event returned by the simulator. The raw MQTT samples subscribe to `Virex.NET/#`; while they are running, trigger events from the simulator UI with **Apply WaferInfo**, **Start Cycle**, **Emit Fake Result**, or **Emit Error**.
 
 ## C# SDK Example
 
@@ -109,10 +113,13 @@ More examples are under `samples/`:
 - `csharp-sdk`
 - `csharp-raw-rest`
 - `csharp-raw-tcp`
+- `csharp-raw-mqtt`
 - `python-raw-rest`
 - `python-raw-tcp`
+- `python-raw-mqtt`
 - `cpp-raw-rest`
 - `cpp-raw-tcp`
+- `cpp-raw-mqtt`
 
 ## Customer Documentation Website
 
