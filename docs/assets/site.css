@@ -64,9 +64,21 @@ a:focus {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   font-weight: 700;
   color: var(--ink);
+}
+
+.brand-logo {
+  display: block;
+  width: min(260px, 38vw);
+  height: auto;
+  max-height: 52px;
+  object-fit: contain;
+}
+
+.brand-title {
+  white-space: nowrap;
 }
 
 .brand-mark {
@@ -81,6 +93,13 @@ a:focus {
   letter-spacing: 0;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -88,6 +107,42 @@ a:focus {
   justify-content: flex-end;
   gap: 12px 18px;
   font-size: 14px;
+}
+
+.language-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.lang-button {
+  min-width: 54px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lang-button[aria-pressed="true"] {
+  color: #ffffff;
+  background: var(--brand);
+}
+
+[data-lang] {
+  display: none;
+}
+
+html[data-current-lang="zh"] [data-lang="zh"],
+html[data-current-lang="en"] [data-lang="en"] {
+  display: revert;
 }
 
 .hero {
@@ -437,6 +492,11 @@ pre code {
     flex-direction: column;
   }
 
+  .header-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .nav {
     justify-content: flex-start;
   }
@@ -464,6 +524,20 @@ pre code {
 
   .nav {
     gap: 8px 12px;
+  }
+
+  .brand {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .brand-logo {
+    width: min(280px, 84vw);
+    max-height: none;
+  }
+
+  .brand-title {
+    white-space: normal;
   }
 
   .comparison {

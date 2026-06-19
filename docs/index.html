@@ -1,49 +1,74 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant" data-current-lang="zh">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Virex.NET Integration Kit Documentation</title>
-  <meta name="description" content="Customer documentation for the Virex.NET public integration SDK, REST API, TCP socket protocol, MQTT events, and simulator workflow.">
+  <title>Virex.NET Integration Kit User Guide</title>
+  <meta name="description" content="Product user guide for the Virex.NET Integration Kit SDK, sample code, simulator, REST API, TCP socket protocol, and MQTT events.">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="#top" aria-label="Virex.NET documentation home">
-        <span class="brand-mark">VX</span>
-        <span>Virex.NET Integration Kit</span>
+        <img class="brand-logo" src="assets/vst-logo.png" alt="VS Technology">
+        <span class="brand-title">Virex.NET Integration Kit</span>
       </a>
-      <nav class="nav" aria-label="Primary navigation">
-        <a href="#overview">Overview</a>
-        <a href="#scenarios">Scenarios</a>
-        <a href="#interfaces">Interfaces</a>
-        <a href="#sdk">SDK</a>
-        <a href="#samples">Samples</a>
-        <a href="#simulator">Simulator</a>
-        <a href="#references">References</a>
-      </nav>
+      <div class="header-actions">
+        <nav class="nav" aria-label="Primary navigation">
+          <a href="#quickstart"><span data-lang="zh">快速開始</span><span data-lang="en">Quick Start</span></a>
+          <a href="#sdk"><span data-lang="zh">SDK</span><span data-lang="en">SDK</span></a>
+          <a href="#samples"><span data-lang="zh">範例程式</span><span data-lang="en">Samples</span></a>
+          <a href="#scenarios"><span data-lang="zh">使用情境</span><span data-lang="en">Scenarios</span></a>
+          <a href="#references"><span data-lang="zh">參考資料</span><span data-lang="en">References</span></a>
+        </nav>
+        <div class="language-toggle" role="group" aria-label="Language">
+          <button type="button" class="lang-button" data-set-lang="zh" aria-pressed="true">中文</button>
+          <button type="button" class="lang-button" data-set-lang="en" aria-pressed="false">EN</button>
+        </div>
+      </div>
     </div>
   </header>
 
   <main id="top">
-    <section class="hero">
+    <section class="hero product-hero">
       <div class="hero-inner">
         <div>
-          <p class="eyebrow">Customer integration documentation</p>
-          <h1>Build against the Virex.NET public communication surface.</h1>
+          <p class="eyebrow">
+            <span data-lang="zh">產品使用說明書</span>
+            <span data-lang="en">Product User Guide</span>
+          </p>
+          <h1>
+            <span data-lang="zh">Virex.NET Integration Kit SDK 與範例程式使用指南</span>
+            <span data-lang="en">Virex.NET Integration Kit SDK and Sample Code Guide</span>
+          </h1>
           <p class="lead">
-            Use this guide to find the SDK, sample code, protocol references, and simulator workflow needed
-            to build a Virex.NET-compatible integration. Start with the C# SDK when possible, use the raw
-            protocol samples when integrating from another platform, and validate behavior with the simulator.
+            <span data-lang="zh">
+              本頁說明如何使用 Virex.NET Integration Kit 建立客戶端整合程式。請從 SDK 與範例程式開始，
+              使用 simulator 驗證 REST、TCP 與 MQTT 通訊流程，再依照您的系統架構選擇合適的介面。
+            </span>
+            <span data-lang="en">
+              This guide explains how to use the Virex.NET Integration Kit to build customer-side integrations.
+              Start with the SDK and sample code, validate REST, TCP, and MQTT behavior with the simulator,
+              then choose the interface that matches your system architecture.
+            </span>
           </p>
           <div class="hero-actions">
-            <a class="button" href="#sdk">Start with the SDK</a>
-            <a class="button secondary" href="#samples">Run the samples</a>
+            <a class="button" href="#quickstart">
+              <span data-lang="zh">開始使用</span>
+              <span data-lang="en">Get Started</span>
+            </a>
+            <a class="button secondary" href="#samples">
+              <span data-lang="zh">查看範例程式</span>
+              <span data-lang="en">View Samples</span>
+            </a>
           </div>
         </div>
         <aside class="hero-panel" aria-label="Default simulator endpoints">
-          <div class="hero-panel-header">Default simulator endpoints</div>
+          <div class="hero-panel-header">
+            <span data-lang="zh">Simulator 預設連線資訊</span>
+            <span data-lang="en">Default Simulator Endpoints</span>
+          </div>
           <dl class="endpoint-list">
             <div>
               <dt>REST</dt>
@@ -67,149 +92,129 @@
     </section>
 
     <div class="page">
-      <section class="section" id="overview">
-        <h2>Find the Right Starting Point</h2>
+      <section class="section" id="product">
+        <h2>
+          <span data-lang="zh">產品定位</span>
+          <span data-lang="en">Product Purpose</span>
+        </h2>
         <p class="section-intro">
-          This repository is organized around the files a customer integration developer needs most often:
-          the SDK, runnable samples, protocol references, and a local simulator.
+          <span data-lang="zh">
+            Virex.NET Integration Kit 是提供給客戶整合 Virex.NET 相容系統的公開 SDK 與通訊範例。
+            它不是內部系統原始碼，而是用來協助外部系統建立穩定通訊的產品套件。
+          </span>
+          <span data-lang="en">
+            Virex.NET Integration Kit is a public SDK and communication sample package for customer systems
+            integrating with Virex.NET-compatible services. It is not private application source code; it is
+            a product package for building stable external communication.
+          </span>
         </p>
         <div class="grid three">
           <article class="card">
-            <span class="tag">Contracts</span>
-            <h3>Virex.NET.Contracts</h3>
-            <p>
-              Public DTOs, route constants, MQTT topic helpers, JSON settings, TCP/NDJSON formatters, and
-              protocol parsers. Look here when you need the exact field names and payload shapes.
-            </p>
-          </article>
-          <article class="card">
-            <span class="tag">Client SDK</span>
+            <span class="tag">SDK</span>
             <h3>Virex.NET.Client</h3>
             <p>
-              C# client wrappers for REST commands and queries, TCP socket events, and MQTT event
-              subscription. Start here for .NET applications.
+              <span data-lang="zh">提供 C# client wrapper，可操作 REST command/query，並訂閱 TCP 與 MQTT 事件。</span>
+              <span data-lang="en">C# client wrappers for REST commands and queries, plus TCP and MQTT event subscriptions.</span>
             </p>
           </article>
           <article class="card">
             <span class="tag">Samples</span>
             <h3>samples</h3>
             <p>
-              Runnable examples for the C# SDK, raw REST calls, and raw TCP frames. Use these as the quickest
-              way to confirm your environment and copy a working request flow.
+              <span data-lang="zh">可直接執行的 SDK、raw REST、raw TCP 範例，用來確認環境與整合流程。</span>
+              <span data-lang="en">Runnable SDK, raw REST, and raw TCP examples for verifying environment setup and integration flow.</span>
             </p>
           </article>
-        </div>
-        <div class="grid two offset">
           <article class="card">
             <span class="tag">Simulator</span>
             <h3>Virex.NET.Simulator.WPF</h3>
             <p>
-              Local simulator for validating REST, TCP, and MQTT behavior before connecting to a
-              production-compatible service.
-            </p>
-          </article>
-          <article class="card">
-            <span class="tag">Documentation</span>
-            <h3>docs</h3>
-            <p>
-              Protocol references for REST endpoints, TCP/NDJSON frames, MQTT topics, and compatibility
-              expectations.
+              <span data-lang="zh">本機模擬服務，提供 REST、TCP、MQTT 端點讓客戶在接正式系統前先驗證程式。</span>
+              <span data-lang="en">A local simulator exposing REST, TCP, and MQTT endpoints for validation before connecting to a production-compatible service.</span>
             </p>
           </article>
         </div>
         <div class="callout warning">
-          <strong>Public boundary</strong>
-          This documentation describes public communication contracts only. It does not include private
-          application internals, inspection algorithms, camera control, recipe internals, storage internals,
-          credentials, customer data, or production hostnames.
+          <strong>
+            <span data-lang="zh">公開範圍</span>
+            <span data-lang="en">Public Boundary</span>
+          </strong>
+          <span data-lang="zh">
+            本文件只說明公開通訊介面、SDK、範例程式與 simulator。它不包含 HALCON、camera、
+            recipe、inspection algorithm、storage internals、客戶資料或正式環境主機資訊。
+          </span>
+          <span data-lang="en">
+            This guide covers only public communication interfaces, the SDK, sample code, and the simulator.
+            It does not include HALCON, camera control, recipes, inspection algorithms, storage internals,
+            customer data, or production host information.
+          </span>
         </div>
       </section>
 
-      <section class="section" id="scenarios">
-        <h2>Common Integration Scenarios</h2>
+      <section class="section" id="quickstart">
+        <h2>
+          <span data-lang="zh">快速開始</span>
+          <span data-lang="en">Quick Start</span>
+        </h2>
         <p class="section-intro">
-          The kit is designed for customer teams that need a stable contract for exchanging wafer context,
-          control commands, status, result summaries, and error state with a Virex.NET-compatible service.
+          <span data-lang="zh">建議第一次使用時先跑 simulator 與 C# SDK sample，確認開發環境、端點與基本流程都正常。</span>
+          <span data-lang="en">For first-time use, run the simulator and the C# SDK sample to confirm the development environment, endpoints, and basic flow.</span>
         </p>
-        <div class="grid two">
-          <article class="card">
-            <h3>Send wafer context from a host or MES</h3>
+        <ol class="steps">
+          <li>
+            <h3>
+              <span data-lang="zh">建置並測試套件</span>
+              <span data-lang="en">Build and Test the Kit</span>
+            </h3>
+            <pre><code class="language-powershell">dotnet test Virex.NET.Integration.slnx</code></pre>
+          </li>
+          <li>
+            <h3>
+              <span data-lang="zh">啟動 simulator</span>
+              <span data-lang="en">Start the Simulator</span>
+            </h3>
+            <pre><code class="language-powershell">dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj</code></pre>
+          </li>
+          <li>
+            <h3>
+              <span data-lang="zh">執行 SDK 範例程式</span>
+              <span data-lang="en">Run the SDK Sample</span>
+            </h3>
+            <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
+          </li>
+          <li>
+            <h3>
+              <span data-lang="zh">確認預期結果</span>
+              <span data-lang="en">Confirm Expected Results</span>
+            </h3>
             <p>
-              Use REST or TCP to send <code>WaferInfo</code> before starting an inspection cycle. The public
-              fields are <code>lotId</code>, <code>waferId</code>, <code>recipeId</code>, <code>slot</code>,
-              <code>foupId</code>, and <code>chamberId</code>.
+              <span data-lang="zh">
+                範例程式會讀取狀態、送出 WaferInfo、啟動流程，並查詢 result summary。若這些步驟成功，
+                代表 SDK 與 simulator 的基本通訊已建立。
+              </span>
+              <span data-lang="en">
+                The sample reads status, sends WaferInfo, starts a cycle, and queries result summaries.
+                If these steps succeed, basic SDK-to-simulator communication is working.
+              </span>
             </p>
-          </article>
-          <article class="card">
-            <h3>Control a simulated inspection cycle</h3>
-            <p>
-              Use REST control endpoints or TCP command frames to initialize, start, stop, and terminate a
-              cycle while validating client-side error handling and state transitions.
-            </p>
-          </article>
-          <article class="card">
-            <h3>Subscribe to operational events</h3>
-            <p>
-              Use TCP when the integration expects a direct socket connection. Use MQTT when another system
-              needs outbound event distribution through a broker.
-            </p>
-          </article>
-          <article class="card">
-            <h3>Query summary results</h3>
-            <p>
-              Use REST to query result summaries by <code>lotId</code>, <code>waferId</code>, and
-              <code>recipeId</code>. Result payloads are summary-only and intentionally exclude large
-              inspection data.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section class="section" id="interfaces">
-        <h2>Choose an Interface</h2>
-        <p class="section-intro">
-          REST, TCP, and MQTT are all supported, but they are intended for different integration styles.
-          Choose the narrowest interface that matches the customer's system boundary.
-        </p>
-        <div class="table-scroll">
-          <table class="comparison">
-            <thead>
-              <tr>
-                <th>Interface</th>
-                <th>Best fit</th>
-                <th>Direction</th>
-                <th>Typical use</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>REST</strong></td>
-                <td>Request/response commands and queries</td>
-                <td>Client to service</td>
-                <td>Read status, send wafer info, initialize, start, stop, terminate, and query results.</td>
-              </tr>
-              <tr>
-                <td><strong>TCP / NDJSON</strong></td>
-                <td>Direct socket integration</td>
-                <td>Bidirectional</td>
-                <td>Send wafer info or command frames and receive status, wafer info, result, and error events.</td>
-              </tr>
-              <tr>
-                <td><strong>MQTT</strong></td>
-                <td>Brokered event subscription</td>
-                <td>Outbound events only</td>
-                <td>Subscribe to status, wafer info, result, and error topics. MQTT is not used for command/control.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          </li>
+        </ol>
       </section>
 
       <section class="section" id="sdk">
-        <h2>C# SDK Quick Start</h2>
+        <h2>
+          <span data-lang="zh">SDK 使用方法</span>
+          <span data-lang="en">SDK Usage</span>
+        </h2>
         <p class="section-intro">
-          Use the SDK when the integrating application is written in C#. It wraps the public communication
-          APIs with a small surface and targets <code>netstandard2.0</code> for broad application compatibility.
+          <span data-lang="zh">
+            C# 應用程式建議使用 <code>VirexClient</code>。它集中管理 REST、TCP、MQTT 設定，
+            並提供常用操作方法。
+          </span>
+          <span data-lang="en">
+            C# applications should start with <code>VirexClient</code>. It centralizes REST, TCP, and MQTT
+            settings and exposes the common operations used by integrations.
+          </span>
         </p>
         <pre><code class="language-csharp">using Virex.NET.Client;
 using Virex.NET.Contracts;
@@ -241,164 +246,237 @@ await client.InitializeAsync();
 await client.StartAsync();
 
 var results = await client.QueryResultsAsync(lotId: "LOT-001");</code></pre>
-
         <div class="grid two">
           <article class="card">
-            <h3>REST convenience methods</h3>
+            <h3>
+              <span data-lang="zh">主要方法</span>
+              <span data-lang="en">Main Methods</span>
+            </h3>
             <p>
-              <code>VirexClient</code> exposes <code>GetStatusAsync</code>,
-              <code>SetWaferInfoAsync</code>, <code>InitializeAsync</code>, <code>TerminateAsync</code>,
-              <code>StartAsync</code>, <code>StopAsync</code>, and <code>QueryResultsAsync</code>.
+              <code>GetStatusAsync</code>, <code>SetWaferInfoAsync</code>, <code>InitializeAsync</code>,
+              <code>TerminateAsync</code>, <code>StartAsync</code>, <code>StopAsync</code>,
+              <code>QueryResultsAsync</code>
             </p>
           </article>
           <article class="card">
-            <h3>Error handling</h3>
+            <h3>
+              <span data-lang="zh">錯誤處理</span>
+              <span data-lang="en">Error Handling</span>
+            </h3>
             <p>
-              Non-success HTTP responses throw <code>VirexClientException</code>, including the numeric
-              status code and response body so customer applications can log or display the service response.
+              <span data-lang="zh">
+                REST 回應非成功狀態時會丟出 <code>VirexClientException</code>，包含 HTTP status code 與 response body。
+              </span>
+              <span data-lang="en">
+                Non-success REST responses throw <code>VirexClientException</code> with the HTTP status code and response body.
+              </span>
             </p>
           </article>
-        </div>
-      </section>
-
-      <section class="section" id="events">
-        <h2>Event Subscription</h2>
-        <p class="section-intro">
-          Event clients expose a common <code>EventReceived</code> pattern. The parsed event contains the
-          original raw JSON plus the typed payload for supported event types.
-        </p>
-        <pre><code class="language-csharp">using var cts = new CancellationTokenSource();
-
-client.MqttEvents.EventReceived += (_, ev) =>
-{
-    if (ev.Status is not null)
-        Console.WriteLine($"State: {ev.Status.ProcessState}");
-
-    if (ev.Result is not null)
-        Console.WriteLine($"Result: {ev.Result.ResultId} {ev.Result.OverallResult}");
-};
-
-await client.MqttEvents.RunAsync(cts.Token);</code></pre>
-        <div class="callout">
-          <strong>MQTT topic behavior</strong>
-          MQTT messages are published under the configured base topic. The default child topics are
-          <code>status</code>, <code>wafer-info</code>, <code>result</code>, and <code>error</code>.
-          The MQTT client attaches the event type from the topic when the payload does not include a
-          <code>type</code> field.
-        </div>
-      </section>
-
-      <section class="section" id="contracts">
-        <h2>Data Contract Summary</h2>
-        <div class="grid two">
-          <article class="card">
-            <h3>WaferInfo</h3>
-            <p>
-              Identifies the wafer and surrounding production context. Required validation for TCP wafer
-              info frames includes non-empty <code>lotId</code>, <code>waferId</code>, <code>slot</code>,
-              <code>foupId</code>, and <code>chamberId</code>.
-            </p>
-          </article>
-          <article class="card">
-            <h3>StatusDto</h3>
-            <p>
-              Reports whether the service is initialized, the current process state, and the active recipe
-              label. Public process states are <code>ready</code>, <code>capturing</code>,
-              <code>inspecting</code>, and <code>saving</code>.
-            </p>
-          </article>
-          <article class="card">
-            <h3>ResultSummaryDto</h3>
-            <p>
-              Provides fixed-size result summaries such as result id, timestamp, wafer context, overall
-              result, defect count, die count, and relative output paths.
-            </p>
-          </article>
-          <article class="card">
-            <h3>ErrorStatusDto</h3>
-            <p>
-              Reports the current error message together with initialized state, process state, and recipe
-              so clients can show actionable operational context.
-            </p>
-          </article>
-        </div>
-        <div class="callout warning">
-          <strong>Result payload boundary</strong>
-          Result responses and result events are summary-only. They do not include defect lists, die lists,
-          crop lists, image binaries, or private inspection details.
         </div>
       </section>
 
       <section class="section" id="samples">
-        <h2>Sample Code Guide</h2>
+        <h2>
+          <span data-lang="zh">範例程式使用說明</span>
+          <span data-lang="en">Sample Code Guide</span>
+        </h2>
         <p class="section-intro">
-          The sample projects are intended to be the fastest way to verify setup and understand the expected
-          request and event flow. Choose the sample that matches the integration style you plan to use.
+          <span data-lang="zh">
+            範例程式是本產品的主要學習入口。請依照您要使用的整合方式選擇 sample。
+          </span>
+          <span data-lang="en">
+            Sample projects are the primary learning path for this product. Choose the sample that matches your integration style.
+          </span>
         </p>
         <div class="grid three">
           <article class="card">
-            <span class="tag">Recommended for C#</span>
+            <span class="tag">Recommended</span>
             <h3>samples/csharp-sdk</h3>
             <p>
-              Uses <code>VirexClient</code> to read status, submit wafer information, start a cycle, and
-              query result summaries. Start here for most .NET applications.
+              <span data-lang="zh">適合 .NET 應用程式。示範使用 SDK 讀取狀態、送 WaferInfo、啟動流程與查詢結果。</span>
+              <span data-lang="en">For .NET applications. Demonstrates status reads, WaferInfo submission, cycle start, and result queries through the SDK.</span>
             </p>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
           </article>
           <article class="card">
-            <span class="tag">Raw REST</span>
+            <span class="tag">REST</span>
             <h3>samples/csharp-raw-rest</h3>
             <p>
-              Shows the REST payloads and endpoint flow without using the SDK wrapper. Use it when another
-              language or system will call the REST API directly.
+              <span data-lang="zh">適合需要直接呼叫 REST API，或使用非 C# 語言整合的系統。</span>
+              <span data-lang="en">For systems calling the REST API directly or integrating from a non-C# platform.</span>
             </p>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj</code></pre>
           </article>
           <article class="card">
-            <span class="tag">Raw TCP</span>
+            <span class="tag">TCP</span>
             <h3>samples/csharp-raw-tcp</h3>
             <p>
-              Shows TCP/NDJSON framing for direct socket integrations. Use it to verify connection handling
-              and line-delimited JSON frames.
+              <span data-lang="zh">適合 socket / NDJSON 整合。可用來確認連線、換行分隔 JSON frame 與 command 格式。</span>
+              <span data-lang="en">For socket and NDJSON integrations. Use it to verify connection handling, line-delimited JSON frames, and command format.</span>
             </p>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj</code></pre>
           </article>
         </div>
       </section>
 
-      <section class="section" id="simulator">
-        <h2>Simulator Workflow</h2>
-        <p class="section-intro">
-          Use the WPF simulator to validate integration code before connecting to a Virex.NET-compatible
-          service. The simulator exposes the same public REST, TCP, and MQTT communication surfaces.
-        </p>
-        <ol class="steps">
-          <li>
-            <h3>Build and test the repository</h3>
-            <pre><code class="language-powershell">dotnet test Virex.NET.Integration.slnx</code></pre>
-          </li>
-          <li>
-            <h3>Start the simulator</h3>
-            <pre><code class="language-powershell">dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj</code></pre>
-          </li>
-          <li>
-            <h3>Run the C# SDK sample</h3>
-            <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
-          </li>
-          <li>
-            <h3>Validate customer integration behavior</h3>
+      <section class="section" id="scenarios">
+        <h2>
+          <span data-lang="zh">典型使用情境</span>
+          <span data-lang="en">Typical Use Cases</span>
+        </h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>
+              <span data-lang="zh">由 MES / Host 下 WaferInfo</span>
+              <span data-lang="en">Send WaferInfo from MES or Host</span>
+            </h3>
             <p>
-              Confirm that the customer application can send wafer context, control the simulated cycle,
-              receive status/result/error events, and query result summaries using the chosen interface.
+              <span data-lang="zh">在 inspection cycle 前送出 lot、wafer、recipe、slot、FOUP、chamber 等資訊。</span>
+              <span data-lang="en">Send lot, wafer, recipe, slot, FOUP, and chamber context before an inspection cycle.</span>
             </p>
-          </li>
-        </ol>
+          </article>
+          <article class="card">
+            <h3>
+              <span data-lang="zh">控制流程</span>
+              <span data-lang="en">Control the Cycle</span>
+            </h3>
+            <p>
+              <span data-lang="zh">使用 REST 或 TCP command 執行 initialize、start、stop、terminate。</span>
+              <span data-lang="en">Use REST or TCP commands for initialize, start, stop, and terminate operations.</span>
+            </p>
+          </article>
+          <article class="card">
+            <h3>
+              <span data-lang="zh">接收事件</span>
+              <span data-lang="en">Receive Events</span>
+            </h3>
+            <p>
+              <span data-lang="zh">透過 TCP 或 MQTT 監聽 status、wafer-info、result、error 事件。</span>
+              <span data-lang="en">Listen for status, wafer-info, result, and error events through TCP or MQTT.</span>
+            </p>
+          </article>
+          <article class="card">
+            <h3>
+              <span data-lang="zh">查詢結果摘要</span>
+              <span data-lang="en">Query Result Summaries</span>
+            </h3>
+            <p>
+              <span data-lang="zh">使用 REST 依 lotId、waferId、recipeId 查詢固定大小的 result summary。</span>
+              <span data-lang="en">Use REST to query fixed-size result summaries by lotId, waferId, and recipeId.</span>
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="interfaces">
+        <h2>
+          <span data-lang="zh">介面選擇指南</span>
+          <span data-lang="en">Interface Selection Guide</span>
+        </h2>
+        <p class="section-intro">
+          <span data-lang="zh">若使用 C#，請優先使用 SDK。若不是 C#，再依系統需求選擇 REST、TCP 或 MQTT。</span>
+          <span data-lang="en">Use the SDK first for C# applications. For other platforms, choose REST, TCP, or MQTT based on system needs.</span>
+        </p>
+        <div class="table-scroll">
+          <table class="comparison">
+            <thead>
+              <tr>
+                <th><span data-lang="zh">介面</span><span data-lang="en">Interface</span></th>
+                <th><span data-lang="zh">適合情境</span><span data-lang="en">Best Fit</span></th>
+                <th><span data-lang="zh">方向</span><span data-lang="en">Direction</span></th>
+                <th><span data-lang="zh">用途</span><span data-lang="en">Typical Use</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>REST</strong></td>
+                <td><span data-lang="zh">指令與查詢</span><span data-lang="en">Commands and queries</span></td>
+                <td><span data-lang="zh">Client 到 service</span><span data-lang="en">Client to service</span></td>
+                <td><span data-lang="zh">讀取狀態、送 WaferInfo、控制流程、查詢結果。</span><span data-lang="en">Read status, send WaferInfo, control cycles, and query results.</span></td>
+              </tr>
+              <tr>
+                <td><strong>TCP / NDJSON</strong></td>
+                <td><span data-lang="zh">直接 socket 整合</span><span data-lang="en">Direct socket integration</span></td>
+                <td><span data-lang="zh">雙向</span><span data-lang="en">Bidirectional</span></td>
+                <td><span data-lang="zh">送 command frame，並接收 status/result/error event。</span><span data-lang="en">Send command frames and receive status/result/error events.</span></td>
+              </tr>
+              <tr>
+                <td><strong>MQTT</strong></td>
+                <td><span data-lang="zh">事件訂閱</span><span data-lang="en">Event subscription</span></td>
+                <td><span data-lang="zh">只做 outbound event</span><span data-lang="en">Outbound events only</span></td>
+                <td><span data-lang="zh">透過 broker 訂閱 status、wafer-info、result、error。MQTT 不用於 command/control。</span><span data-lang="en">Subscribe to status, wafer-info, result, and error through a broker. MQTT is not used for command/control.</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section" id="contracts">
+        <h2>
+          <span data-lang="zh">主要資料格式</span>
+          <span data-lang="en">Main Data Contracts</span>
+        </h2>
+        <div class="grid two">
+          <article class="card">
+            <h3>WaferInfo</h3>
+            <p><code>lotId</code>, <code>waferId</code>, <code>recipeId</code>, <code>slot</code>, <code>foupId</code>, <code>chamberId</code></p>
+          </article>
+          <article class="card">
+            <h3>Status</h3>
+            <p><code>initialized</code>, <code>processState</code>, <code>recipe</code></p>
+          </article>
+          <article class="card">
+            <h3>Result Summary</h3>
+            <p><code>resultId</code>, <code>timestamp</code>, wafer context, <code>overallResult</code>, <code>defectCount</code>, <code>dieCount</code>, paths</p>
+          </article>
+          <article class="card">
+            <h3>Error</h3>
+            <p><code>message</code>, <code>initialized</code>, <code>processState</code>, <code>recipe</code></p>
+          </article>
+        </div>
+        <div class="callout warning">
+          <strong>
+            <span data-lang="zh">Result 範圍限制</span>
+            <span data-lang="en">Result Boundary</span>
+          </strong>
+          <span data-lang="zh">Result response 與 result event 只提供 summary，不包含 defect list、die list、crop list、image binary 或 inspection private details。</span>
+          <span data-lang="en">Result responses and result events provide summaries only. They do not include defect lists, die lists, crop lists, image binaries, or private inspection details.</span>
+        </div>
+      </section>
+
+      <section class="section" id="troubleshooting">
+        <h2>
+          <span data-lang="zh">疑難排解</span>
+          <span data-lang="en">Troubleshooting</span>
+        </h2>
+        <div class="grid two">
+          <article class="card">
+            <h3><span data-lang="zh">REST 連不上</span><span data-lang="en">REST Request Fails</span></h3>
+            <p><span data-lang="zh">確認 simulator 已啟動、<code>RestBaseUrl</code> 正確、防火牆允許連線，並查看 <code>VirexClientException</code> 的 response body。</span><span data-lang="en">Confirm the simulator is running, <code>RestBaseUrl</code> is correct, firewall access is allowed, and inspect the <code>VirexClientException</code> response body.</span></p>
+          </article>
+          <article class="card">
+            <h3><span data-lang="zh">TCP 沒收到事件</span><span data-lang="en">TCP Events Are Missing</span></h3>
+            <p><span data-lang="zh">確認 host/port、NDJSON 每筆 frame 以換行結尾，並保持 event loop 執行。</span><span data-lang="en">Confirm host/port, ensure each NDJSON frame ends with a newline, and keep the event loop running.</span></p>
+          </article>
+          <article class="card">
+            <h3><span data-lang="zh">MQTT 沒收到事件</span><span data-lang="en">MQTT Events Are Missing</span></h3>
+            <p><span data-lang="zh">確認 broker、port 1883、base topic <code>Virex.NET</code> 與訂閱 topic tree。</span><span data-lang="en">Confirm broker connectivity, port 1883, base topic <code>Virex.NET</code>, and the subscribed topic tree.</span></p>
+          </article>
+          <article class="card">
+            <h3><span data-lang="zh">查不到 result</span><span data-lang="en">Result Query Is Empty</span></h3>
+            <p><span data-lang="zh">確認 simulator 已產生 result，且 <code>lotId</code>、<code>waferId</code>、<code>recipeId</code> filter 與送出的 WaferInfo 一致。</span><span data-lang="en">Confirm the simulator has emitted a result and that <code>lotId</code>, <code>waferId</code>, and <code>recipeId</code> filters match the submitted WaferInfo.</span></p>
+          </article>
+        </div>
       </section>
 
       <section class="section" id="references">
-        <h2>Protocol References</h2>
+        <h2>
+          <span data-lang="zh">參考資料</span>
+          <span data-lang="en">References</span>
+        </h2>
         <p class="section-intro">
-          Use these references when integrating from non-C# clients or when validating the raw wire contract.
+          <span data-lang="zh">需要檢查 raw protocol 或非 C# 整合時，請參考以下文件。</span>
+          <span data-lang="en">Use these documents when checking raw protocols or building a non-C# integration.</span>
         </p>
         <div class="reference-list">
           <a href="rest-api.md">REST API Reference</a>
@@ -407,48 +485,43 @@ await client.MqttEvents.RunAsync(cts.Token);</code></pre>
           <a href="protocol-versioning.md">Protocol Versioning</a>
         </div>
       </section>
-
-      <section class="section" id="troubleshooting">
-        <h2>Troubleshooting</h2>
-        <div class="grid two">
-          <article class="card">
-            <h3>REST request fails</h3>
-            <p>
-              Verify <code>RestBaseUrl</code>, firewall rules, simulator status, and the HTTP response body
-              carried by <code>VirexClientException</code>.
-            </p>
-          </article>
-          <article class="card">
-            <h3>TCP client does not receive events</h3>
-            <p>
-              Confirm the TCP host and port, ensure frames are UTF-8 NDJSON, and keep the event loop running
-              with a live cancellation token.
-            </p>
-          </article>
-          <article class="card">
-            <h3>MQTT events are missing</h3>
-            <p>
-              Confirm broker connectivity, port <code>1883</code>, base topic <code>Virex.NET</code>, and
-              subscription to the configured topic tree.
-            </p>
-          </article>
-          <article class="card">
-            <h3>Result query is empty</h3>
-            <p>
-              Verify the simulator has emitted a result and that <code>lotId</code>, <code>waferId</code>,
-              and <code>recipeId</code> filters match the submitted wafer context.
-            </p>
-          </article>
-        </div>
-      </section>
     </div>
   </main>
 
   <footer class="site-footer">
     <div class="footer-inner">
-      Virex.NET Integration Kit documentation. Public communication contracts, SDK usage, simulator workflow,
-      and protocol references for customer integrations.
+      <span data-lang="zh">Virex.NET Integration Kit 產品使用說明書。提供 SDK、範例程式、simulator 與公開通訊協定參考。</span>
+      <span data-lang="en">Virex.NET Integration Kit product user guide for the SDK, sample code, simulator, and public communication protocols.</span>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var buttons = Array.prototype.slice.call(document.querySelectorAll("[data-set-lang]"));
+      function setLanguage(lang) {
+        root.setAttribute("data-current-lang", lang);
+        root.setAttribute("lang", lang === "zh" ? "zh-Hant" : "en");
+        buttons.forEach(function (button) {
+          button.setAttribute("aria-pressed", button.getAttribute("data-set-lang") === lang ? "true" : "false");
+        });
+        try {
+          window.localStorage.setItem("virex-doc-lang", lang);
+        } catch (error) {
+        }
+      }
+      buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          setLanguage(button.getAttribute("data-set-lang"));
+        });
+      });
+      var saved = "zh";
+      try {
+        saved = window.localStorage.getItem("virex-doc-lang") || "zh";
+      } catch (error) {
+      }
+      setLanguage(saved === "en" ? "en" : "zh");
+    }());
+  </script>
 </body>
 </html>
