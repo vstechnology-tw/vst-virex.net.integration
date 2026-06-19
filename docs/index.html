@@ -19,6 +19,7 @@
           <a href="#quickstart"><span data-lang="zh">快速開始</span><span data-lang="en">Quick Start</span></a>
           <a href="#sdk"><span data-lang="zh">SDK</span><span data-lang="en">SDK</span></a>
           <a href="#samples"><span data-lang="zh">範例程式</span><span data-lang="en">Samples</span></a>
+          <a href="simulator.html"><span data-lang="zh">Simulator</span><span data-lang="en">Simulator</span></a>
           <a href="#scenarios"><span data-lang="zh">使用情境</span><span data-lang="en">Scenarios</span></a>
           <a href="#references"><span data-lang="zh">參考資料</span><span data-lang="en">References</span></a>
         </nav>
@@ -61,6 +62,10 @@
             <a class="button secondary" href="#samples">
               <span data-lang="zh">查看範例程式</span>
               <span data-lang="en">View Samples</span>
+            </a>
+            <a class="button secondary" href="simulator.html">
+              <span data-lang="zh">Simulator 操作手冊</span>
+              <span data-lang="en">Simulator Manual</span>
             </a>
           </div>
         </div>
@@ -132,22 +137,13 @@
               <span data-lang="zh">本機模擬服務，提供 REST、TCP、MQTT 端點讓客戶在接正式系統前先驗證程式。</span>
               <span data-lang="en">A local simulator exposing REST, TCP, and MQTT endpoints for validation before connecting to a production-compatible service.</span>
             </p>
+            <p class="card-action">
+              <a href="simulator.html">
+                <span data-lang="zh">查看 Simulator 操作手冊</span>
+                <span data-lang="en">Open the simulator manual</span>
+              </a>
+            </p>
           </article>
-        </div>
-        <div class="callout warning">
-          <strong>
-            <span data-lang="zh">公開範圍</span>
-            <span data-lang="en">Public Boundary</span>
-          </strong>
-          <span data-lang="zh">
-            本文件只說明公開通訊介面、SDK、範例程式與 simulator。它不包含 HALCON、camera、
-            recipe、inspection algorithm、storage internals、客戶資料或正式環境主機資訊。
-          </span>
-          <span data-lang="en">
-            This guide covers only public communication interfaces, the SDK, sample code, and the simulator.
-            It does not include HALCON, camera control, recipes, inspection algorithms, storage internals,
-            customer data, or production host information.
-          </span>
         </div>
       </section>
 
@@ -174,6 +170,12 @@
               <span data-lang="en">Start the Simulator</span>
             </h3>
             <pre><code class="language-powershell">dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj</code></pre>
+            <p>
+              <a href="simulator.html">
+                <span data-lang="zh">需要 App UI 與操作 SOP 時，請開啟 Simulator 操作手冊。</span>
+                <span data-lang="en">Open the simulator manual for the app UI guide and operating SOP.</span>
+              </a>
+            </p>
           </li>
           <li>
             <h3>
