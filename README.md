@@ -70,4 +70,4 @@ More examples are under `samples/`.
 
 ## License
 
-No license file has been selected yet. Choose a license before publishing this repository publicly.
+This repository is licensed under the MIT License. See [LICENSE](LICENSE).
