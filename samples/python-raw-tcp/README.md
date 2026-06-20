@@ -1,22 +1,22 @@
 # Python Raw TCP Sample
 
-Minimal Python client for the public Virex.NET TCP/NDJSON protocol.
+Guided demo for the TCP/NDJSON event socket using Python.
 
-## Prerequisites
+## Simulator Prerequisites
 
-- Python 3.8 or newer.
-- The Virex.NET simulator running with TCP enabled on `127.0.0.1:5089`.
-- No third-party Python packages are required.
+- Start the simulator and keep TCP at `127.0.0.1:5089`.
+- Press **Start Servers**.
+- **Initialize** is not required for this WaferInfo TCP demo.
+
+## UI SOP
+
+1. Press **Start Servers**.
+2. Run the sample.
+3. Confirm the initial `status` and `waferInfo` frames.
+4. Let the sample send WaferInfo.
+5. Check Event Log for the full TCP WaferInfo update.
 
 ## Run
-
-From the repository root:
-
-```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
-```
-
-In the simulator window, click **Start Servers**. Then open a second terminal from the repository root and run:
 
 ```powershell
 python samples\python-raw-tcp\main.py
@@ -28,11 +28,16 @@ Optional host and port:
 python samples\python-raw-tcp\main.py 127.0.0.1 5089
 ```
 
-Expected result:
+## Expected Output
 
-```text
-{"type":"status",...}
-{"type":"waferInfo",...}
-Sent waferInfo frame. Waiting for echo/update event...
-{"type":"waferInfo",...}
-```
+- Initial status frame.
+- Initial WaferInfo frame.
+- Echoed WaferInfo update event.
+- Event Log shows `WaferInfo updated from TCP: lotId=LOT-PY-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1`.
+
+## Troubleshooting
+
+- Server not started: press **Start Servers**.
+- `not_initialized`: not required for this sample.
+- No result returned: TCP WaferInfo demo does not query results.
+- No MQTT events: this sample uses TCP.

@@ -1,38 +1,43 @@
 # Python Raw MQTT Sample
 
-Minimal Python client for the public Virex.NET MQTT event topics. It implements the small MQTT 3.1.1 subset needed to connect and subscribe, so no third-party Python packages are required.
+Guided demo for observing simulator MQTT events using Python.
 
-## Prerequisites
+## Simulator Prerequisites
 
-- Python 3.8 or newer.
-- The Virex.NET simulator running with MQTT enabled on `127.0.0.1:1883`.
+- Start the simulator and keep MQTT at `127.0.0.1:1883`.
+- Press **Start Servers**.
+- Keep base topic `Virex.NET`.
+
+## UI SOP
+
+1. Press **Start Servers**.
+2. Run the sample.
+3. Press **Apply WaferInfo** for `Virex.NET/wafer-info`.
+4. Press **Initialize** for `Virex.NET/status`.
+5. Press **Start Cycle** for status transitions.
+6. Press **Emit Fake Result** for `Virex.NET/result`.
+7. Press **Emit Error** for `Virex.NET/error`.
 
 ## Run
-
-From the repository root:
-
-```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
-```
-
-In the simulator window, click **Start Servers**. Then open a second terminal from the repository root and run:
 
 ```powershell
 python samples\python-raw-mqtt\main.py
 ```
 
-While the sample is running, click **Apply WaferInfo**, **Start Cycle**, **Emit Fake Result**, or **Emit Error** in the simulator.
-
-Optional host, port, base topic, and listen duration in seconds:
+Optional host, port, topic, and duration:
 
 ```powershell
 python samples\python-raw-mqtt\main.py 127.0.0.1 1883 Virex.NET 30
 ```
 
-Expected result:
+## Expected Output
 
-```text
-Subscribed to Virex.NET/# for 30 seconds.
-Virex.NET/wafer-info: {"lotId":"LOT-001",...}
-```
+- The sample subscribes to `Virex.NET/#`.
+- Each UI action prints the matching MQTT topic and JSON payload.
 
+## Troubleshooting
+
+- Server not started: press **Start Servers**.
+- `not_initialized`: press **Initialize** before **Start Cycle** for normal cycle behavior.
+- No result returned: press **Emit Fake Result** or run **Start Cycle** after **Initialize**.
+- No MQTT events: verify topic `Virex.NET/#` and listen duration.

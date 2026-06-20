@@ -90,7 +90,28 @@ namespace
         WinHttpHandle& operator=(const WinHttpHandle&) = delete;
     };
 
-    std::string SendRequest(const ParsedUrl& url, const wchar_t* method, const wchar_t* path, const std::string& body = "")
+    struct HttpResponse
+    {
+        DWORD statusCode = 0;
+        std::string body;
+    };
+
+    void PrintStep(const std::string& title)
+    {
+        std::cout << std::endl;
+        std::cout << "== " << title << " ==" << std::endl;
+    }
+
+    void Prompt(const std::string& message)
+    {
+        std::cout << std::endl;
+        std::cout << "Action required in Simulator:" << std::endl;
+        std::cout << message << " ";
+        std::string ignored;
+        std::getline(std::cin, ignored);
+    }
+
+    HttpResponse SendRequest(const ParsedUrl& url, const wchar_t* method, const wchar_t* path, const std::string& body = "")
     {
         WinHttpHandle session(WinHttpOpen(L"Virex.NET C++ REST Sample/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
         if (session.value == nullptr)
@@ -122,7 +143,14 @@ namespace
             throw std::runtime_error("REST request failed.");
         }
 
-        std::string response;
+        HttpResponse response;
+        DWORD statusCode = 0;
+        DWORD statusCodeSize = sizeof(statusCode);
+        if (WinHttpQueryHeaders(request.value, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &statusCode, &statusCodeSize, WINHTTP_NO_HEADER_INDEX))
+        {
+            response.statusCode = statusCode;
+        }
+
         DWORD available = 0;
         while (WinHttpQueryDataAvailable(request.value, &available) && available > 0)
         {
@@ -133,7 +161,7 @@ namespace
                 throw std::runtime_error("Failed to read REST response.");
             }
 
-            response.append(buffer.data(), read);
+            response.body.append(buffer.data(), read);
         }
 
         return response;
@@ -147,13 +175,53 @@ int main(int argc, char* argv[])
         const std::string baseUrl = argc > 1 ? argv[1] : "http://127.0.0.1:5088";
         const ParsedUrl url = ParseBaseUrl(baseUrl);
 
-        const std::string status = SendRequest(url, L"GET", L"/api/status");
-        std::cout << "Status: " << status << std::endl;
+        PrintStep("Virex.NET C++ Raw REST Guided Demo");
+        std::cout << "This sample uses direct REST calls and shows how simulator UI state affects API returns." << std::endl;
+        std::cout << "REST base URL: " << baseUrl << std::endl;
+        Prompt("Press Start Servers. Leave Initialize unpressed for the first check, then press Enter here.");
 
+        PrintStep("Step 1 - Read /api/status");
+        const HttpResponse status = SendRequest(url, L"GET", L"/api/status");
+        std::cout << "Status returned HTTP " << status.statusCode << ": " << status.body << std::endl;
+
+        if (status.body.find("\"initialized\":false") != std::string::npos)
+        {
+            PrintStep("Step 2 - Expected negative check");
+            std::cout << "Calling POST /api/control/start before Initialize should return HTTP 409 not_initialized." << std::endl;
+            const HttpResponse negative = SendRequest(url, L"POST", L"/api/control/start");
+            std::cout << "Start returned HTTP " << negative.statusCode << ": " << negative.body << std::endl;
+            if (negative.statusCode != 409 || negative.body.find("not_initialized") == std::string::npos)
+            {
+                throw std::runtime_error("Expected HTTP 409 not_initialized. Confirm the simulator was not initialized.");
+            }
+
+            Prompt("Press Initialize. Confirm Status shows initialized=True, processState=ready, then press Enter here.");
+        }
+
+        PrintStep("Step 3 - POST /api/wafer-info");
         const std::string waferInfo =
             R"({"lotId":"LOT-CPP-REST-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"})";
-        SendRequest(url, L"POST", L"/api/wafer-info", waferInfo);
-        std::cout << "WaferInfo updated through raw REST." << std::endl;
+        const HttpResponse waferResponse = SendRequest(url, L"POST", L"/api/wafer-info", waferInfo);
+        if (waferResponse.statusCode >= 400)
+        {
+            throw std::runtime_error("WaferInfo update failed: " + waferResponse.body);
+        }
+
+        std::cout << "Expected Simulator Event Log:" << std::endl;
+        std::cout << "WaferInfo updated from REST: lotId=LOT-CPP-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1" << std::endl;
+
+        PrintStep("Step 4 - POST /api/control/start");
+        std::cout << "Expected Simulator Status: capturing -> inspecting -> saving -> ready." << std::endl;
+        const HttpResponse start = SendRequest(url, L"POST", L"/api/control/start");
+        std::cout << "Start returned HTTP " << start.statusCode << ": " << start.body << std::endl;
+        if (start.statusCode >= 400)
+        {
+            throw std::runtime_error("Start failed. Confirm Initialize was pressed and processState is ready.");
+        }
+
+        PrintStep("Step 5 - GET /api/results by lotId");
+        const HttpResponse results = SendRequest(url, L"GET", L"/api/results?lotId=LOT-CPP-REST-001");
+        std::cout << "Results returned HTTP " << results.statusCode << ": " << results.body << std::endl;
     }
     catch (const std::exception& ex)
     {

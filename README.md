@@ -39,6 +39,33 @@ The simulator lets you configure IP/port settings, update WaferInfo, run simulat
 
 The simulator starts an embedded MQTT broker when you click **Start Servers**, so no external broker is required for local testing.
 
+## Guided Demo Flow
+
+The simulator UI controls the equipment-like state used by every sample. Samples are guided demos: they tell the tester which simulator button to press, what condition is being tested, and what return value or event is expected.
+
+Use this baseline flow:
+
+1. Start the simulator.
+2. Confirm the default endpoints:
+   - REST: `http://127.0.0.1:5088/`
+   - TCP: `5089`
+   - MQTT: `127.0.0.1:1883`
+   - Topic: `Virex.NET`
+3. Press **Start Servers** before running any sample.
+4. For SDK and REST samples, leave **Initialize** unpressed first. The sample intentionally calls start and expects `HTTP 409 not_initialized`.
+5. When prompted, press **Initialize** and confirm `initialized=True, processState=ready`.
+6. Continue the sample. It will send WaferInfo, start a cycle, and query results where applicable.
+7. For MQTT samples, keep the sample running and press **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, and **Emit Error** to observe events.
+
+Expected Event Log examples:
+
+```text
+WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
+WaferInfo updated from TCP: lotId=LOT-RAW-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
+```
+
+Detailed UI SOPs are in `docs/simulator.html`.
+
 ## Run Samples
 
 1. Start the simulator:
@@ -49,7 +76,7 @@ The simulator starts an embedded MQTT broker when you click **Start Servers**, s
 
 2. In the simulator window, keep the default endpoints and click **Start Servers**.
 
-3. Open a second terminal from the repository root and run one sample:
+3. Open a second terminal from the repository root and run one sample. Follow the console prompts; they tell you when to press **Initialize**, **Apply WaferInfo**, **Start Cycle**, **Emit Fake Result**, or **Emit Error**:
 
    ```powershell
    dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj
@@ -77,7 +104,7 @@ The simulator starts an embedded MQTT broker when you click **Start Servers**, s
    samples\cpp-raw-mqtt\build\Release\cpp-raw-mqtt.exe
    ```
 
-The raw REST samples read `/api/status` and then update `/api/wafer-info`. The raw TCP samples connect to port `5089`, read the initial status and wafer info frames, send a `waferInfo` NDJSON frame, and print the update event returned by the simulator. The raw MQTT samples subscribe to `Virex.NET/#`; while they are running, trigger events from the simulator UI with **Apply WaferInfo**, **Start Cycle**, **Emit Fake Result**, or **Emit Error**.
+The SDK and raw REST samples demonstrate the expected `not_initialized` response before **Initialize**, then continue through WaferInfo, cycle start, and result query after the tester presses **Initialize**. The raw TCP samples connect to port `5089`, read the initial status and wafer info frames, send a `waferInfo` NDJSON frame, and print the update event returned by the simulator. The raw MQTT samples subscribe to `Virex.NET/#`; while they are running, trigger events from the simulator UI with **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, or **Emit Error**.
 
 ## C# SDK Example
 

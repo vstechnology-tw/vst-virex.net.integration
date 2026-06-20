@@ -270,6 +270,21 @@ namespace
         const std::string message(payload.begin() + static_cast<std::ptrdiff_t>(offset), payload.end());
         std::cout << topic << ": " << message << std::endl;
     }
+
+    void PrintStep(const std::string& title)
+    {
+        std::cout << std::endl;
+        std::cout << "== " << title << " ==" << std::endl;
+    }
+
+    void Prompt(const std::string& message)
+    {
+        std::cout << std::endl;
+        std::cout << "Action required in Simulator:" << std::endl;
+        std::cout << message << " ";
+        std::string ignored;
+        std::getline(std::cin, ignored);
+    }
 }
 
 int main(int argc, char* argv[])
@@ -281,6 +296,12 @@ int main(int argc, char* argv[])
         const std::string baseTopic = argc > 3 ? argv[3] : "Virex.NET";
         const int durationSeconds = argc > 4 ? std::stoi(argv[4]) : 30;
         const std::string topicFilter = baseTopic + "/#";
+
+        PrintStep("Virex.NET C++ Raw MQTT Guided Demo");
+        std::cout << "This sample subscribes to simulator MQTT events and lets you trigger each event from the UI." << std::endl;
+        std::cout << "MQTT endpoint: " << host << ":" << port << std::endl;
+        std::cout << "Topic filter: " << topicFilter << std::endl;
+        Prompt("Press Start Servers, then press Enter here.");
 
         WsaSession wsa;
         SocketHandle client = Connect(host, port);
@@ -302,8 +323,14 @@ int main(int argc, char* argv[])
             throw std::runtime_error("MQTT SUBACK was not received.");
         }
 
+        PrintStep("Step 1 - Trigger events from Simulator");
         std::cout << "Subscribed to " << topicFilter << " for " << durationSeconds << " seconds." << std::endl;
-        std::cout << "Trigger simulator events with Apply WaferInfo, Start Cycle, Emit Fake Result, or Emit Error." << std::endl;
+        std::cout << "Expected UI actions and topics:" << std::endl;
+        std::cout << "- Press Apply WaferInfo: expect Virex.NET/wafer-info." << std::endl;
+        std::cout << "- Press Initialize: expect Virex.NET/status with initialized=true." << std::endl;
+        std::cout << "- Press Start Cycle: expect Virex.NET/status transitions." << std::endl;
+        std::cout << "- Press Emit Fake Result: expect Virex.NET/result." << std::endl;
+        std::cout << "- Press Emit Error: expect Virex.NET/error." << std::endl;
 
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(durationSeconds);
         while (std::chrono::steady_clock::now() < deadline)

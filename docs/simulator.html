@@ -147,6 +147,60 @@
 
       <section class="section" id="flows">
         <h2><span data-lang="zh">不同測試情境的操作流程</span><span data-lang="en">Test Flows by Scenario</span></h2>
+        <p class="section-intro">
+          <span data-lang="zh">這些情境用來搭配 sample code。請先確認條件，再按指定 UI 按鈕，最後對照 sample console 與 Event Log。</span>
+          <span data-lang="en">Use these scenarios with the sample code. Confirm the condition first, press the specified UI button, then compare sample console output with Event Log.</span>
+        </p>
+        <div class="table-scroll">
+          <table class="comparison">
+            <thead>
+              <tr>
+                <th><span data-lang="zh">情境</span><span data-lang="en">Scenario</span></th>
+                <th><span data-lang="zh">條件</span><span data-lang="en">Condition</span></th>
+                <th><span data-lang="zh">UI SOP</span><span data-lang="en">UI SOP</span></th>
+                <th><span data-lang="zh">預期結果</span><span data-lang="en">Expected Result</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span data-lang="zh">啟動通訊服務</span><span data-lang="en">Start communication services</span></td>
+                <td><span data-lang="zh">Simulator app 已開啟，servers 尚未啟動。</span><span data-lang="en">Simulator app is open and servers are not started.</span></td>
+                <td><span data-lang="zh">確認 REST/TCP/MQTT 設定後按 <strong>Start Servers</strong>。</span><span data-lang="en">Confirm REST/TCP/MQTT settings, then press <strong>Start Servers</strong>.</span></td>
+                <td><span data-lang="zh">Event Log 顯示 REST listening、TCP listening、MQTT connected/started；sample 可連線。</span><span data-lang="en">Event Log shows REST listening, TCP listening, and MQTT connected/started; samples can connect.</span></td>
+              </tr>
+              <tr>
+                <td><code>not_initialized</code></td>
+                <td><span data-lang="zh">已按 Start Servers，但尚未按 Initialize。</span><span data-lang="en">Start Servers was pressed, but Initialize was not pressed.</span></td>
+                <td><span data-lang="zh">不要按 Initialize，執行 C# SDK 或 REST sample 的 start 步驟。</span><span data-lang="en">Do not press Initialize. Run the C# SDK or REST sample start step.</span></td>
+                <td><span data-lang="zh">Console 顯示 HTTP 409 / <code>not_initialized</code>；這是預期狀態，不是連線失敗。</span><span data-lang="en">Console shows HTTP 409 / <code>not_initialized</code>; this is expected state behavior, not a connection failure.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">正常 Initialize 與 cycle</span><span data-lang="en">Normal Initialize and cycle</span></td>
+                <td><span data-lang="zh">已按 Start Servers，狀態為 ready。</span><span data-lang="en">Start Servers was pressed and state is ready.</span></td>
+                <td><span data-lang="zh">按 <strong>Initialize</strong>，確認 Status 顯示 initialized=True，再讓 sample 繼續 start。</span><span data-lang="en">Press <strong>Initialize</strong>, confirm Status shows initialized=True, then let the sample continue start.</span></td>
+                <td><span data-lang="zh">Status 依序顯示 capturing、inspecting、saving、ready，Event Log 顯示 Result emitted。</span><span data-lang="en">Status shows capturing, inspecting, saving, ready; Event Log shows Result emitted.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">WaferInfo 更新確認</span><span data-lang="en">WaferInfo update verification</span></td>
+                <td><span data-lang="zh">已按 Start Servers。</span><span data-lang="en">Start Servers was pressed.</span></td>
+                <td><span data-lang="zh">在 UI 按 <strong>Apply WaferInfo</strong>，或讓 SDK/REST/TCP sample 送出 WaferInfo。</span><span data-lang="en">Press <strong>Apply WaferInfo</strong> in the UI, or let SDK/REST/TCP samples send WaferInfo.</span></td>
+                <td><span data-lang="zh">Event Log 同一行列出 <code>lotId</code>、<code>waferId</code>、<code>recipeId</code>、<code>slot</code>、<code>foupId</code>、<code>chamberId</code>。</span><span data-lang="en">Event Log lists <code>lotId</code>, <code>waferId</code>, <code>recipeId</code>, <code>slot</code>, <code>foupId</code>, and <code>chamberId</code> in one line.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">MQTT event 觀察</span><span data-lang="en">MQTT event observation</span></td>
+                <td><span data-lang="zh">MQTT sample 已訂閱 <code>Virex.NET/#</code>。</span><span data-lang="en">MQTT sample is subscribed to <code>Virex.NET/#</code>.</span></td>
+                <td><span data-lang="zh">依序按 <strong>Apply WaferInfo</strong>、<strong>Initialize</strong>、<strong>Start Cycle</strong>、<strong>Emit Fake Result</strong>、<strong>Emit Error</strong>。</span><span data-lang="en">Press <strong>Apply WaferInfo</strong>, <strong>Initialize</strong>, <strong>Start Cycle</strong>, <strong>Emit Fake Result</strong>, and <strong>Emit Error</strong>.</span></td>
+                <td><span data-lang="zh">Console 顯示 <code>wafer-info</code>、<code>status</code>、<code>result</code>、<code>error</code> topic。</span><span data-lang="en">Console shows <code>wafer-info</code>, <code>status</code>, <code>result</code>, and <code>error</code> topics.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">Result 查詢</span><span data-lang="en">Result query</span></td>
+                <td><span data-lang="zh">已完成 Start Cycle 或按過 Emit Fake Result。</span><span data-lang="en">Start Cycle completed or Emit Fake Result was pressed.</span></td>
+                <td><span data-lang="zh">用 SDK/REST sample 依目前 WaferInfo 的 lotId 查詢。</span><span data-lang="en">Use SDK/REST samples to query by the current WaferInfo lotId.</span></td>
+                <td><span data-lang="zh">Console 顯示 result count；若為 0，確認查詢 filter 與 WaferInfo 一致。</span><span data-lang="en">Console prints result count; if it is 0, confirm the query filter matches WaferInfo.</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div class="flow-grid">
           <article class="flow-card">
             <h3><span data-lang="zh">情境 A：第一次確認 SDK 能連線</span><span data-lang="en">Scenario A: First SDK Connection Check</span></h3>
@@ -200,11 +254,16 @@
           </li>
           <li>
             <h3><span data-lang="zh">按下 Start Servers</span><span data-lang="en">Press Start Servers</span></h3>
-            <p><span data-lang="zh">成功後 Event Log 會顯示 <code>Servers started.</code>，SDK 或 sample code 才能連線。</span><span data-lang="en">When successful, Event Log shows <code>Servers started.</code>. SDK and sample clients can connect after this step.</span></p>
+            <p><span data-lang="zh">成功後 Event Log 會顯示 REST listening、TCP listening 與 MQTT 啟動/連線紀錄，SDK 或 sample code 才能連線。</span><span data-lang="en">When successful, Event Log shows REST listening, TCP listening, and MQTT started/connected records. SDK and sample clients can connect after this step.</span></p>
+          </li>
+          <li>
+            <h3><span data-lang="zh">先驗證 not_initialized</span><span data-lang="en">Verify not_initialized First</span></h3>
+            <p><span data-lang="zh">在尚未按 <strong>Initialize</strong> 前執行 SDK 或 REST sample。當 sample 呼叫 Start 時，預期回傳 <code>HTTP 409 not_initialized</code>。這表示 sample 正在正確反映 UI 狀態。</span><span data-lang="en">Before pressing <strong>Initialize</strong>, run the SDK or REST sample. When the sample calls Start, the expected return is <code>HTTP 409 not_initialized</code>. This means the sample is correctly reflecting UI state.</span></p>
           </li>
           <li>
             <h3><span data-lang="zh">輸入並套用 WaferInfo</span><span data-lang="en">Enter and Apply WaferInfo</span></h3>
-            <p><span data-lang="zh">填入 Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID，按 <strong>Apply WaferInfo</strong>。</span><span data-lang="en">Enter Lot ID, Wafer ID, Recipe ID, Slot, FOUP ID, and Chamber ID, then press <strong>Apply WaferInfo</strong>.</span></p>
+            <p><span data-lang="zh">填入 Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID，按 <strong>Apply WaferInfo</strong>，或讓 sample 送出 WaferInfo。Event Log 應同一行列出所有欄位。</span><span data-lang="en">Enter Lot ID, Wafer ID, Recipe ID, Slot, FOUP ID, and Chamber ID, then press <strong>Apply WaferInfo</strong>, or let a sample send WaferInfo. Event Log should list all fields in one line.</span></p>
+            <pre><code>WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1</code></pre>
           </li>
           <li>
             <h3><span data-lang="zh">執行 Initialize 與 Start Cycle</span><span data-lang="en">Run Initialize and Start Cycle</span></h3>
@@ -212,7 +271,7 @@
           </li>
           <li>
             <h3><span data-lang="zh">產生測試事件</span><span data-lang="en">Emit Test Events</span></h3>
-            <p><span data-lang="zh">使用 <strong>Emit Fake Result</strong> 測試 result handling；使用 <strong>Emit Error</strong> 測試 error handling。</span><span data-lang="en">Use <strong>Emit Fake Result</strong> to test result handling and <strong>Emit Error</strong> to test error handling.</span></p>
+            <p><span data-lang="zh">使用 <strong>Emit Fake Result</strong> 測試 result handling；使用 <strong>Emit Error</strong> 測試 error handling。MQTT sample 執行中時，這兩個按鈕應分別產生 <code>Virex.NET/result</code> 與 <code>Virex.NET/error</code>。</span><span data-lang="en">Use <strong>Emit Fake Result</strong> to test result handling and <strong>Emit Error</strong> to test error handling. While an MQTT sample is running, these buttons should produce <code>Virex.NET/result</code> and <code>Virex.NET/error</code>.</span></p>
           </li>
           <li>
             <h3><span data-lang="zh">結束測試</span><span data-lang="en">End the Test</span></h3>
@@ -227,14 +286,17 @@
           <article class="card">
             <h3><span data-lang="zh">SDK sample</span><span data-lang="en">SDK Sample</span></h3>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
+            <p><span data-lang="zh">Canonical guided demo：先看 <code>not_initialized</code>，再按 Initialize 完成 cycle 與 result query。</span><span data-lang="en">Canonical guided demo: first observe <code>not_initialized</code>, then press Initialize to complete cycle and result query.</span></p>
           </article>
           <article class="card">
             <h3><span data-lang="zh">Raw REST sample</span><span data-lang="en">Raw REST Sample</span></h3>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj</code></pre>
+            <p><span data-lang="zh">直接展示 REST status、WaferInfo、start 與 result query。</span><span data-lang="en">Directly demonstrates REST status, WaferInfo, start, and result query.</span></p>
           </article>
           <article class="card">
             <h3><span data-lang="zh">Raw TCP sample</span><span data-lang="en">Raw TCP Sample</span></h3>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj</code></pre>
+            <p><span data-lang="zh">確認初始 frame 與 WaferInfo update event。</span><span data-lang="en">Confirms initial frames and the WaferInfo update event.</span></p>
           </article>
         </div>
       </section>
@@ -244,6 +306,7 @@
         <ul class="checklist">
           <li><strong><span data-lang="zh">Start Servers 失敗</span><span data-lang="en">Start Servers fails</span></strong><br><span data-lang="zh">檢查 REST prefix 是否被占用、TCP port 是否已被其他程式使用、MQTT broker 是否可連線。</span><span data-lang="en">Check whether the REST prefix or TCP port is already in use and whether the MQTT broker is reachable.</span></li>
           <li><strong><span data-lang="zh">SDK 連不上</span><span data-lang="en">SDK cannot connect</span></strong><br><span data-lang="zh">確認 Simulator 已按 Start Servers，且 SDK 的 <code>RestBaseUrl</code>、TCP host/port、MQTT host/port/topic 與 UI 一致。</span><span data-lang="en">Confirm Start Servers was pressed and SDK <code>RestBaseUrl</code>, TCP host/port, and MQTT host/port/topic match the UI.</span></li>
+          <li><strong><span data-lang="zh">看到 not_initialized</span><span data-lang="en">Seeing not_initialized</span></strong><br><span data-lang="zh">若尚未按 Initialize，這是預期結果。按 <strong>Initialize</strong> 並確認 Status 後再繼續 sample。</span><span data-lang="en">If Initialize has not been pressed, this is expected. Press <strong>Initialize</strong>, confirm Status, then continue the sample.</span></li>
           <li><strong><span data-lang="zh">沒有收到 event</span><span data-lang="en">No events received</span></strong><br><span data-lang="zh">先看 Event Log 是否有產生事件，再確認 client 是否已訂閱 TCP 或 MQTT。</span><span data-lang="en">First check Event Log for emitted events, then confirm the client is subscribed through TCP or MQTT.</span></li>
           <li><strong><span data-lang="zh">查不到 result</span><span data-lang="en">No result returned</span></strong><br><span data-lang="zh">先按 Start Cycle 或 Emit Fake Result，再確認查詢 filter 與目前 WaferInfo 一致。</span><span data-lang="en">Run Start Cycle or Emit Fake Result first, then confirm query filters match the current WaferInfo.</span></li>
         </ul>

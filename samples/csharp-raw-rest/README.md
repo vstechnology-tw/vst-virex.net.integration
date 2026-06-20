@@ -1,21 +1,23 @@
 # C# Raw REST Sample
 
-Minimal C# client for the public Virex.NET REST API. It uses `HttpClient` directly instead of the SDK wrapper.
+Guided demo for the public REST API using `HttpClient` directly.
 
-## Prerequisites
+## Simulator Prerequisites
 
-- .NET SDK.
-- The Virex.NET simulator running with REST enabled at `http://127.0.0.1:5088`.
+- Start the simulator and keep REST at `http://127.0.0.1:5088`.
+- Press **Start Servers**.
+- Leave **Initialize** unpressed for the first negative check.
+
+## UI SOP
+
+1. Press **Start Servers**.
+2. Run the sample.
+3. Confirm the sample reads `/api/status`.
+4. Confirm the sample shows `POST /api/control/start` returning `409 not_initialized`.
+5. Press **Initialize** when prompted.
+6. Let the sample send WaferInfo, start a cycle, and query results.
 
 ## Run
-
-From the repository root, start the simulator:
-
-```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
-```
-
-In the simulator window, click **Start Servers**. Then open a second terminal from the repository root and run:
 
 ```powershell
 dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj
@@ -27,9 +29,16 @@ Optional base URL:
 dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj -- http://127.0.0.1:5088
 ```
 
-Expected result:
+## Expected Output
 
-```text
-Status: initialized=False, processState=ready, recipe=Default
-WaferInfo updated through raw REST.
-```
+- Initial status shows `initialized=False` when starting from a fresh simulator state.
+- Start before **Initialize** returns HTTP `409` with `not_initialized`.
+- Event Log shows `WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1`.
+- After **Initialize**, start returns HTTP `200` and the result query prints a count.
+
+## Troubleshooting
+
+- Server not started: press **Start Servers** and retry.
+- `not_initialized`: expected before **Initialize**; press **Initialize** and continue.
+- No result returned: press **Start Cycle** or **Emit Fake Result**, then query with the matching lot ID.
+- No MQTT events: REST does not subscribe to MQTT; use a raw MQTT sample.

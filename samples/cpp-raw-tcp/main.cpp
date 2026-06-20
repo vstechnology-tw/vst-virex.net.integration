@@ -138,6 +138,21 @@ namespace
             sent += static_cast<size_t>(chunk);
         }
     }
+
+    void PrintStep(const std::string& title)
+    {
+        std::cout << std::endl;
+        std::cout << "== " << title << " ==" << std::endl;
+    }
+
+    void Prompt(const std::string& message)
+    {
+        std::cout << std::endl;
+        std::cout << "Action required in Simulator:" << std::endl;
+        std::cout << message << " ";
+        std::string ignored;
+        std::getline(std::cin, ignored);
+    }
 }
 
 int main(int argc, char* argv[])
@@ -147,18 +162,30 @@ int main(int argc, char* argv[])
         const char* host = argc > 1 ? argv[1] : "127.0.0.1";
         const char* port = argc > 2 ? argv[2] : "5089";
 
+        PrintStep("Virex.NET C++ Raw TCP Guided Demo");
+        std::cout << "This sample connects to the simulator TCP socket, reads initial frames, sends WaferInfo, and waits for the update event." << std::endl;
+        std::cout << "TCP endpoint: " << host << ":" << port << std::endl;
+        Prompt("Press Start Servers, then press Enter here. Initialize is not required for the WaferInfo TCP demo.");
+
         WsaSession wsa;
         SocketHandle client = Connect(host, port);
 
+        PrintStep("Step 1 - Read initial TCP frames");
+        std::cout << "Initial status frame:" << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
+        std::cout << "Initial WaferInfo frame:" << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
 
+        PrintStep("Step 2 - Send waferInfo frame");
         const std::string frame =
             R"({"type":"waferInfo","lotId":"LOT-CPP-TCP-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"})"
             "\n";
         SendAll(client.value, frame);
 
-        std::cout << "Sent waferInfo frame. Waiting for echo/update event..." << std::endl;
+        std::cout << "Sent waferInfo frame." << std::endl;
+        std::cout << "Expected Simulator Event Log:" << std::endl;
+        std::cout << "WaferInfo updated from TCP: lotId=LOT-CPP-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1" << std::endl;
+        std::cout << "Waiting for echoed waferInfo update event..." << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
     }
     catch (const std::exception& ex)
