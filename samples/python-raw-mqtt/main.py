@@ -69,6 +69,17 @@ def parse_publish(first, payload):
     return topic, message
 
 
+def print_step(title):
+    print()
+    print(f"== {title} ==")
+
+
+def prompt(message):
+    print()
+    print("Action required in Simulator:")
+    input(message + " ")
+
+
 def main():
     host = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 1883
@@ -76,7 +87,20 @@ def main():
     duration_seconds = int(sys.argv[4]) if len(sys.argv) > 4 else 30
     topic_filter = f"{base_topic}/#"
 
-    with socket.create_connection((host, port), timeout=10) as client:
+    print_step("Virex.NET Python Raw MQTT Guided Demo")
+    print("This sample subscribes to simulator MQTT events and lets you trigger each event from the UI.")
+    print(f"MQTT endpoint: {host}:{port}")
+    print(f"Topic filter: {topic_filter}")
+    prompt("Press Start Servers, then press Enter here.")
+
+    try:
+        client = socket.create_connection((host, port), timeout=10)
+    except OSError as error:
+        print("Connection failed. In Simulator, press Start Servers and verify the MQTT host, port, and topic.")
+        print(error)
+        return 1
+
+    with client:
         client.settimeout(1)
         client.sendall(connect_packet("virex-python-raw-mqtt"))
         first, payload = recv_packet(client)
@@ -88,8 +112,14 @@ def main():
         if first != 0x90:
             raise RuntimeError("MQTT SUBACK was not received.")
 
+        print_step("Step 1 - Trigger events from Simulator")
         print(f"Subscribed to {topic_filter} for {duration_seconds} seconds.")
-        print("Trigger simulator events with Apply WaferInfo, Start Cycle, Emit Fake Result, or Emit Error.")
+        print("Expected UI actions and topics:")
+        print("- Press Apply WaferInfo: expect Virex.NET/wafer-info.")
+        print("- Press Initialize: expect Virex.NET/status with initialized=true.")
+        print("- Press Start Cycle: expect Virex.NET/status transitions.")
+        print("- Press Emit Fake Result: expect Virex.NET/result.")
+        print("- Press Emit Error: expect Virex.NET/error.")
 
         deadline = time.monotonic() + duration_seconds
         while time.monotonic() < deadline:
@@ -102,7 +132,9 @@ def main():
                 topic, message = parse_publish(first, payload)
                 print(f"{topic}: {message}")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
 

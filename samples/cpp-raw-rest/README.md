@@ -1,34 +1,26 @@
 # C++ Raw REST Sample
 
-Minimal Windows C++ client for the public Virex.NET REST API. It uses WinHTTP and does not require third-party packages.
+Guided demo for the public REST API using WinHTTP.
 
-## Prerequisites
+## Simulator Prerequisites
 
-- Windows.
-- CMake 3.20 or newer.
-- Visual Studio Build Tools or Visual Studio with the C++ desktop workload.
-- The Virex.NET simulator running with REST enabled at `http://127.0.0.1:5088`.
+- Start the simulator and keep REST at `http://127.0.0.1:5088`.
+- Press **Start Servers**.
+- Leave **Initialize** unpressed for the first negative check.
 
-## Build
+## UI SOP
 
-From a Visual Studio Developer PowerShell:
+1. Press **Start Servers**.
+2. Run the sample.
+3. Confirm `POST /api/control/start` returns `409 not_initialized`.
+4. Press **Initialize** when prompted.
+5. Let the sample update WaferInfo, start a cycle, and query results.
+
+## Build and Run
 
 ```powershell
 cmake -S samples\cpp-raw-rest -B samples\cpp-raw-rest\build
 cmake --build samples\cpp-raw-rest\build --config Release
-```
-
-## Run
-
-From the repository root, start the simulator:
-
-```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
-```
-
-In the simulator window, click **Start Servers**. Then run:
-
-```powershell
 samples\cpp-raw-rest\build\Release\cpp-raw-rest.exe
 ```
 
@@ -38,9 +30,14 @@ Optional base URL:
 samples\cpp-raw-rest\build\Release\cpp-raw-rest.exe http://127.0.0.1:5088
 ```
 
-Expected result:
+## Expected Output
 
-```text
-Status: {"initialized":false,"processState":"ready","recipe":"Default"}
-WaferInfo updated through raw REST.
-```
+- Initial status, expected `not_initialized`, WaferInfo update, start result, and result query body.
+- Event Log shows `WaferInfo updated from REST: lotId=LOT-CPP-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1`.
+
+## Troubleshooting
+
+- Server not started: press **Start Servers**.
+- `not_initialized`: expected before **Initialize**.
+- No result returned: press **Start Cycle** or **Emit Fake Result** with matching WaferInfo.
+- No MQTT events: REST does not subscribe to MQTT.

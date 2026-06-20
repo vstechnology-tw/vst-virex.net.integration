@@ -153,8 +153,8 @@
           <span data-lang="en">Quick Start</span>
         </h2>
         <p class="section-intro">
-          <span data-lang="zh">建議第一次使用時先跑 simulator 與 C# SDK sample，確認開發環境、端點與基本流程都正常。</span>
-          <span data-lang="en">For first-time use, run the simulator and the C# SDK sample to confirm the development environment, endpoints, and basic flow.</span>
+          <span data-lang="zh">建議第一次使用時先跑 simulator 與 C# SDK sample。Sample 會引導您先按 Start Servers，示範未 Initialize 時的 <code>not_initialized</code>，再請您回到 UI 按 Initialize 完成正常流程。</span>
+          <span data-lang="en">For first-time use, run the simulator and the C# SDK sample. The sample guides you to press Start Servers, shows the expected <code>not_initialized</code> response before Initialize, then asks you to return to the UI and press Initialize for the normal flow.</span>
         </p>
         <ol class="steps">
           <li>
@@ -170,6 +170,10 @@
               <span data-lang="en">Start the Simulator</span>
             </h3>
             <pre><code class="language-powershell">dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj</code></pre>
+            <p>
+              <span data-lang="zh">在 simulator 視窗中按 <strong>Start Servers</strong> 後，REST、TCP、MQTT sample 才能連線。</span>
+              <span data-lang="en">In the simulator window, press <strong>Start Servers</strong> before REST, TCP, MQTT, or SDK samples can connect.</span>
+            </p>
             <p>
               <a href="simulator.html">
                 <span data-lang="zh">需要 App UI 與操作 SOP 時，請開啟 Simulator 操作手冊。</span>
@@ -191,12 +195,11 @@
             </h3>
             <p>
               <span data-lang="zh">
-                範例程式會讀取狀態、送出 WaferInfo、啟動流程，並查詢 result summary。若這些步驟成功，
-                代表 SDK 與 simulator 的基本通訊已建立。
+                範例程式會要求您依序操作 simulator UI，並顯示每個步驟的預期回應。看到 <code>not_initialized</code> 代表尚未 Initialize，是預期的教學步驟。
               </span>
               <span data-lang="en">
-                The sample reads status, sends WaferInfo, starts a cycle, and queries result summaries.
-                If these steps succeed, basic SDK-to-simulator communication is working.
+                The sample asks you to operate the simulator UI and prints the expected response for each step.
+                Seeing <code>not_initialized</code> before Initialize is an expected teaching step.
               </span>
             </p>
           </li>
@@ -284,10 +287,10 @@ var results = await client.QueryResultsAsync(lotId: "LOT-001");</code></pre>
         </h2>
         <p class="section-intro">
           <span data-lang="zh">
-            範例程式是本產品的主要學習入口。請依照您要使用的整合方式選擇 sample。
+            範例程式是本產品的主要學習入口。它們不是單純直跑腳本，而是會提示您在 simulator UI 按哪個按鈕、目前測什麼、預期得到什麼。
           </span>
           <span data-lang="en">
-            Sample projects are the primary learning path for this product. Choose the sample that matches your integration style.
+            Sample projects are the primary learning path for this product. They are guided demos that tell you which simulator UI button to press, what is being tested, and what output to expect.
           </span>
         </p>
         <div class="grid three">
@@ -295,8 +298,8 @@ var results = await client.QueryResultsAsync(lotId: "LOT-001");</code></pre>
             <span class="tag">Recommended</span>
             <h3>samples/csharp-sdk</h3>
             <p>
-              <span data-lang="zh">適合 .NET 應用程式。示範使用 SDK 讀取狀態、送 WaferInfo、啟動流程與查詢結果。</span>
-              <span data-lang="en">For .NET applications. Demonstrates status reads, WaferInfo submission, cycle start, and result queries through the SDK.</span>
+              <span data-lang="zh">適合 .NET 應用程式。這是 canonical guided demo，包含 Start Servers、not_initialized、Initialize、WaferInfo、Start Cycle 與 result query。</span>
+              <span data-lang="en">For .NET applications. This is the canonical guided demo covering Start Servers, not_initialized, Initialize, WaferInfo, Start Cycle, and result query.</span>
             </p>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj</code></pre>
           </article>
@@ -304,8 +307,8 @@ var results = await client.QueryResultsAsync(lotId: "LOT-001");</code></pre>
             <span class="tag">REST</span>
             <h3>samples/csharp-raw-rest</h3>
             <p>
-              <span data-lang="zh">適合需要直接呼叫 REST API，或使用非 C# 語言整合的系統。</span>
-              <span data-lang="en">For systems calling the REST API directly or integrating from a non-C# platform.</span>
+              <span data-lang="zh">適合需要直接呼叫 REST API 的系統。會示範未 Initialize 的 409 與正常 cycle/result 查詢。</span>
+              <span data-lang="en">For systems calling REST directly. Demonstrates HTTP 409 before Initialize plus the normal cycle/result path.</span>
             </p>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj</code></pre>
           </article>
@@ -313,8 +316,8 @@ var results = await client.QueryResultsAsync(lotId: "LOT-001");</code></pre>
             <span class="tag">TCP</span>
             <h3>samples/csharp-raw-tcp</h3>
             <p>
-              <span data-lang="zh">適合 socket / NDJSON 整合。可用來確認連線、換行分隔 JSON frame 與 command 格式。</span>
-              <span data-lang="en">For socket and NDJSON integrations. Use it to verify connection handling, line-delimited JSON frames, and command format.</span>
+              <span data-lang="zh">適合 socket / NDJSON 整合。可用來確認初始 status/WaferInfo frame 與 WaferInfo update event。</span>
+              <span data-lang="en">For socket and NDJSON integrations. Use it to verify initial status/WaferInfo frames and the WaferInfo update event.</span>
             </p>
             <pre><code class="language-powershell">dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj</code></pre>
           </article>
@@ -326,6 +329,67 @@ var results = await client.QueryResultsAsync(lotId: "LOT-001");</code></pre>
           <span data-lang="zh">典型使用情境</span>
           <span data-lang="en">Typical Use Cases</span>
         </h2>
+        <p class="section-intro">
+          <span data-lang="zh">每個 use case 都由 simulator UI 狀態與 sample output 共同驗證。測試者應先確認條件，再按指定按鈕，最後對照 console 與 Event Log。</span>
+          <span data-lang="en">Each use case is verified by both simulator UI state and sample output. Confirm the condition first, press the named UI button, then compare console output with Event Log.</span>
+        </p>
+        <div class="table-scroll">
+          <table class="comparison">
+            <thead>
+              <tr>
+                <th><span data-lang="zh">Use case</span><span data-lang="en">Use Case</span></th>
+                <th><span data-lang="zh">條件</span><span data-lang="en">Required State</span></th>
+                <th><span data-lang="zh">UI 操作</span><span data-lang="en">UI Action</span></th>
+                <th><span data-lang="zh">Sample</span><span data-lang="en">Sample</span></th>
+                <th><span data-lang="zh">預期結果</span><span data-lang="en">Expected Output</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span data-lang="zh">啟動通訊服務</span><span data-lang="en">Start communication services</span></td>
+                <td><span data-lang="zh">Simulator 已開啟</span><span data-lang="en">Simulator is open</span></td>
+                <td><strong>Start Servers</strong></td>
+                <td>Any sample</td>
+                <td><span data-lang="zh">Event Log 顯示 REST/TCP/MQTT listening，sample 可連線。</span><span data-lang="en">Event Log shows REST/TCP/MQTT listening; samples can connect.</span></td>
+              </tr>
+              <tr>
+                <td><code>not_initialized</code></td>
+                <td><span data-lang="zh">已 Start Servers，尚未 Initialize</span><span data-lang="en">Start Servers pressed, Initialize not pressed</span></td>
+                <td><span data-lang="zh">先不要按 Initialize</span><span data-lang="en">Do not press Initialize yet</span></td>
+                <td>csharp-sdk, raw REST</td>
+                <td><span data-lang="zh">Start 回 HTTP 409 / <code>not_initialized</code>。</span><span data-lang="en">Start returns HTTP 409 / <code>not_initialized</code>.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">正常 cycle</span><span data-lang="en">Normal cycle</span></td>
+                <td><span data-lang="zh">processState=ready</span><span data-lang="en">processState=ready</span></td>
+                <td><strong>Initialize</strong>, then continue sample</td>
+                <td>csharp-sdk, raw REST</td>
+                <td><span data-lang="zh">狀態依序 capturing、inspecting、saving、ready，並產生 result。</span><span data-lang="en">State transitions through capturing, inspecting, saving, ready, and creates a result.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">WaferInfo 更新確認</span><span data-lang="en">WaferInfo update verification</span></td>
+                <td><span data-lang="zh">已 Start Servers</span><span data-lang="en">Start Servers pressed</span></td>
+                <td><strong>Apply WaferInfo</strong> or send from sample</td>
+                <td>SDK, REST, TCP</td>
+                <td><span data-lang="zh">Event Log 同一行列出 lotId、waferId、recipeId、slot、foupId、chamberId。</span><span data-lang="en">Event Log lists lotId, waferId, recipeId, slot, foupId, and chamberId in one line.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">MQTT event 觀察</span><span data-lang="en">MQTT event observation</span></td>
+                <td><span data-lang="zh">MQTT sample 訂閱中</span><span data-lang="en">MQTT sample is subscribed</span></td>
+                <td><strong>Apply WaferInfo</strong>, <strong>Initialize</strong>, <strong>Start Cycle</strong>, <strong>Emit Fake Result</strong>, <strong>Emit Error</strong></td>
+                <td>raw MQTT</td>
+                <td><span data-lang="zh">Console 顯示 wafer-info、status、result、error topic。</span><span data-lang="en">Console shows wafer-info, status, result, and error topics.</span></td>
+              </tr>
+              <tr>
+                <td><span data-lang="zh">Result 查詢</span><span data-lang="en">Result query</span></td>
+                <td><span data-lang="zh">已完成 cycle 或 Emit Fake Result</span><span data-lang="en">Cycle completed or Emit Fake Result pressed</span></td>
+                <td><strong>Start Cycle</strong> or <strong>Emit Fake Result</strong></td>
+                <td>SDK, REST</td>
+                <td><span data-lang="zh">依 matching lotId 查詢 result count。</span><span data-lang="en">Query by matching lotId and print result count.</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <div class="grid two">
           <article class="card">
             <h3>

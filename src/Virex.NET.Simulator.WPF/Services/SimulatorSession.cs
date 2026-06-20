@@ -121,7 +121,7 @@ public sealed class SimulatorSession
     public void UpdateWaferInfo(WaferInfo info, string source)
     {
         WaferInfo = info;
-        LogMessage($"WaferInfo updated from {source}: {info.LotIdOr}/{info.WaferIdOr}");
+        LogMessage($"WaferInfo updated from {source}: {FormatWaferInfoForLog(info)}");
         WaferInfoChanged?.Invoke(this, info);
     }
 
@@ -207,6 +207,9 @@ public sealed class SimulatorSession
     private void LogMessage(string message) => Log?.Invoke(this, message);
 
     public void WriteLog(string message) => LogMessage(message);
+
+    private static string FormatWaferInfoForLog(WaferInfo info) =>
+        $"lotId={info.LotIdOr}, waferId={info.WaferIdOr}, recipeId={info.RecipeIdOr}, slot={info.SlotOr}, foupId={info.FoupIdOr}, chamberId={info.ChamberIdOr}";
 
     private static string JoinExternalPath(string prefix, string relative)
     {

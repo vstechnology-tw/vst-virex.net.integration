@@ -1,38 +1,43 @@
 # C# Raw MQTT Sample
 
-Minimal C# client for the public Virex.NET MQTT event topics. It uses MQTTnet directly instead of the SDK wrapper.
+Guided demo for observing simulator MQTT events.
 
-## Prerequisites
+## Simulator Prerequisites
 
-- .NET SDK.
-- The Virex.NET simulator running with MQTT enabled on `127.0.0.1:1883`.
+- Start the simulator and keep MQTT at `127.0.0.1:1883`.
+- Press **Start Servers**.
+- Keep base topic `Virex.NET`.
+
+## UI SOP
+
+1. Press **Start Servers**.
+2. Run the sample.
+3. Press **Apply WaferInfo** and expect `Virex.NET/wafer-info`.
+4. Press **Initialize** and expect `Virex.NET/status`.
+5. Press **Start Cycle** and expect status transitions.
+6. Press **Emit Fake Result** and expect `Virex.NET/result`.
+7. Press **Emit Error** and expect `Virex.NET/error`.
 
 ## Run
-
-From the repository root, start the simulator:
-
-```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
-```
-
-In the simulator window, click **Start Servers**. Then open a second terminal from the repository root and run:
 
 ```powershell
 dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj
 ```
 
-While the sample is running, click **Apply WaferInfo**, **Start Cycle**, **Emit Fake Result**, or **Emit Error** in the simulator.
-
-Optional host, port, base topic, and listen duration in seconds:
+Optional host, port, topic, and duration:
 
 ```powershell
 dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj -- 127.0.0.1 1883 Virex.NET 30
 ```
 
-Expected result:
+## Expected Output
 
-```text
-Subscribed to Virex.NET/# for 30 seconds.
-Virex.NET/wafer-info: {"lotId":"LOT-001",...}
-```
+- The sample subscribes to `Virex.NET/#`.
+- Each UI action prints the matching MQTT topic and JSON payload.
 
+## Troubleshooting
+
+- Server not started: press **Start Servers** and verify MQTT `127.0.0.1:1883`.
+- `not_initialized`: press **Initialize** before **Start Cycle** if you want normal cycle transitions.
+- No result returned: press **Emit Fake Result** or run **Start Cycle** after **Initialize**.
+- No MQTT events: verify the base topic is `Virex.NET` and the sample is still within its listen duration.
