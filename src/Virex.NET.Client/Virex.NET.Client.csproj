@@ -3,6 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>Virex.NET.Client</PackageId>
     <Description>C# client SDK for Virex.NET integration through REST, MQTT, and TCP socket protocols.</Description>
+    <PackageIcon>vst-logo.png</PackageIcon>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
@@ -11,5 +12,9 @@
     <PackageReference Include="MQTTnet" />
     <PackageReference Include="System.Text.Json" />
     <ProjectReference Include="..\Virex.NET.Contracts\Virex.NET.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\packaging\vst-logo.png" Pack="true" PackagePath="" Visible="false" />
   </ItemGroup>
 </Project>

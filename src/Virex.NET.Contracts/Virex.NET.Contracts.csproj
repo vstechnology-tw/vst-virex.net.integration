@@ -3,11 +3,16 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>Virex.NET.Contracts</PackageId>
     <Description>Public Virex.NET integration contracts for REST, MQTT, and TCP socket protocols.</Description>
+    <PackageIcon>vst-logo.png</PackageIcon>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\packaging\vst-logo.png" Pack="true" PackagePath="" Visible="false" />
   </ItemGroup>
 </Project>
