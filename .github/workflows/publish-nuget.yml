@@ -14,16 +14,18 @@ permissions:
   contents: read
 
 jobs:
-  publish-contracts:
-    name: Publish Virex.NET.Contracts
+  publish-packages:
+    name: Publish Virex.NET packages
     runs-on: windows-latest
     permissions:
       contents: read
       id-token: write
 
     env:
-      PACKAGE_ID: Virex.NET.Contracts
-      PACKAGE_PROJECT: src/Virex.NET.Contracts/Virex.NET.Contracts.csproj
+      CONTRACTS_PACKAGE_ID: Virex.NET.Contracts
+      CONTRACTS_PACKAGE_PROJECT: src/Virex.NET.Contracts/Virex.NET.Contracts.csproj
+      CLIENT_PACKAGE_ID: Virex.NET.Client
+      CLIENT_PACKAGE_PROJECT: src/Virex.NET.Client/Virex.NET.Client.csproj
       PACKAGE_OUTPUT: artifacts/packages
       NUGET_SOURCE: https://api.nuget.org/v3/index.json
 
@@ -75,7 +77,15 @@ jobs:
 
       - name: Pack contracts
         run: >
-          dotnet pack $env:PACKAGE_PROJECT
+          dotnet pack $env:CONTRACTS_PACKAGE_PROJECT
+          --configuration Release
+          --no-restore
+          --output $env:PACKAGE_OUTPUT
+          /p:PackageVersion=${{ steps.package.outputs.version }}
+
+      - name: Pack client
+        run: >
+          dotnet pack $env:CLIENT_PACKAGE_PROJECT
           --configuration Release
           --no-restore
           --output $env:PACKAGE_OUTPUT
@@ -87,11 +97,18 @@ jobs:
         with:
           user: ${{ vars.NUGET_USER }}
 
-      - name: Publish contracts
+      - name: Publish packages
         shell: pwsh
         run: |
-          $packagePath = Join-Path $env:PACKAGE_OUTPUT "$env:PACKAGE_ID.${{ steps.package.outputs.version }}.nupkg"
-          dotnet nuget push $packagePath `
-            --source $env:NUGET_SOURCE `
-            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" `
-            --skip-duplicate
+          $packageIds = @(
+            $env:CONTRACTS_PACKAGE_ID,
+            $env:CLIENT_PACKAGE_ID
+          )
+
+          foreach ($packageId in $packageIds) {
+            $packagePath = Join-Path $env:PACKAGE_OUTPUT "$packageId.${{ steps.package.outputs.version }}.nupkg"
+            dotnet nuget push $packagePath `
+              --source $env:NUGET_SOURCE `
+              --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" `
+              --skip-duplicate
+          }
