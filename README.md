@@ -1,9 +1,7 @@
 # Virex.NET Integration Kit
 
 [![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts/)
-[![Virex.NET.Contracts downloads](https://img.shields.io/nuget/dt/Virex.NET.Contracts?label=Contracts%20downloads)](https://www.nuget.org/packages/Virex.NET.Contracts/)
 [![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client/)
-[![Virex.NET.Client downloads](https://img.shields.io/nuget/dt/Virex.NET.Client?label=Client%20downloads)](https://www.nuget.org/packages/Virex.NET.Client/)
 
 Public integration kit for customers who need to connect to Virex.NET-compatible systems.
 
