@@ -1,0 +1,97 @@
+name: Publish NuGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version to publish, for example 1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish-contracts:
+    name: Publish Virex.NET.Contracts
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      PACKAGE_ID: Virex.NET.Contracts
+      PACKAGE_PROJECT: src/Virex.NET.Contracts/Virex.NET.Contracts.csproj
+      PACKAGE_OUTPUT: artifacts/packages
+      NUGET_SOURCE: https://api.nuget.org/v3/index.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Resolve package version
+        id: package
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ inputs.version }}"
+          } else {
+            $version = "${{ github.event.release.tag_name }}" -replace '^v', ''
+          }
+
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Package version could not be resolved. Use a release tag like v1.0.0 or provide workflow_dispatch input."
+          }
+
+          if ($version -notmatch '^\d+\.\d+\.\d+([\-+][0-9A-Za-z\-.]+)?$') {
+            throw "Package version '$version' is not a valid SemVer-style package version."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Validate NuGet user
+        shell: pwsh
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:NUGET_USER)) {
+            throw "Repository variable NUGET_USER must be set to the nuget.org username or profile name used for trusted publishing."
+          }
+
+      - name: Restore
+        run: dotnet restore Virex.NET.Integration.slnx
+
+      - name: Test
+        run: dotnet test Virex.NET.Integration.slnx --configuration Release --no-restore
+
+      - name: Pack contracts
+        run: >
+          dotnet pack $env:PACKAGE_PROJECT
+          --configuration Release
+          --no-restore
+          --output $env:PACKAGE_OUTPUT
+          /p:PackageVersion=${{ steps.package.outputs.version }}
+
+      - name: NuGet login
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Publish contracts
+        shell: pwsh
+        run: |
+          $packagePath = Join-Path $env:PACKAGE_OUTPUT "$env:PACKAGE_ID.${{ steps.package.outputs.version }}.nupkg"
+          dotnet nuget push $packagePath `
+            --source $env:NUGET_SOURCE `
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" `
+            --skip-duplicate
