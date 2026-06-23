@@ -22,13 +22,13 @@ public sealed class ResultSummaryDto
 
     public int DefectCount { get; set; }
 
-    public int DieCount { get; set; }
-
     public string ImageRelativePath { get; set; } = string.Empty;
 
     public string ResultRelativePath { get; set; } = string.Empty;
 
     public string ImagePath { get; set; } = string.Empty;
+
+    public string PreviewImagePath { get; set; } = string.Empty;
 
     public string ResultPath { get; set; } = string.Empty;
 }

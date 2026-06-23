@@ -17,7 +17,7 @@ public static class RestRoutes
 
 public static class MqttTopics
 {
-    public const string DefaultBaseTopic = "Virex.NET";
+    public const string DefaultBaseTopic = "virex";
     public const string Status = "status";
     public const string WaferInfo = "wafer-info";
     public const string Result = "result";

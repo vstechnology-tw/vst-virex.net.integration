@@ -49,11 +49,11 @@ await client.SubscribeAsync(subscribeOptions, timeout.Token);
 PrintStep("Step 1 - Trigger events from Simulator");
 Console.WriteLine($"Subscribed to {baseTopic}/# for {duration.TotalSeconds:0} seconds.");
 Console.WriteLine("Expected UI actions and topics:");
-Console.WriteLine("- Press Apply WaferInfo: expect Virex.NET/wafer-info.");
-Console.WriteLine("- Press Initialize: expect Virex.NET/status with initialized=true.");
-Console.WriteLine("- Press Start Cycle: expect Virex.NET/status transitions.");
-Console.WriteLine("- Press Emit Fake Result: expect Virex.NET/result.");
-Console.WriteLine("- Press Emit Error: expect Virex.NET/error.");
+Console.WriteLine("- Press Apply WaferInfo: expect virex/wafer-info.");
+Console.WriteLine("- Press Initialize: expect virex/status with initialized=true.");
+Console.WriteLine("- Press Start Cycle: expect virex/status transitions.");
+Console.WriteLine("- Press Emit Fake Result: expect virex/result.");
+Console.WriteLine("- Press Emit Error: expect virex/error.");
 
 try
 {

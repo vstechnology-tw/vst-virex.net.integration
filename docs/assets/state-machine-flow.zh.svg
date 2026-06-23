@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="640" viewBox="0 0 1120 640" role="img" aria-labelledby="title desc">
+  <title id="title">Virex.NET simulator 狀態轉移示意圖</title>
+  <desc id="desc">初始化後進入 cycle ready 狀態；Start 後依序進入 capturing、inspecting、saving，result 後回到 ready。</desc>
+  <defs>
+    <marker id="arrow-orange" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth"><path d="M2,2 L10,6 L2,10 Z" fill="#f97316" /></marker>
+    <marker id="arrow-dark" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth"><path d="M2,2 L10,6 L2,10 Z" fill="#334155" /></marker>
+    <marker id="arrow-orange-small" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M1,1 L7,4 L1,7 Z" fill="#f97316" /></marker>
+    <marker id="arrow-dark-small" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M1,1 L7,4 L1,7 Z" fill="#334155" /></marker>
+    <filter id="shadow" x="-10%" y="-24%" width="120%" height="148%"><feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.16" /></filter>
+    <style>
+      text { font-family: "Segoe UI", "Microsoft JhengHei", Arial, sans-serif; }
+      .page { fill: #f8fbff; stroke: #bfdbfe; stroke-width: 2; }
+      .section { fill: #edf6ff; stroke: #93c5fd; stroke-width: 2; }
+      .legend-box { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; }
+      .node { fill: #0284c7; stroke: #0369a1; stroke-width: 2; filter: url(#shadow); }
+      .node2 { fill: #0ea5e9; stroke: #0284c7; stroke-width: 2; filter: url(#shadow); }
+      .title { fill: #ffffff; font-size: 26px; font-weight: 700; text-anchor: middle; }
+      .sub { fill: #e0f2fe; font-size: 15px; text-anchor: middle; }
+      .state { fill: #ffffff; font-size: 18px; font-weight: 700; text-anchor: middle; }
+      .label { fill: #1f2937; font-size: 16px; font-weight: 700; text-anchor: middle; }
+      .small { fill: #475569; font-size: 14px; text-anchor: middle; }
+      .legend { fill: #334155; font-size: 13px; font-weight: 600; }
+      .orange { fill: none; stroke: #f97316; stroke-width: 3; marker-end: url(#arrow-orange); }
+      .dark { fill: none; stroke: #334155; stroke-width: 2.7; marker-end: url(#arrow-dark); }
+      .reject { fill: none; stroke: #334155; stroke-width: 2.5; stroke-dasharray: 8 7; marker-end: url(#arrow-dark); }
+      .orange-key { fill: none; stroke: #f97316; stroke-width: 2.5; marker-end: url(#arrow-orange-small); }
+      .dark-key { fill: none; stroke: #334155; stroke-width: 2.3; marker-end: url(#arrow-dark-small); }
+      .reject-key { fill: none; stroke: #334155; stroke-width: 2.2; stroke-dasharray: 7 6; marker-end: url(#arrow-dark-small); }
+    </style>
+  </defs>
+
+  <rect class="page" x="40" y="34" width="1040" height="560" rx="20" />
+
+  <rect class="node" x="96" y="118" width="250" height="92" rx="14" />
+  <text class="title" x="221" y="158">初始化前</text>
+  <text class="sub" x="221" y="188">initialized=false</text>
+
+  <rect class="node" x="774" y="118" width="250" height="92" rx="14" />
+  <text class="title" x="899" y="158">已初始化</text>
+  <text class="sub" x="899" y="188">initialized=true</text>
+
+  <path class="orange" d="M346 146 H774" />
+  <text class="label" x="560" y="128">Initialize</text>
+
+  <path class="orange" d="M774 196 H346" />
+  <text class="label" x="560" y="228">Terminate</text>
+
+  <path class="reject" d="M221 210 V306" />
+  <text class="label" x="221" y="334">Start 被拒絕</text>
+  <text class="small" x="221" y="356">409 not_initialized，狀態不變</text>
+
+  <rect class="section" x="430" y="332" width="610" height="190" rx="18" />
+  <text class="label" x="735" y="364">Cycle 狀態：ready 與內部進度</text>
+
+  <rect class="node2" x="468" y="420" width="110" height="54" rx="12" />
+  <text class="state" x="523" y="453">ready</text>
+  <rect class="node2" x="610" y="420" width="110" height="54" rx="12" />
+  <text class="state" x="665" y="453">capturing</text>
+  <rect class="node2" x="752" y="420" width="110" height="54" rx="12" />
+  <text class="state" x="807" y="453">inspecting</text>
+  <rect class="node2" x="894" y="420" width="110" height="54" rx="12" />
+  <text class="state" x="949" y="453">saving</text>
+
+  <path class="dark" d="M899 210 V332" />
+
+  <path class="orange" d="M578 447 H610" />
+  <text class="label" x="594" y="407">Start</text>
+  <path class="dark" d="M720 447 H752" />
+  <path class="dark" d="M862 447 H894" />
+
+  <path class="dark" d="M949 420 V392 H523 V420" />
+  <text class="label" x="1010" y="386">result emitted</text>
+  <text class="small" x="1010" y="406">回到 ready</text>
+
+  <path class="orange" d="M949 474 V500 H523 V474" />
+  <text class="label" x="736" y="514">Stop → ready</text>
+
+  <rect class="legend-box" x="92" y="392" width="318" height="118" rx="12" />
+  <text class="legend" x="118" y="423" style="font-size:17px;font-weight:700;">線條說明</text>
+  <line x1="118" y1="438" x2="142" y2="438" stroke="#f97316" stroke-width="2.5" />
+  <path d="M142,432 L154,438 L142,444 Z" fill="#f97316" />
+  <text class="legend" x="166" y="443">橘色：client 外部指令</text>
+  <line x1="118" y1="466" x2="142" y2="466" stroke="#334155" stroke-width="2.3" />
+  <path d="M142,460 L154,466 L142,472 Z" fill="#334155" />
+  <text class="legend" x="166" y="471">深色：內部進度或回 ready</text>
+  <line x1="118" y1="494" x2="142" y2="494" stroke="#334155" stroke-width="2.2" stroke-dasharray="7 6" />
+  <path d="M142,488 L154,494 L142,500 Z" fill="#334155" />
+  <text class="legend" x="166" y="499">虛線：指令被拒絕</text>
+</svg>

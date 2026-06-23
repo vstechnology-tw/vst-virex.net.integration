@@ -40,8 +40,10 @@ Default endpoints:
 ```text
 REST: http://127.0.0.1:5088
 TCP:  5089
-MQTT: 127.0.0.1:1883, base topic Virex.NET
+MQTT: 127.0.0.1:1883, base topic virex
 ```
+
+After **Start Servers**, REST can be verified from `http://127.0.0.1:5088/scalar`; the OpenAPI document is `http://127.0.0.1:5088/openapi/v1.json`.
 
 The simulator lets you configure IP/port settings, update WaferInfo, run simulated state transitions, emit results, and emit errors.
 
@@ -58,7 +60,7 @@ Use this baseline flow:
    - REST: `http://127.0.0.1:5088/`
    - TCP: `5089`
    - MQTT: `127.0.0.1:1883`
-   - Topic: `Virex.NET`
+   - Topic: `virex`
 3. Press **Start Servers** before running any sample.
 4. For SDK and REST samples, leave **Initialize** unpressed first. The sample intentionally calls start and expects `HTTP 409 not_initialized`.
 5. When prompted, press **Initialize** and confirm `initialized=True, processState=ready`.
@@ -72,7 +74,7 @@ WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A
 WaferInfo updated from TCP: lotId=LOT-RAW-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
 ```
 
-Detailed UI SOPs are in `docs/simulator.html`.
+Detailed UI SOPs are in the MkDocs source at `docs/simulator.md` and the published documentation website.
 
 ## Run Samples
 
@@ -112,7 +114,7 @@ Detailed UI SOPs are in `docs/simulator.html`.
    samples\cpp-raw-mqtt\build\Release\cpp-raw-mqtt.exe
    ```
 
-The SDK and raw REST samples demonstrate the expected `not_initialized` response before **Initialize**, then continue through WaferInfo, cycle start, and result query after the tester presses **Initialize**. The raw TCP samples connect to port `5089`, read the initial status and wafer info frames, send a `waferInfo` NDJSON frame, and print the update event returned by the simulator. The raw MQTT samples subscribe to `Virex.NET/#`; while they are running, trigger events from the simulator UI with **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, or **Emit Error**.
+The SDK and raw REST samples demonstrate the expected `not_initialized` response before **Initialize**, then continue through WaferInfo, cycle start, and result query after the tester presses **Initialize**. The raw TCP samples connect to port `5089`, read the initial status and wafer info frames, send a `waferInfo` NDJSON frame, and print the update event returned by the simulator. The raw MQTT samples subscribe to `virex/#`; while they are running, trigger events from the simulator UI with **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, or **Emit Error**.
 
 ## C# SDK Example
 
@@ -127,7 +129,7 @@ using var client = new VirexClient(new VirexClientOptions
     TcpPort = 5089,
     MqttHost = "127.0.0.1",
     MqttPort = 1883,
-    MqttTopic = "Virex.NET",
+    MqttTopic = "virex",
 });
 
 await client.SetWaferInfoAsync(new WaferInfo
@@ -161,6 +163,26 @@ More examples are under `samples/`:
 Customer-facing SDK usage, sample code guidance, simulator workflow, and protocol references are available at:
 
 https://vstechnology-tw.github.io/vst-virex.net.integration/
+
+### Preview Documentation Locally
+
+```powershell
+python -m pip install -r requirements-docs.txt
+mkdocs build --strict
+```
+
+Run a local preview server separately when you want to browse the site:
+
+```powershell
+mkdocs serve
+```
+
+Local preview URLs:
+
+- English: `http://127.0.0.1:8000/vst-virex.net.integration/`
+- Traditional Chinese: `http://127.0.0.1:8000/vst-virex.net.integration/zh/`
+
+The MkDocs source files live under `docs/`. The generated `site/` folder is a local build artifact and should not be committed.
 
 ## License
 

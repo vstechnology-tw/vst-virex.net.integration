@@ -1,6 +1,6 @@
 # REST API
 
-REST is used for command/query flows: reading status, submitting WaferInfo, controlling the cycle, and querying result summaries.
+REST 用於 command/query flows：讀取 status、送出 WaferInfo、控制 cycle、查詢 result summaries。
 
 Default simulator base URL:
 
@@ -8,14 +8,14 @@ Default simulator base URL:
 http://127.0.0.1:5088
 ```
 
-After **Start Servers**, the simulator also exposes:
+按下 **Start Servers** 後，simulator 也會提供：
 
 ```text
 Scalar:       http://127.0.0.1:5088/scalar
 OpenAPI JSON: http://127.0.0.1:5088/openapi/v1.json
 ```
 
-Use the Scalar page to manually verify the same public REST surface exposed by `vst-virex.net.wpf`.
+可使用 Scalar page 手動驗證與 `vst-virex.net.wpf` 相同的 public REST surface。
 
 Endpoints:
 
@@ -31,7 +31,7 @@ POST /api/control/stop
 GET  /api/results
 ```
 
-For exact request and response body shapes, see [Transmitted Content / Payloads](payloads.md).
+完整 request/response body shape 請看 [傳送內容 / Payloads](payloads.md)。
 
 ## Status
 
@@ -43,7 +43,7 @@ For exact request and response body shapes, see [Transmitted Content / Payloads]
 }
 ```
 
-`processState` is one of:
+`processState` 可為：
 
 ```text
 ready
@@ -67,7 +67,7 @@ saving
 
 ## Results
 
-`GET /api/results` returns fixed-size summaries only. It does not include defect lists, die lists, crop lists, or image binaries.
+`GET /api/results` 只回傳固定大小的 summaries，不包含 defect lists、die lists、crop lists 或 image binaries。
 
 Supported query parameters:
 
@@ -77,6 +77,6 @@ waferId
 recipeId
 ```
 
-Multiple parameters are combined with AND.
+多個 parameters 以 AND 合併。
 
-REST result summaries are public integration summaries. They do not expose private inspection internals.
+REST result summaries 是 public integration summaries，不暴露 private inspection internals。

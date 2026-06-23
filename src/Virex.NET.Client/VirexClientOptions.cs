@@ -12,7 +12,9 @@ public sealed class VirexClientOptions
 
     public int MqttPort { get; set; } = 1883;
 
-    public string MqttTopic { get; set; } = "Virex.NET";
+    public string MqttTopic { get; set; } = "virex";
 
     public int TimeoutMs { get; set; } = 5000;
+
+    public int TcpFrameTimeoutMs { get; set; } = 5000;
 }

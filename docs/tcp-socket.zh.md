@@ -1,8 +1,8 @@
 # TCP Socket Protocol
 
-TCP is used for direct socket integrations that need bidirectional command and event traffic.
+TCP 用於需要雙向 command 與 event traffic 的 direct socket integrations。
 
-TCP uses a single port and NDJSON framing:
+TCP 使用單一 port 與 NDJSON framing：
 
 ```text
 one JSON object per line
@@ -10,11 +10,11 @@ each frame ends with \n
 UTF-8 encoding
 ```
 
-The C# SDK applies a per-frame idle timeout while reading TCP/NDJSON. A long gap between two complete frames is valid. After any byte of a frame has arrived, the remaining bytes and the terminating newline must arrive within `VirexClientOptions.TcpFrameTimeoutMs` or the TCP event reader fails with a timeout.
+C# SDK 讀取 TCP/NDJSON 時會套用 per-frame idle timeout。兩筆完整 frame 之間可以間隔很久；但只要某一筆 frame 已經收到任何 byte，剩餘 bytes 與結尾 newline 必須在 `VirexClientOptions.TcpFrameTimeoutMs` 內抵達，否則 TCP event reader 會 timeout。
 
-The equipment/client connects to the Virex.NET-compatible service. The same connection can send inbound messages and receive outbound events.
+Equipment/client 連到 Virex.NET-compatible service。同一條 connection 可送 inbound messages，也可接收 outbound events。
 
-For field-level details and shared JSON body shapes, see [Transmitted Content / Payloads](payloads.md).
+Field-level details 與 shared JSON body shapes 請看 [傳送內容 / Payloads](payloads.md)。
 
 ## Inbound
 
@@ -30,7 +30,7 @@ For field-level details and shared JSON body shapes, see [Transmitted Content / 
 {"type":"stop"}
 ```
 
-The `type` field is optional for legacy WaferInfo frames. Start/stop require `type`.
+Legacy WaferInfo frames 可省略 `type` field。Start/stop 必須包含 `type`。
 
 ## Outbound
 
@@ -50,4 +50,4 @@ The `type` field is optional for legacy WaferInfo frames. Start/stop require `ty
 {"type":"error","message":"Recipe load failed.","initialized":true,"processState":"ready","recipe":"Default","timestamp":"2026-06-20T00:00:00+08:00"}
 ```
 
-The result event is summary-only and does not include defect lists or binaries.
+Result event 只提供 summary，不包含 defect lists 或 binary payloads。

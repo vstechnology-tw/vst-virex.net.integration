@@ -1,8 +1,8 @@
 # TCP Socket Protocol
 
-TCP is used for direct socket integrations that need bidirectional command and event traffic.
+TCP는 bidirectional command 및 event traffic이 필요한 direct socket integration에 사용됩니다.
 
-TCP uses a single port and NDJSON framing:
+TCP는 single port와 NDJSON framing을 사용합니다.
 
 ```text
 one JSON object per line
@@ -10,11 +10,11 @@ each frame ends with \n
 UTF-8 encoding
 ```
 
-The C# SDK applies a per-frame idle timeout while reading TCP/NDJSON. A long gap between two complete frames is valid. After any byte of a frame has arrived, the remaining bytes and the terminating newline must arrive within `VirexClientOptions.TcpFrameTimeoutMs` or the TCP event reader fails with a timeout.
+C# SDK는 TCP/NDJSON을 읽는 동안 per-frame idle timeout을 적용합니다. 두 complete frames 사이의 긴 gap은 유효합니다. Frame의 첫 byte가 도착한 뒤에는 나머지 bytes와 종료 newline이 `VirexClientOptions.TcpFrameTimeoutMs` 이내에 도착해야 하며, 그렇지 않으면 TCP event reader가 timeout으로 실패합니다.
 
-The equipment/client connects to the Virex.NET-compatible service. The same connection can send inbound messages and receive outbound events.
+Equipment/client는 Virex.NET-compatible service에 연결합니다. 같은 connection으로 inbound messages를 보내고 outbound events를 받을 수 있습니다.
 
-For field-level details and shared JSON body shapes, see [Transmitted Content / Payloads](payloads.md).
+Field-level details 및 shared JSON body shapes는 [Transmitted Content / Payloads](payloads.md)를 참조하십시오.
 
 ## Inbound
 
@@ -30,7 +30,7 @@ For field-level details and shared JSON body shapes, see [Transmitted Content / 
 {"type":"stop"}
 ```
 
-The `type` field is optional for legacy WaferInfo frames. Start/stop require `type`.
+`type` field는 legacy WaferInfo frames에서는 optional입니다. Start/stop에는 `type`이 필요합니다.
 
 ## Outbound
 
@@ -50,4 +50,4 @@ The `type` field is optional for legacy WaferInfo frames. Start/stop require `ty
 {"type":"error","message":"Recipe load failed.","initialized":true,"processState":"ready","recipe":"Default","timestamp":"2026-06-20T00:00:00+08:00"}
 ```
 
-The result event is summary-only and does not include defect lists or binaries.
+Result event는 summary-only이며 defect lists 또는 binaries를 포함하지 않습니다.
