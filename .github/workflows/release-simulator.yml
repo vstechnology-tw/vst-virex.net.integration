@@ -1,0 +1,155 @@
+name: Release Simulator
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Simulator version to build, for example 2.0.1"
+        required: true
+        type: string
+      upload_to_release:
+        description: "Upload ZIP assets to an existing GitHub Release"
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: "Existing release tag to upload to. Defaults to v{version}."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-simulator:
+    name: Build simulator ZIP assets
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    env:
+      SIMULATOR_PROJECT: src/Virex.NET.Simulator.WPF/Virex.NET.Simulator.WPF.csproj
+      PUBLISH_ROOT: artifacts/simulator
+      ZIP_ROOT: artifacts/release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Resolve release metadata
+        id: release
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ inputs.version }}"
+            $tag = "${{ inputs.release_tag }}"
+            $uploadToRelease = [System.Convert]::ToBoolean("${{ inputs.upload_to_release }}")
+          } else {
+            $tag = "${{ github.event.release.tag_name }}"
+            $version = $tag -replace '^v', ''
+            $uploadToRelease = $true
+          }
+
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "Simulator version could not be resolved."
+          }
+
+          if ($version -notmatch '^\d+\.\d+\.\d+([\-+][0-9A-Za-z\-.]+)?$') {
+            throw "Simulator version '$version' is not a valid SemVer-style version."
+          }
+
+          if ([string]::IsNullOrWhiteSpace($tag)) {
+            $tag = "v$version"
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "upload_to_release=$($uploadToRelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore Virex.NET.Integration.slnx
+
+      - name: Test
+        run: dotnet test Virex.NET.Integration.slnx --configuration Release --no-restore
+
+      - name: Publish simulator builds
+        shell: pwsh
+        run: |
+          $version = "${{ steps.release.outputs.version }}"
+          $project = $env:SIMULATOR_PROJECT
+          $publishRoot = $env:PUBLISH_ROOT
+
+          $builds = @(
+            @{
+              Framework = "net48"
+              Output = Join-Path $publishRoot "Virex.NET.Simulator-v$version-net48-win-x64"
+              Args = @("-f", "net48")
+            },
+            @{
+              Framework = "net8.0-windows"
+              Output = Join-Path $publishRoot "Virex.NET.Simulator-v$version-net8.0-windows-win-x64-self-contained"
+              Args = @("-f", "net8.0-windows", "-r", "win-x64", "--self-contained", "true", "-p:PublishSingleFile=false")
+            },
+            @{
+              Framework = "net10.0-windows"
+              Output = Join-Path $publishRoot "Virex.NET.Simulator-v$version-net10.0-windows-win-x64-self-contained"
+              Args = @("-f", "net10.0-windows", "-r", "win-x64", "--self-contained", "true", "-p:PublishSingleFile=false")
+            }
+          )
+
+          foreach ($build in $builds) {
+            dotnet publish $project `
+              --configuration Release `
+              --output $build.Output `
+              @($build.Args)
+
+            $exePath = Join-Path $build.Output "Virex.NET.Simulator.WPF.exe"
+            if (-not (Test-Path $exePath)) {
+              throw "Expected simulator executable was not produced: $exePath"
+            }
+          }
+
+      - name: Create ZIP assets
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:ZIP_ROOT | Out-Null
+
+          Get-ChildItem -Path $env:PUBLISH_ROOT -Directory | ForEach-Object {
+            $zipPath = Join-Path $env:ZIP_ROOT "$($_.Name).zip"
+            if (Test-Path $zipPath) {
+              Remove-Item $zipPath -Force
+            }
+
+            Compress-Archive -Path (Join-Path $_.FullName "*") -DestinationPath $zipPath
+            if (-not (Test-Path $zipPath)) {
+              throw "ZIP asset was not created: $zipPath"
+            }
+          }
+
+          Get-ChildItem -Path $env:ZIP_ROOT -Filter *.zip | Format-Table Name, Length
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-release-zips
+          path: artifacts/release/*.zip
+          if-no-files-found: error
+
+      - name: Upload assets to GitHub Release
+        if: steps.release.outputs.upload_to_release == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ steps.release.outputs.tag }}"
+          gh release view $tag --repo $env:GITHUB_REPOSITORY | Out-Null
+          gh release upload $tag artifacts/release/*.zip --repo $env:GITHUB_REPOSITORY --clobber

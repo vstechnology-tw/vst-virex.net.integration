@@ -10,4 +10,5 @@ TestResults/
 packages/
 logs/
 /site/
+/artifacts/
 mkdocs-serve*.log
