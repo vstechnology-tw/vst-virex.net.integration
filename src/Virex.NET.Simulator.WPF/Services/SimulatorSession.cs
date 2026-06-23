@@ -127,10 +127,13 @@ public sealed class SimulatorSession
 
     public ResultSummaryDto EmitResult(string resultPathPrefix)
     {
-        var id = $"{WaferInfo.LotIdOr}-{WaferInfo.WaferIdOr}-{WaferInfo.SlotOr}-{DateTime.Now:yyyyMMdd_HHmmss}_{Interlocked.Increment(ref _resultSequence):000}";
-        var relativeRoot = $"{DateTime.Now:yyyyMMdd}/{WaferInfo.LotIdOr}";
-        var imageRelative = $"{relativeRoot}/{id}-image.tiff";
-        var resultRelative = $"{relativeRoot}/{id}-result.json";
+        var now = DateTime.Now;
+        var id = $"{WaferInfo.LotIdOr}-{WaferInfo.WaferIdOr}-{WaferInfo.SlotOr}-{now:yyyyMMdd_HHmmss}_{Interlocked.Increment(ref _resultSequence):000}";
+        var relativeRoot = $"{now:yyyyMMdd}/{WaferInfo.LotIdOr}";
+        var artifactName = $"{now:yyyyMMdd_HHmmss}_{WaferInfo.WaferIdOr}";
+        var imageRelative = $"{relativeRoot}/{artifactName}.tiff";
+        var previewImageRelative = $"{relativeRoot}/{artifactName}.jpg";
+        var resultRelative = $"{relativeRoot}/{artifactName}.json";
         var result = new ResultSummaryDto
         {
             ResultId = id,
@@ -143,10 +146,10 @@ public sealed class SimulatorSession
             ChamberId = WaferInfo.ChamberIdOr,
             OverallResult = "OK",
             DefectCount = 0,
-            DieCount = 100,
             ImageRelativePath = imageRelative,
             ResultRelativePath = resultRelative,
             ImagePath = JoinExternalPath(resultPathPrefix, imageRelative),
+            PreviewImagePath = JoinExternalPath(resultPathPrefix, previewImageRelative),
             ResultPath = JoinExternalPath(resultPathPrefix, resultRelative),
         };
 

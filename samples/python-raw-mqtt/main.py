@@ -83,7 +83,7 @@ def prompt(message):
 def main():
     host = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 1883
-    base_topic = sys.argv[3] if len(sys.argv) > 3 else "Virex.NET"
+    base_topic = sys.argv[3] if len(sys.argv) > 3 else "virex"
     duration_seconds = int(sys.argv[4]) if len(sys.argv) > 4 else 30
     topic_filter = f"{base_topic}/#"
 
@@ -115,11 +115,11 @@ def main():
         print_step("Step 1 - Trigger events from Simulator")
         print(f"Subscribed to {topic_filter} for {duration_seconds} seconds.")
         print("Expected UI actions and topics:")
-        print("- Press Apply WaferInfo: expect Virex.NET/wafer-info.")
-        print("- Press Initialize: expect Virex.NET/status with initialized=true.")
-        print("- Press Start Cycle: expect Virex.NET/status transitions.")
-        print("- Press Emit Fake Result: expect Virex.NET/result.")
-        print("- Press Emit Error: expect Virex.NET/error.")
+        print("- Press Apply WaferInfo: expect virex/wafer-info.")
+        print("- Press Initialize: expect virex/status with initialized=true.")
+        print("- Press Start Cycle: expect virex/status transitions.")
+        print("- Press Emit Fake Result: expect virex/result.")
+        print("- Press Emit Error: expect virex/error.")
 
         deadline = time.monotonic() + duration_seconds
         while time.monotonic() < deadline:

@@ -9,3 +9,6 @@ TestResults/
 *.snupkg
 packages/
 logs/
+/site/
+/artifacts/
+mkdocs-serve*.log

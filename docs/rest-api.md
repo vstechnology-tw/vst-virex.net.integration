@@ -1,10 +1,21 @@
 # REST API
 
+REST is used for command/query flows: reading status, submitting WaferInfo, controlling the cycle, and querying result summaries.
+
 Default simulator base URL:
 
 ```text
 http://127.0.0.1:5088
 ```
+
+After **Start Servers**, the simulator also exposes:
+
+```text
+Scalar:       http://127.0.0.1:5088/scalar
+OpenAPI JSON: http://127.0.0.1:5088/openapi/v1.json
+```
+
+Use the Scalar page to manually verify the same public REST surface exposed by `vst-virex.net.wpf`.
 
 Endpoints:
 
@@ -19,6 +30,8 @@ POST /api/control/start
 POST /api/control/stop
 GET  /api/results
 ```
+
+For exact request and response body shapes, see [Transmitted Content / Payloads](payloads.md).
 
 ## Status
 
@@ -65,3 +78,5 @@ recipeId
 ```
 
 Multiple parameters are combined with AND.
+
+REST result summaries are public integration summaries. They do not expose private inspection internals.

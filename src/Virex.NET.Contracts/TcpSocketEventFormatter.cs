@@ -39,10 +39,10 @@ public static class TcpSocketEventFormatter
             summary.ChamberId,
             summary.OverallResult,
             summary.DefectCount,
-            summary.DieCount,
             summary.ImageRelativePath,
             summary.ResultRelativePath,
             summary.ImagePath,
+            summary.PreviewImagePath,
             summary.ResultPath,
         });
 

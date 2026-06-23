@@ -8,7 +8,7 @@ var options = new VirexClientOptions
     TcpPort = 5089,
     MqttHost = "127.0.0.1",
     MqttPort = 1883,
-    MqttTopic = "Virex.NET",
+    MqttTopic = "virex",
 };
 
 using var client = new VirexClient(options);

@@ -11,6 +11,8 @@ namespace Virex.NET.Simulator.WPF.Services;
 
 public sealed class RestSimulatorServer
 {
+    private static readonly string[] AllowedResultQueryKeys = ["lotId", "waferId", "recipeId"];
+
     private readonly SimulatorSession _session;
     private readonly string _prefix;
     private readonly HttpListener _listener = new HttpListener();
@@ -111,6 +113,21 @@ public sealed class RestSimulatorServer
             }
             else if (path == RestRoutes.ApiResults && context.Request.HttpMethod == "GET")
             {
+                var invalid = context.Request.QueryString.AllKeys
+                    .Where(key => !string.IsNullOrWhiteSpace(key) &&
+                        !AllowedResultQueryKeys.Contains(key!, StringComparer.OrdinalIgnoreCase))
+                    .ToArray();
+                if (invalid.Length > 0)
+                {
+                    context.Response.StatusCode = 400;
+                    await JsonAsync(context, new
+                    {
+                        error = "Only lotId, waferId, and recipeId are supported query parameters.",
+                        invalid,
+                    }).ConfigureAwait(false);
+                    return;
+                }
+
                 var items = FilterResults(context.Request.QueryString["lotId"], context.Request.QueryString["waferId"], context.Request.QueryString["recipeId"]);
                 await JsonAsync(context, new ResultListDto { Items = items, Count = items.Length }).ConfigureAwait(false);
             }
@@ -120,7 +137,7 @@ public sealed class RestSimulatorServer
             }
             else if (path == RestRoutes.Scalar)
             {
-                await TextAsync(context, "<html><body><h1>Virex.NET Simulator</h1><p>OpenAPI: <a href=\"/openapi/v1.json\">/openapi/v1.json</a></p></body></html>", "text/html").ConfigureAwait(false);
+                await TextAsync(context, ScalarHtml(), "text/html").ConfigureAwait(false);
             }
             else
             {
@@ -170,6 +187,20 @@ public sealed class RestSimulatorServer
     }
 
     private static string EnsureTrailingSlash(string value) => value.Trim().TrimEnd('/') + "/";
+
+    private static string ScalarHtml() =>
+        @"<!doctype html>
+<html>
+<head>
+  <meta charset=""utf-8"" />
+  <meta name=""viewport"" content=""width=device-width, initial-scale=1"" />
+  <title>Virex.NET Simulator API</title>
+</head>
+<body>
+  <script id=""api-reference"" data-url=""/openapi/v1.json""></script>
+  <script src=""https://cdn.jsdelivr.net/npm/@scalar/api-reference""></script>
+</body>
+</html>";
 
     private static Task WriteResponseAsync(Stream stream, byte[] bytes)
     {

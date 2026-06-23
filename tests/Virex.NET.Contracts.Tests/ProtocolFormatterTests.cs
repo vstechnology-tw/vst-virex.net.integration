@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Virex.NET.Contracts;
+using Virex.NET.Simulator.WPF.Services;
 
 namespace Virex.NET.Contracts.Tests;
 
@@ -29,7 +30,7 @@ public sealed class ProtocolFormatterTests
         var frame = TcpSocketEventFormatter.FormatResult(new ResultSummaryDto
         {
             ResultId = "RID-1",
-            Timestamp = "2026-06-20T00:00:00+08:00",
+            Timestamp = "2026-06-20T15:30:12+08:00",
             LotId = "LOT-1",
             WaferId = "W01",
             RecipeId = "RCP-A",
@@ -38,17 +39,33 @@ public sealed class ProtocolFormatterTests
             ChamberId = "CH-1",
             OverallResult = "OK",
             DefectCount = 0,
-            DieCount = 100,
-            ImageRelativePath = "20260620/LOT-1/image.tiff",
-            ResultRelativePath = "20260620/LOT-1/result.json",
-            ImagePath = @"\\vision\results\20260620\LOT-1\image.tiff",
-            ResultPath = @"\\vision\results\20260620\LOT-1\result.json",
+            ImageRelativePath = "20260620/LOT-1/20260620_153012_W01.tiff",
+            ResultRelativePath = "20260620/LOT-1/20260620_153012_W01.json",
+            ImagePath = "/data/virex-results/20260620/LOT-1/20260620_153012_W01.tiff",
+            PreviewImagePath = "/data/virex-results/20260620/LOT-1/20260620_153012_W01.jpg",
+            ResultPath = "/data/virex-results/20260620/LOT-1/20260620_153012_W01.json",
         });
 
         using var doc = JsonDocument.Parse(frame);
         Assert.Equal("result", doc.RootElement.GetProperty("type").GetString());
         Assert.Equal("RID-1", doc.RootElement.GetProperty("resultId").GetString());
+        Assert.Equal("/data/virex-results/20260620/LOT-1/20260620_153012_W01.jpg", doc.RootElement.GetProperty("previewImagePath").GetString());
+        Assert.False(doc.RootElement.TryGetProperty("dieCount", out _));
         Assert.False(doc.RootElement.TryGetProperty("defectList", out _));
+    }
+
+    [Fact]
+    public void SimulatorResultUsesTimestampWaferArtifactNamesAndPreviewImagePath()
+    {
+        var session = new SimulatorSession();
+
+        var result = session.EmitResult("/data/virex-results");
+
+        Assert.Matches(@"^\d{8}/LOT-001/\d{8}_\d{6}_W01\.tiff$", result.ImageRelativePath);
+        Assert.Matches(@"^\d{8}/LOT-001/\d{8}_\d{6}_W01\.json$", result.ResultRelativePath);
+        Assert.Matches(@"^/data/virex-results/\d{8}/LOT-001/\d{8}_\d{6}_W01\.tiff$", result.ImagePath);
+        Assert.Matches(@"^/data/virex-results/\d{8}/LOT-001/\d{8}_\d{6}_W01\.jpg$", result.PreviewImagePath);
+        Assert.Matches(@"^/data/virex-results/\d{8}/LOT-001/\d{8}_\d{6}_W01\.json$", result.ResultPath);
     }
 
     [Fact]

@@ -16,3 +16,4 @@ Rules:
 - Additive fields are allowed in a minor version.
 - Breaking changes require a major version.
 - Keep simulator, SDK, docs, and contract tests on the same version.
+- Keep [Transmitted Content / Payloads](payloads.md) aligned with any public DTO, route, topic, or event-shape change.

@@ -293,7 +293,7 @@ int main(int argc, char* argv[])
     {
         const char* host = argc > 1 ? argv[1] : "127.0.0.1";
         const char* port = argc > 2 ? argv[2] : "1883";
-        const std::string baseTopic = argc > 3 ? argv[3] : "Virex.NET";
+        const std::string baseTopic = argc > 3 ? argv[3] : "virex";
         const int durationSeconds = argc > 4 ? std::stoi(argv[4]) : 30;
         const std::string topicFilter = baseTopic + "/#";
 
@@ -326,11 +326,11 @@ int main(int argc, char* argv[])
         PrintStep("Step 1 - Trigger events from Simulator");
         std::cout << "Subscribed to " << topicFilter << " for " << durationSeconds << " seconds." << std::endl;
         std::cout << "Expected UI actions and topics:" << std::endl;
-        std::cout << "- Press Apply WaferInfo: expect Virex.NET/wafer-info." << std::endl;
-        std::cout << "- Press Initialize: expect Virex.NET/status with initialized=true." << std::endl;
-        std::cout << "- Press Start Cycle: expect Virex.NET/status transitions." << std::endl;
-        std::cout << "- Press Emit Fake Result: expect Virex.NET/result." << std::endl;
-        std::cout << "- Press Emit Error: expect Virex.NET/error." << std::endl;
+        std::cout << "- Press Apply WaferInfo: expect virex/wafer-info." << std::endl;
+        std::cout << "- Press Initialize: expect virex/status with initialized=true." << std::endl;
+        std::cout << "- Press Start Cycle: expect virex/status transitions." << std::endl;
+        std::cout << "- Press Emit Fake Result: expect virex/result." << std::endl;
+        std::cout << "- Press Emit Error: expect virex/error." << std::endl;
 
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(durationSeconds);
         while (std::chrono::steady_clock::now() < deadline)
