@@ -1,0 +1,89 @@
+name: Verify samples
+
+on:
+  pull_request:
+    paths:
+      - samples/**
+      - src/**
+      - Directory.Build.props
+      - Directory.Build.targets
+      - Directory.Packages.props
+      - Virex.NET.Integration.slnx
+      - .github/workflows/verify-samples.yml
+  push:
+    branches:
+      - main
+    paths:
+      - samples/**
+      - src/**
+      - Directory.Build.props
+      - Directory.Build.targets
+      - Directory.Packages.props
+      - Virex.NET.Integration.slnx
+      - .github/workflows/verify-samples.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-samples:
+    name: Verify C#, Python, and C++ samples
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build C# samples
+        shell: pwsh
+        run: |
+          $projects = @(
+            "samples/csharp-raw-rest/CSharpRawRestSample.csproj",
+            "samples/csharp-raw-tcp/CSharpRawTcpSample.csproj",
+            "samples/csharp-raw-mqtt/CSharpRawMqttSample.csproj",
+            "samples/csharp-sdk/CSharpSdkSample.csproj"
+          )
+
+          foreach ($project in $projects) {
+            dotnet build $project --configuration Release
+          }
+
+      - name: Compile Python samples
+        run: >
+          python -m py_compile
+          samples/python-raw-rest/main.py
+          samples/python-raw-tcp/main.py
+          samples/python-raw-mqtt/main.py
+
+      - name: Build C++ samples
+        shell: pwsh
+        run: |
+          $samples = @(
+            "cpp-raw-rest",
+            "cpp-raw-tcp",
+            "cpp-raw-mqtt"
+          )
+
+          foreach ($sample in $samples) {
+            $source = "samples/$sample"
+            $build = "artifacts/sample-build/$sample"
+            if (Test-Path $build) {
+              Remove-Item -Recurse -Force $build
+            }
+
+            cmake -S $source -B $build
+            cmake --build $build --config Release
+          }
