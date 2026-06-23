@@ -3,6 +3,8 @@ obj/
 .vs/
 .vscode/
 TestResults/
+__pycache__/
+*.py[cod]
 *.user
 *.suo
 *.nupkg
