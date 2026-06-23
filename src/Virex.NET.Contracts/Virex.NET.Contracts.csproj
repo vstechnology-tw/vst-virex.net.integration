@@ -4,6 +4,11 @@
     <PackageId>Virex.NET.Contracts</PackageId>
     <Description>Public Virex.NET integration contracts for REST, MQTT, and TCP socket protocols.</Description>
     <PackageIcon>vst-logo.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/vstechnology-tw/vst-virex.net.integration</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/vstechnology-tw/vst-virex.net.integration</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
@@ -14,5 +19,6 @@
 
   <ItemGroup>
     <None Include="..\..\packaging\vst-logo.png" Pack="true" PackagePath="" Visible="false" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="" Visible="false" />
   </ItemGroup>
 </Project>
