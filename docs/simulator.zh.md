@@ -1,6 +1,6 @@
 # Simulator 操作手冊
 
-Virex.NET Integration Simulator 是客戶端整合開發時使用的本機測試工具。它提供 REST、TCP、MQTT endpoints，並可模擬 WaferInfo、狀態變化、result summaries 與 error events。
+Virex.NET Integration Simulator 是客戶端整合開發時使用的本機測試工具。它提供 REST、TCP、MQTT 端點，並可模擬 WaferInfo、狀態變化、結果摘要與錯誤事件。
 
 從 repository root 啟動：
 
@@ -12,17 +12,17 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 | 用途 | 要驗證的內容 |
 | --- | --- |
-| 驗證 SDK | 確認 `VirexClient` 可以讀 status、送 WaferInfo、start cycle、query result summaries。 |
-| 驗證 raw protocols | 讓非 C# 系統測試 REST payloads、TCP/NDJSON frames 與 MQTT topics。 |
-| 模擬 events | 在本機先模擬 status、wafer-info、result、error events，讓 client handling logic 先完成。 |
+| 驗證 SDK | 確認 `VirexClient` 可以讀取狀態、送出 WaferInfo、啟動流程並查詢結果摘要。 |
+| 驗證 raw protocols | 讓非 C# 系統測試 REST payload、TCP/NDJSON frame 與 MQTT topic。 |
+| 模擬事件 | 在本機先模擬 `status`、`wafer-info`、`result`、`error` 事件，讓客戶端處理邏輯先完成。 |
 
 ## App UI
 
-下圖是 guided samples 使用的 simulator window。
+下圖是引導式範例使用的模擬器視窗。
 
 <figure>
-  <div style="position: relative; display: inline-block; max-width: 100%;">
-    <img src="../assets/simulator-main-window.png" alt="Virex.NET Integration Simulator main window" style="display: block; width: 100%; height: auto;">
+  <div style="position: relative; width: 100%; max-width: 1008px; aspect-ratio: 1008 / 658;">
+    <img src="assets/simulator-main-window.png" alt="Virex.NET Integration Simulator main window" style="display: block; width: 100%; height: 100%; object-fit: contain;">
     <span aria-label="Area 1" style="position: absolute; left: 3%; top: 12%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">1</span>
     <span aria-label="Area 2" style="position: absolute; left: 42%; top: 12%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">2</span>
     <span aria-label="Area 3" style="position: absolute; left: 82%; top: 12%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">3</span>
@@ -40,21 +40,21 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | 1 | Connection Settings | REST prefix、TCP port、MQTT host/port/topic、result prefix。測試前先確認此區。 |
 | 2 | WaferInfo | Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID。 |
 | 3 | State | 目前 `initialized`、`processState`、`recipe` 與主要操作按鈕。 |
-| 4 | Event Log | Server start、WaferInfo updates、cycle events、results、errors 與其他 activity。 |
-| 5 | **Start Servers** | 第一個要按的按鈕。按下後 REST/TCP/MQTT services 才會開始對外服務。 |
-| 6 | **Apply WaferInfo** | 修改 WaferInfo fields 後，套用目前 test wafer context。 |
-| 7 | **Start Cycle** | 模擬完整 cycle、state transitions 與 result summary。 |
-| 8 | **Emit Fake Result** / **Emit Error** | 手動產生 result 或 error events，用於 client-side handling tests。 |
+| 4 | Event Log | 服務啟動、WaferInfo 更新、流程事件、結果、錯誤與其他執行紀錄。 |
+| 5 | **Start Servers** | 第一個要按的按鈕。按下後 REST/TCP/MQTT 服務才會開始對外服務。 |
+| 6 | **Apply WaferInfo** | 修改 WaferInfo 欄位後，套用目前測試 wafer context。 |
+| 7 | **Start Cycle** | 模擬完整流程、狀態變化與結果摘要。 |
+| 8 | **Emit Fake Result** / **Emit Error** | 手動產生結果或錯誤事件，用於客戶端處理測試。 |
 
 ## 標準操作 SOP
 
-1. 啟動 simulator app：
+1. 啟動 Simulator App：
 
    ```powershell
    dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
    ```
 
-2. 確認 connection settings。
+2. 確認連線設定。
 
    第一次使用建議保留預設值：
 
@@ -67,7 +67,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 3. 按 **Start Servers**。
 
-   成功後 Event Log 會顯示 REST listening、TCP listening、MQTT started/connected records。SDK 與 sample clients 必須等此步驟後才能連線。
+   成功後 Event Log 會顯示 REST listening、TCP listening、MQTT started/connected 紀錄。SDK 與範例程式必須等此步驟後才能連線。
 
    此步驟後 REST 驗證頁也會立即可用：
 
@@ -76,15 +76,15 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
    OpenAPI JSON: http://127.0.0.1:5088/openapi/v1.json
    ```
 
-   可用 Scalar 直接在 browser 呼叫 status、wafer-info、control 與 results endpoints。
+   可用 Scalar 直接在瀏覽器呼叫 status、wafer-info、control 與 results endpoint。
 
 4. 先驗證 `not_initialized`。
 
-   在按 **Initialize** 前執行 SDK 或 REST sample。當 sample 呼叫 start 時，預期回傳 `HTTP 409 not_initialized`。這表示 sample 正確反映 UI state。
+   在按 **Initialize** 前執行 SDK 或 REST 範例。當範例呼叫 start 時，預期回傳 `HTTP 409 not_initialized`。這表示範例正確反映 UI 狀態。
 
 5. 輸入並套用 WaferInfo。
 
-   填入 Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID，然後按 **Apply WaferInfo**，或讓 sample 送出 WaferInfo。Event Log 應同一行列出所有欄位：
+   填入 Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID，然後按 **Apply WaferInfo**，或讓範例程式送出 WaferInfo。Event Log 應同一行列出所有欄位：
 
    ```text
    WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
@@ -92,15 +92,15 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 6. 執行 **Initialize** 與 **Start Cycle**。
 
-   按 **Initialize** 進入 initialized state。接著按 **Start Cycle** 或讓 sample 繼續。Simulator 會依序進入 `capturing`、`inspecting`、`saving`，再回到 `ready`。
+   按 **Initialize** 進入 initialized 狀態。接著按 **Start Cycle** 或讓範例程式繼續。Simulator 會依序進入 `capturing`、`inspecting`、`saving`，再回到 `ready`。
 
-7. 產生測試 events。
+7. 產生測試事件。
 
-   使用 **Emit Fake Result** 測試 result handling。使用 **Emit Error** 測試 error handling。MQTT sample 執行中時，這兩個按鈕應產生 `virex/result` 與 `virex/error`。
+   使用 **Emit Fake Result** 測試結果處理。使用 **Emit Error** 測試錯誤處理。MQTT 範例執行中時，這兩個按鈕應產生 `virex/result` 與 `virex/error`。
 
 8. 結束測試。
 
-   按 **Stop Servers** 或關閉 simulator window。
+   按 **Stop Servers** 或關閉模擬器視窗。
 
 ## 依情境測試流程
 
