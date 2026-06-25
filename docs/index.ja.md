@@ -29,6 +29,8 @@ Production-compatible service に接続する前に、customer-side integrations
 
 初回利用者は simulator と C# SDK sample を実行してください。Sample は **Start Servers**、**Initialize** 前に期待される `not_initialized` response、そして **Initialize** 後の normal cycle を案内します。
 
+ビルド済み simulator download、NuGet packages、sample code links は [インストール / ダウンロード](installation.md) を参照してください。
+
 1. Kit を build/test します。
 
    ```powershell
@@ -180,6 +182,7 @@ Result responses と result events は summaries のみを提供します。Defe
 
 ## References
 
+- [インストール / ダウンロード](installation.md)
 - [Simulator Manual](simulator.md)
 - [State Machine](state-machine.md)
 - [Transmitted Content / Payloads](payloads.md)
