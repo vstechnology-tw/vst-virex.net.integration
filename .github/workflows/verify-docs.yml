@@ -1,0 +1,47 @@
+name: Verify documentation
+
+on:
+  pull_request:
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - requirements-docs.txt
+      - scripts/verify-doc-assets.ps1
+      - .github/workflows/verify-docs.yml
+  push:
+    branches:
+      - main
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - requirements-docs.txt
+      - scripts/verify-doc-assets.ps1
+      - .github/workflows/verify-docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-docs:
+    name: Build docs and verify image assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install documentation dependencies
+        run: python -m pip install -r requirements-docs.txt
+
+      - name: Build documentation
+        run: mkdocs build --strict
+
+      - name: Verify documentation image assets
+        shell: pwsh
+        run: ./scripts/verify-doc-assets.ps1 -SitePath site
