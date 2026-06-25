@@ -82,6 +82,7 @@ using var client = new VirexClient(new VirexClientOptions
 
 var status = await client.GetStatusAsync();
 
+// REST command/query helpers는 SDK의 default high-level path입니다.
 await client.SetWaferInfoAsync(new WaferInfo
 {
     LotId = "LOT-001",
@@ -96,6 +97,28 @@ await client.InitializeAsync();
 await client.StartAsync();
 
 var results = await client.QueryResultsAsync(lotId: "LOT-001");
+
+// TCP는 TcpEvents를 통해 명시적으로 선택합니다.
+await client.TcpEvents.SendWaferInfoAsync(new WaferInfo
+{
+    LotId = "LOT-TCP-001",
+    WaferId = "W01",
+    RecipeId = "RCP-A",
+});
+await client.TcpEvents.SendStartAsync();
+
+// TCP and MQTT event listeners are started explicitly.
+using var eventCts = new CancellationTokenSource();
+client.TcpEvents.EventReceived += (_, value) =>
+    Console.WriteLine("TCP event: " + value.Type);
+client.MqttEvents.EventReceived += (_, value) =>
+    Console.WriteLine("MQTT event: " + value.Type);
+
+_ = client.TcpEvents.RunAsync(eventCts.Token);
+_ = client.MqttEvents.RunAsync(eventCts.Token);
+
+// MQTT는 event-only이며 command/control에 사용하지 않습니다.
+// Listening이 끝나면 eventCts.Cancel()을 호출합니다.
 ```
 
 Main SDK methods:
