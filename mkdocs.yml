@@ -1,9 +1,13 @@
 site_name: Virex.NET Integration Kit
 site_url: https://vstechnology-tw.github.io/vst-virex.net.integration/
+repo_url: https://github.com/vstechnology-tw/vst-virex.net.integration
+repo_name: vstechnology-tw/vst-virex.net.integration
 use_directory_urls: false
 
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.tracking
     - navigation.sections
