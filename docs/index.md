@@ -29,6 +29,8 @@ Use this kit to build and validate customer-side integrations before connecting 
 
 First-time users should run the simulator and the C# SDK sample. The sample guides the tester through **Start Servers**, the expected `not_initialized` response before **Initialize**, then the normal cycle after **Initialize**.
 
+For prebuilt simulator downloads, NuGet packages, and sample code links, see [Installation / Download](installation.md).
+
 1. Build and test the kit:
 
    ```powershell
@@ -180,6 +182,7 @@ Result responses and result events provide summaries only. They do not include d
 
 ## References
 
+- [Installation / Download](installation.md)
 - [Simulator Manual](simulator.md)
 - [State Machine](state-machine.md)
 - [Transmitted Content / Payloads](payloads.md)
