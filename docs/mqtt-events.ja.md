@@ -1,16 +1,16 @@
-# MQTT Events
+# MQTT イベント
 
-MQTT は Virex.NET-compatible service からの outbound-only event に使用します。
+MQTT は、Virex.NET 互換サービスからの送信専用です。
 
-**Start Servers** をクリックすると、simulator は embedded MQTT broker を起動します。Local clients は default broker `127.0.0.1:1883` を subscribe できます。simulator testing では外部 broker は不要です。
+**Start Servers** をクリックすると、シミュレーターは組み込み MQTT ブローカーを起動します。ローカル クライアントは既定のブローカー `127.0.0.1:1883` を購読できます。シミュレーター テストでは外部ブローカーは不要です。
 
-Default base topic:
+既定のベース トピック:
 
 ```text
 virex
 ```
 
-Published topics:
+発行されるトピック:
 
 ```text
 virex/status
@@ -19,8 +19,8 @@ virex/result
 virex/error
 ```
 
-Payload は REST と TCP socket events と同じ JSON shape を使用します。ただし MQTT payload は child topic が event を識別するため、`type` field は不要です。
+ペイロードは REST および TCP ソケット イベントと同じ JSON 形状を使用します。ただし、MQTT ペイロードでは子トピックがイベントを識別するため、`type` フィールドは不要です。
 
-MQTT は command/control には使用しません。
+MQTT はコマンド/制御には使用しません。
 
-Field-level payload details と simulator verification steps は [Transmitted Content / Payloads](payloads.md) を参照してください。
+フィールド単位のペイロード詳細とシミュレーター検証手順は、[送信内容 / ペイロード](payloads.md)を参照してください。

@@ -1,23 +1,23 @@
 # REST API
 
-REST는 command/query 흐름에 사용됩니다. status 조회, WaferInfo 제출, cycle 제어, result summary 조회를 수행합니다.
+REST는 상태 읽기, WaferInfo 제출, 사이클 제어, 결과 요약 조회 같은 명령/조회 흐름에 사용합니다.
 
-Default simulator base URL:
+기본 시뮬레이터 베이스 URL:
 
 ```text
 http://127.0.0.1:5088
 ```
 
-**Start Servers** 후 simulator는 다음도 제공합니다.
+**Start Servers** 후 시뮬레이터는 다음 항목도 제공합니다.
 
 ```text
 Scalar:       http://127.0.0.1:5088/scalar
 OpenAPI JSON: http://127.0.0.1:5088/openapi/v1.json
 ```
 
-Scalar page를 사용하면 `vst-virex.net.wpf` 와 동일한 public REST surface를 수동으로 검증할 수 있습니다.
+Scalar 페이지를 사용하면 `vst-virex.net.wpf` 가 제공하는 것과 동일한 공개 REST 표면을 수동으로 검증할 수 있습니다.
 
-Endpoints:
+엔드포인트:
 
 ```text
 GET  /api/status
@@ -31,7 +31,7 @@ POST /api/control/stop
 GET  /api/results
 ```
 
-정확한 request / response body shape는 [Transmitted Content / Payloads](payloads.md)를 참조하십시오.
+정확한 요청 및 응답 본문 형태는 [전송 내용 / 페이로드](payloads.md)를 참조하십시오.
 
 ## Status
 
@@ -67,9 +67,9 @@ saving
 
 ## Results
 
-`GET /api/results` 는 고정 크기의 summary만 반환합니다. defect list, die list, crop list, image binary는 포함하지 않습니다.
+`GET /api/results` 는 고정 크기의 요약만 반환합니다. 결함 목록, 다이 목록, 크롭 목록, 이미지 바이너리는 포함하지 않습니다.
 
-Supported query parameters:
+지원되는 쿼리 매개변수:
 
 ```text
 lotId
@@ -77,6 +77,6 @@ waferId
 recipeId
 ```
 
-여러 parameters는 AND 조건으로 결합됩니다.
+여러 매개변수를 지정하면 AND 로 결합됩니다.
 
-REST result summary는 public integration summary입니다. private inspection internals는 공개하지 않습니다.
+REST 결과 요약은 공개 연동용 요약입니다. 비공개 검사 내부 정보는 노출하지 않습니다.

@@ -1,61 +1,61 @@
 # 起動順序と状態遷移
 
-このページでは、client が simulator と統合するときに従うべき起動順序と、external commands によって公開状態がどのように変わるかを、簡略化した state diagram で説明します。図には integration 判断に必要な状態だけを含め、すべての内部可能性を列挙しません。
+このページでは、シミュレーターと連携するクライアントが従うべき起動順序と、外部コマンドによって発生する公開状態の変化を、簡略化した状態図で説明します。この図は、顧客が連携判断に必要とする状態だけを残しており、内部的な可能性をすべて列挙するものではありません。
 
-Simulator は 2 つの public values で状態を報告します。Clients は内部実装の詳細を知る必要はなく、次の command が有効かどうかをこれらの fields で判断します。
+シミュレーターは 2 つの公開値で状態を報告します。クライアントは内部実装の詳細を知る必要はありません。次のコマンドが有効かどうかを判断するには、これらのフィールドだけで十分です。
 
-| Field | Meaning |
+| フィールド | 意味 |
 | --- | --- |
-| `initialized` | simulated service が initialize されたかどうか。 |
-| `processState` | 現在の process state。`ready` は次の cycle を受け付け可能であることを示します。`capturing`、`inspecting`、`saving` は cycle progress updates です。 |
+| `initialized` | シミュレートされたサービスが初期化済みかどうか。 |
+| `processState` | 現在の処理状態。`ready` は次のサイクルを受け付けられることを意味します。`capturing`、`inspecting`、`saving` はサイクルの進行状況を示します。 |
 
-`Start Servers` は REST、TCP、MQTT endpoints が listening するかどうかだけを制御します。`initialized` や `processState` は変更しません。
+`Start Servers` は REST、TCP、MQTT エンドポイントが待ち受けているかどうかを制御します。`initialized` や `processState` は変更しません。
 
-## State Diagram
+## 状態図
 
 ![Virex.NET simulator state transition diagram](assets/state-machine-flow.svg)
 
-図中の **external command** は、client、SDK、REST、または TCP から送信される control command を意味します。`capturing`、`inspecting`、`saving` は cycle 中に simulator が内部的に進める progress states です。Clients は通常、status/result events を待つか、cancel が必要な場合に **Stop** を送ります。
+図の **external command** は、クライアント、SDK、REST、TCP から送信される制御コマンドを意味します。`capturing`、`inspecting`、`saving` は、サイクル中にシミュレーター内部で進む進行状態です。通常、クライアントは status/result イベントを待つか、キャンセルが必要な場合に **Stop** を送信します。
 
-## Client Rules
+## クライアント ルール
 
-| Rule | Client-side check |
+| ルール | クライアント側の確認 |
 | --- | --- |
-| **Start Servers** は communication prerequisite です。 | REST/TCP/MQTT endpoints が listening してから接続します。 |
-| **Initialize** は cycle prerequisite です。 | `initialized=false` の場合、start は `409 not_initialized` を返します。 |
-| **Start Cycle** は initialized かつ ready のときだけ送信してください。 | `initialized=true` かつ `processState=ready` のとき start が受け付けられます。 |
-| Active cycle states は progress updates です。 | `capturing`、`inspecting`、`saving` は cycle が実行中であることを示します。status/result events を待つか、stop を送ります。 |
-| Simulator は result event 後に ready に戻ります。 | Result summary の後、`processState=ready` になり、次の cycle を開始できます。 |
+| **Start Servers** は通信の前提条件です。 | REST/TCP/MQTT エンドポイントが待ち受けてから接続します。 |
+| **Initialize** はサイクルの前提条件です。 | `initialized=false` の場合、start は `409 not_initialized` を返します。 |
+| **Start Cycle** は初期化済みで ready のときだけ送信してください。 | `initialized=true` かつ `processState=ready` のとき、start が受け付けられます。 |
+| 実行中のサイクル状態は進行状況です。 | `capturing`、`inspecting`、`saving` はサイクル実行中を意味します。status/result イベントを待つか、stop を送信します。 |
+| シミュレーターは結果イベント後に ready へ戻ります。 | 結果要約の後、`processState=ready` になり、次のサイクルを開始できます。 |
 
-## Commands And Transitions
+## コマンドと遷移
 
-| Command or UI action | Required state | Result |
+| コマンドまたは UI 操作 | 必要な状態 | 結果 |
 | --- | --- | --- |
-| **Initialize** / `POST /api/control/initialize` | `initialized=false`, `processState=ready` | `initialized=true` に設定し、`processState=ready` を維持します。 |
+| **Initialize** / `POST /api/control/initialize` | `initialized=false`、`processState=ready` | `initialized=true` に設定し、`processState=ready` を維持します。 |
 | **Terminate** / `POST /api/control/terminate` | `processState=ready` | `initialized=false` に設定し、`processState=ready` を維持します。 |
-| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start"}` | `initialized=true`, `processState=ready` | `capturing`、`inspecting`、`saving` の順に遷移し、result emission 後に `ready` へ戻ります。 |
-| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop"}` | Active process state: `capturing`、`inspecting`、`saving` | 現在の cycle を cancel し、`ready` に戻ります。 |
-| **Apply WaferInfo** / WaferInfo REST or TCP update | Any process state | wafer context を更新し、wafer-info events を送信します。`processState` は変更しません。 |
-| **Emit Fake Result** | Any process state | 単一の result summary event を送信します。`processState` は変更しません。 |
-| **Emit Error** | Any process state | error event を送信します。`processState` は変更しません。 |
+| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start"}` | `initialized=true`、`processState=ready` | `capturing`、`inspecting`、`saving` を経て、結果発行後に `ready` へ戻ります。 |
+| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop"}` | アクティブな処理状態: `capturing`、`inspecting`、`saving` | 現在のサイクルをキャンセルし、`ready` へ戻ります。 |
+| **Apply WaferInfo** / WaferInfo REST または TCP 更新 | 任意の処理状態 | ウェーハ コンテキストを更新し、wafer-info イベントを発行します。`processState` は変更しません。 |
+| **Emit Fake Result** | 任意の処理状態 | 1 件の結果要約イベントを発行します。`processState` は変更しません。 |
+| **Emit Error** | 任意の処理状態 | エラー イベントを発行します。`processState` は変更しません。 |
 
-## Common Rejected Commands
+## よくある拒否コマンド
 
-| Condition | Command | Response |
+| 条件 | コマンド | 応答 |
 | --- | --- | --- |
-| `initialized=false` | Start cycle | HTTP `409` / `not_initialized`; state は `initialized=false`, `processState=ready` のままです。 |
-| `processState` is `capturing`, `inspecting`, or `saving` | Start cycle | HTTP `409` / `process_active`; 現在の cycle は継続します。 |
-| `initialized=false` | Stop | HTTP `409` / `not_initialized`; state は変更されません。 |
-| `initialized=true`, `processState=ready` | Stop | HTTP `409` / `not_running`; state は変更されません。 |
-| `processState` is not `ready` | Terminate | HTTP `409`; state は変更されません。 |
+| `initialized=false` | サイクル開始 | HTTP `409` / `not_initialized`; 状態は `initialized=false`、`processState=ready` のままです。 |
+| `processState` が `capturing`、`inspecting`、`saving` のいずれか | サイクル開始 | HTTP `409` / `process_active`; 現在のサイクルは継続します。 |
+| `initialized=false` | Stop | HTTP `409` / `not_initialized`; 状態は変わりません。 |
+| `initialized=true`、`processState=ready` | Stop | HTTP `409` / `not_running`; 状態は変わりません。 |
+| `processState` が `ready` ではない | Terminate | HTTP `409`; 状態は変わりません。 |
 
-## Event Visibility
+## イベントで見える状態
 
-State changes は次の方法で確認できます。
+状態変化は次の方法で確認できます。
 
 - REST `GET /api/status`
-- TCP `status` events
-- MQTT `virex/status` events
+- TCP `status` イベント
+- MQTT `virex/status` イベント
 - SDK `GetStatusAsync`
 
-Result、wafer-info、error events は別の event types です。Simulator が `ready` のときに発生することがありますが、追加の `processState` values ではありません。
+result、wafer-info、error イベントは別のイベント種別です。シミュレーターが `ready` のときに発生する場合もありますが、追加の `processState` 値ではありません。

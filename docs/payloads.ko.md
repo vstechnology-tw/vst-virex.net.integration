@@ -1,19 +1,19 @@
-# Payload Reference
+# 페이로드 참조
 
-이 페이지는 public Virex.NET integration surfaces에서 전송되는 JSON content를 설명합니다. Customer-visible DTOs, route/topic mappings, simulator verification steps를 다룹니다. Private inspection logic 또는 runtime internals는 설명하지 않습니다.
+이 페이지는 공개 Virex.NET 연동 표면에서 전송되는 JSON 내용을 설명합니다. 고객에게 보이는 DTO, 라우트/토픽 매핑, 시뮬레이터 검증 절차를 다룹니다. 비공개 검사 로직이나 런타임 내부 정보는 설명하지 않습니다.
 
-## JSON Rules
+## JSON 규칙
 
-모든 REST, TCP, MQTT payloads는 동일한 public JSON naming rules를 사용합니다.
+모든 REST, TCP, MQTT 페이로드는 같은 공개 JSON 명명 규칙을 사용합니다.
 
-| Rule | Behavior |
+| 규칙 | 동작 |
 | --- | --- |
-| Property names | `camelCase` 로 serialized 됩니다. |
-| Null values | Serialized JSON에서 omit됩니다. |
-| Incoming property names | Case-insensitive로 읽습니다. |
-| Text encoding | UTF-8 JSON. |
+| 속성 이름 | `camelCase` 로 직렬화됩니다. |
+| null 값 | 직렬화된 JSON 에서 생략됩니다. |
+| 수신 속성 이름 | 대소문자를 구분하지 않고 읽습니다. |
+| 텍스트 인코딩 | UTF-8 JSON. |
 
-Example:
+예:
 
 ```json
 {
@@ -25,48 +25,48 @@ Example:
 
 `processState` 는 다음 중 하나입니다.
 
-| Value | Meaning |
+| 값 | 의미 |
 | --- | --- |
-| `ready` | Simulator가 idle이며 다음 action을 받을 준비가 된 상태입니다. |
-| `capturing` | Simulated capture step이 active입니다. |
-| `inspecting` | Simulated inspection step이 active입니다. |
-| `saving` | Simulated save step이 active입니다. |
+| `ready` | 시뮬레이터가 유휴 상태이며 다음 작업을 받을 준비가 되었습니다. |
+| `capturing` | 모의 캡처 단계가 실행 중입니다. |
+| `inspecting` | 모의 검사 단계가 실행 중입니다. |
+| `saving` | 모의 저장 단계가 실행 중입니다. |
 
-Command transitions 및 rejected states는 [State Machine](state-machine.md)를 참조하십시오.
+명령 전이와 거부되는 상태는 [상태 전이](state-machine.md)를 참조하십시오.
 
-## Direction Matrix
+## 방향 매트릭스
 
-| Payload | REST | TCP | MQTT |
+| 페이로드 | REST | TCP | MQTT |
 | --- | --- | --- | --- |
-| Status | Outbound response from `GET /api/status` | Outbound event with `type: "status"` | Outbound event on `virex/status` |
-| Control status | Outbound response from control POST routes | Not used | Not used |
-| Error status | Outbound response from `GET /api/error` | Outbound event with `type: "error"` | Outbound event on `virex/error` |
-| WaferInfo | Inbound request to `POST /api/wafer-info`; outbound response from `GET /api/wafer-info` | Inbound command with `type: "waferInfo"`; outbound event with `type: "waferInfo"` | Outbound event on `virex/wafer-info` |
-| Result summary | Item inside `GET /api/results` response `items[]` | Outbound event with `type: "result"` | Outbound event on `virex/result` |
-| REST result query response | Response wrapper returned by `GET /api/results` | Not used | Not used |
-| Start command | Control route `POST /api/control/start` | Inbound command with `type: "start"` | Not used |
-| Stop command | Control route `POST /api/control/stop` | Inbound command with `type: "stop"` | Not used |
+| Status | `GET /api/status` 의 송신 응답 | `type: "status"` 를 가진 송신 이벤트 | `virex/status` 의 송신 이벤트 |
+| Control status | 제어 POST 라우트의 송신 응답 | 사용하지 않음 | 사용하지 않음 |
+| Error status | `GET /api/error` 의 송신 응답 | `type: "error"` 를 가진 송신 이벤트 | `virex/error` 의 송신 이벤트 |
+| WaferInfo | `POST /api/wafer-info` 로 들어오는 수신 요청, `GET /api/wafer-info` 의 송신 응답 | `type: "waferInfo"` 를 가진 수신 명령, `type: "waferInfo"` 를 가진 송신 이벤트 | `virex/wafer-info` 의 송신 이벤트 |
+| Result summary | `GET /api/results` 응답의 `items[]` 안에 있는 항목 | `type: "result"` 를 가진 송신 이벤트 | `virex/result` 의 송신 이벤트 |
+| REST result query response | `GET /api/results` 가 반환하는 응답 래퍼 | 사용하지 않음 | 사용하지 않음 |
+| Start command | 제어 라우트 `POST /api/control/start` | `type: "start"` 를 가진 수신 명령 | 사용하지 않음 |
+| Stop command | 제어 라우트 `POST /api/control/stop` | `type: "stop"` 를 가진 수신 명령 | 사용하지 않음 |
 
-MQTT는 outbound-only입니다. Topic이 event를 식별하므로 MQTT payloads에는 `type` property가 필요하지 않습니다.
+MQTT는 송신 전용입니다. MQTT 페이로드는 토픽이 이벤트를 식별하므로 `type` 속성이 필요하지 않습니다.
 
 ## WaferInfo
 
-Direction:
+방향:
 
-| Transport | Direction |
+| 전송 방식 | 방향 |
 | --- | --- |
-| REST | Inbound on `POST /api/wafer-info`; outbound on `GET /api/wafer-info`. |
-| TCP | Inbound command and outbound event. |
-| MQTT | Outbound event only. |
+| REST | `POST /api/wafer-info` 에서 수신, `GET /api/wafer-info` 에서 송신. |
+| TCP | 수신 명령 및 송신 이벤트. |
+| MQTT | 송신 이벤트만. |
 
-When it is sent:
+전송 시점:
 
-| Scenario | Behavior |
+| 시나리오 | 동작 |
 | --- | --- |
-| Host updates wafer context | Simulated cycle을 시작하거나 query하기 전에 REST 또는 TCP로 WaferInfo를 보냅니다. |
-| Simulator publishes wafer context | WaferInfo가 변경되면 TCP 및 MQTT clients가 event를 수신합니다. |
+| 호스트가 웨이퍼 컨텍스트를 업데이트함 | 모의 사이클을 시작하거나 조회하기 전에 REST 또는 TCP 로 WaferInfo 를 보냅니다. |
+| 시뮬레이터가 웨이퍼 컨텍스트를 발행함 | WaferInfo 가 변경되면 TCP 와 MQTT 클라이언트가 이벤트를 받습니다. |
 
-JSON example:
+JSON 예:
 
 ```json
 {
@@ -79,22 +79,22 @@ JSON example:
 }
 ```
 
-Field table:
+필드 표:
 
-| Field | Type | Description |
+| 필드 | 형식 | 설명 |
 | --- | --- | --- |
-| `lotId` | string | Result filtering 및 event correlation에 사용하는 public lot identifier. |
-| `waferId` | string | Public wafer identifier. |
-| `recipeId` | string | Simulated wafer context와 연결된 public recipe identifier. |
-| `slot` | string | Slot identifier. |
-| `foupId` | string | FOUP identifier. |
-| `chamberId` | string | Chamber identifier. |
+| `lotId` | string | 결과 필터링과 이벤트 상관에 사용하는 공개 로트 식별자. |
+| `waferId` | string | 공개 웨이퍼 식별자. |
+| `recipeId` | string | 모의 웨이퍼 컨텍스트와 연결된 공개 레시피 식별자. |
+| `slot` | string | 슬롯 식별자. |
+| `foupId` | string | FOUP 식별자. |
+| `chamberId` | string | 챔버 식별자. |
 
-Simulator/sample verification:
+시뮬레이터/샘플 검증:
 
-1. Simulator를 시작하고 **Start Servers** 를 누릅니다.
-2. C# SDK, raw REST sample, raw TCP sample로 WaferInfo를 보내거나 simulator fields를 편집한 뒤 **Apply WaferInfo** 를 누릅니다.
-3. Simulator Event Log가 모든 public fields를 한 줄에 출력하는지 확인합니다.
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. C# SDK, raw REST 샘플, raw TCP 샘플을 통해 WaferInfo 를 보내거나, 시뮬레이터 필드를 편집한 뒤 **Apply WaferInfo** 를 클릭합니다.
+3. 시뮬레이터 Event Log 에 다음과 같이 모든 공개 필드가 한 줄로 출력되는지 확인합니다.
 
 ```text
 WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
@@ -102,22 +102,22 @@ WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A
 
 ## Status
 
-Direction:
+방향:
 
-| Transport | Direction |
+| 전송 방식 | 방향 |
 | --- | --- |
-| REST | Outbound response from `GET /api/status`. |
-| TCP | Outbound event with `type: "status"`. |
-| MQTT | Outbound event on `virex/status`. |
+| REST | `GET /api/status` 의 송신 응답. |
+| TCP | `type: "status"` 를 가진 송신 이벤트. |
+| MQTT | `virex/status` 의 송신 이벤트. |
 
-When it is sent:
+전송 시점:
 
-| Scenario | Behavior |
+| 시나리오 | 동작 |
 | --- | --- |
-| Client reads current simulator state | REST는 current status를 반환합니다. |
-| Simulator state changes | TCP 및 MQTT clients는 status events를 수신합니다. |
+| 클라이언트가 현재 시뮬레이터 상태를 읽음 | REST 가 현재 status 를 반환합니다. |
+| 시뮬레이터 상태가 변경됨 | TCP 와 MQTT 클라이언트가 status 이벤트를 받습니다. |
 
-JSON example:
+JSON 예:
 
 ```json
 {
@@ -127,31 +127,37 @@ JSON example:
 }
 ```
 
-Field table:
+필드 표:
 
-| Field | Type | Description |
+| 필드 | 형식 | 설명 |
 | --- | --- | --- |
-| `initialized` | boolean | Simulated system이 initialized 되었는지 여부. |
-| `processState` | string | Current public process state: `ready`, `capturing`, `inspecting`, or `saving`. |
-| `recipe` | string | Status가 보고하는 current public recipe value. |
+| `initialized` | boolean | 모의 시스템이 초기화되었는지 여부. |
+| `processState` | string | 현재 공개 처리 상태: `ready`, `capturing`, `inspecting`, `saving`. |
+| `recipe` | string | status 가 보고하는 현재 공개 레시피 값. |
+
+시뮬레이터/샘플 검증:
+
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. C# SDK 또는 raw REST 샘플을 실행하고 `GET /api/status` 를 읽는지 확인합니다.
+3. **Initialize** 또는 **Start Cycle** 을 클릭하고, TCP 또는 MQTT 샘플이 업데이트된 `initialized` 또는 `processState` 값을 포함한 status 이벤트를 출력하는지 확인합니다.
 
 ## Control Status
 
-Direction:
+방향:
 
-| Transport | Direction |
+| 전송 방식 | 방향 |
 | --- | --- |
-| REST | Outbound response from control POST routes. |
-| TCP | Not used. |
-| MQTT | Not used. |
+| REST | 제어 POST 라우트의 송신 응답. |
+| TCP | 사용하지 않음. |
+| MQTT | 사용하지 않음. |
 
-When it is sent:
+전송 시점:
 
-| Scenario | Behavior |
+| 시나리오 | 동작 |
 | --- | --- |
-| Client posts a control action | REST는 action 후 state와 public message를 반환합니다. |
+| 클라이언트가 제어 작업을 POST 함 | REST 는 작업 후 상태와 공개 메시지를 반환합니다. |
 
-JSON example:
+JSON 예:
 
 ```json
 {
@@ -162,33 +168,39 @@ JSON example:
 }
 ```
 
-Field table:
+필드 표:
 
-| Field | Type | Description |
+| 필드 | 형식 | 설명 |
 | --- | --- | --- |
-| `initialized` | boolean | Control action 후 simulated system이 initialized 되었는지 여부. |
-| `processState` | string | Control action 후 public process state. |
-| `recipe` | string | Current public recipe value. |
-| `message` | string | Control action의 public response message. |
+| `initialized` | boolean | 제어 작업 후 모의 시스템이 초기화되었는지 여부. |
+| `processState` | string | 제어 작업 후 공개 처리 상태. |
+| `recipe` | string | 현재 공개 레시피 값. |
+| `message` | string | 제어 작업에 대한 공개 응답 메시지. |
+
+시뮬레이터/샘플 검증:
+
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. REST 지원 샘플에서 `POST /api/control/initialize`, `POST /api/control/terminate`, `POST /api/control/start`, `POST /api/control/stop` 을 보냅니다.
+3. 샘플이 `initialized`, `processState`, `recipe`, `message` 를 포함한 JSON 응답을 출력하는지 확인합니다.
 
 ## Error Status
 
-Direction:
+방향:
 
-| Transport | Direction |
+| 전송 방식 | 방향 |
 | --- | --- |
-| REST | Outbound response from `GET /api/error`. |
-| TCP | Outbound event with `type: "error"`. |
-| MQTT | Outbound event on `virex/error`. |
+| REST | `GET /api/error` 의 송신 응답. |
+| TCP | `type: "error"` 를 가진 송신 이벤트. |
+| MQTT | `virex/error` 의 송신 이벤트. |
 
-When it is sent:
+전송 시점:
 
-| Scenario | Behavior |
+| 시나리오 | 동작 |
 | --- | --- |
-| Client reads current error state | REST는 current error status를 반환합니다. |
-| Simulator error changes | TCP 및 MQTT clients는 error event를 수신합니다. |
+| 클라이언트가 현재 오류 상태를 읽음 | REST 가 현재 error status 를 반환합니다. |
+| 시뮬레이터 오류가 변경됨 | TCP 와 MQTT 클라이언트가 error 이벤트를 받습니다. |
 
-JSON example:
+JSON 예:
 
 ```json
 {
@@ -200,36 +212,43 @@ JSON example:
 }
 ```
 
-Field table:
+필드 표:
 
-| Field | Type | Description |
+| 필드 | 형식 | 설명 |
 | --- | --- | --- |
-| `hasError` | boolean | Error가 현재 active인지 여부. |
-| `message` | string | Public error message. Null이면 omit됩니다. |
-| `initialized` | boolean | Error status 시점의 initialization state. |
-| `processState` | string | Error status 시점의 public process state. |
-| `recipe` | string | Current public recipe value. |
+| `hasError` | boolean | 현재 오류가 활성 상태인지 여부. |
+| `message` | string | 공개 오류 메시지. null 이면 생략됩니다. |
+| `initialized` | boolean | error status 시점의 초기화 상태. |
+| `processState` | string | error status 시점의 공개 처리 상태. |
+| `recipe` | string | 현재 공개 레시피 값. |
+
+시뮬레이터/샘플 검증:
+
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. TCP 또는 MQTT 샘플을 실행하고 연결된 상태로 둡니다.
+3. 시뮬레이터에서 **Emit Error** 를 클릭합니다.
+4. 샘플이 `hasError`, `message`, `initialized`, `processState`, `recipe` 를 포함한 error 페이로드를 출력하는지 확인합니다.
 
 ## Result Summary
 
-`ResultSummaryDto` 는 단일 result summary item입니다. REST는 이를 `ResultListDto.items[]` 에 포함하고, TCP 및 MQTT는 직접 publish합니다.
+`ResultSummaryDto` 는 단일 결과 요약 항목입니다. REST 는 이를 `ResultListDto.items[]` 에 포함하고, TCP 와 MQTT 는 직접 발행합니다.
 
-Direction:
+방향:
 
-| Transport | Direction |
+| 전송 방식 | 방향 |
 | --- | --- |
-| REST | Item inside `GET /api/results` response `items[]`. |
-| TCP | Outbound event with `type: "result"`. |
-| MQTT | Outbound event on `virex/result`. |
+| REST | `GET /api/results` 응답의 `items[]` 안에 있는 항목. |
+| TCP | `type: "result"` 를 가진 송신 이벤트. |
+| MQTT | `virex/result` 의 송신 이벤트. |
 
-When it is sent:
+전송 시점:
 
-| Scenario | Behavior |
+| 시나리오 | 동작 |
 | --- | --- |
-| Simulator creates a result | TCP 및 MQTT clients는 result summary event를 수신합니다. |
-| Client queries historical simulated results | REST는 `ResultListDto` 를 반환하며 각 `items[]` entry는 하나의 `ResultSummaryDto` 입니다. |
+| 시뮬레이터가 결과를 생성함 | TCP 와 MQTT 클라이언트가 결과 요약 이벤트를 받습니다. |
+| 클라이언트가 과거 모의 결과를 조회함 | REST 가 `ResultListDto` 를 반환하며, 각 `items[]` 항목은 하나의 `ResultSummaryDto` 입니다. |
 
-JSON example:
+JSON 예:
 
 ```json
 {
@@ -251,57 +270,64 @@ JSON example:
 }
 ```
 
-Field table:
+필드 표:
 
-| Field | Type | Description |
+| 필드 | 형식 | 설명 |
 | --- | --- | --- |
-| `resultId` | string | Public result identifier. |
-| `timestamp` | string | Result timestamp string. |
-| `lotId` | string | Active WaferInfo에서 copy된 lot identifier. |
-| `waferId` | string | Active WaferInfo에서 copy된 wafer identifier. |
-| `recipeId` | string | Result와 연결된 recipe identifier. |
-| `slot` | string | Active WaferInfo에서 copy된 slot identifier. |
-| `foupId` | string | Active WaferInfo에서 copy된 FOUP identifier. |
-| `chamberId` | string | Active WaferInfo에서 copy된 chamber identifier. |
-| `overallResult` | string | Public summary result value. |
-| `defectCount` | number | Summary 내 모든 defect categories의 total count. |
-| `imageRelativePath` | string | Associated image artifact의 relative path string. |
-| `resultRelativePath` | string | Associated result artifact의 relative path string. |
-| `imagePath` | string | Simulator Result prefix 적용 후 public image path. |
-| `previewImagePath` | string | Simulator Result prefix 적용 후 public preview image path. |
-| `resultPath` | string | Simulator Result prefix 적용 후 public result path. |
+| `resultId` | string | 공개 결과 식별자. |
+| `timestamp` | string | 결과 타임스탬프 문자열. |
+| `lotId` | string | 활성 WaferInfo 에서 복사된 로트 식별자. |
+| `waferId` | string | 활성 WaferInfo 에서 복사된 웨이퍼 식별자. |
+| `recipeId` | string | 결과와 연결된 레시피 식별자. |
+| `slot` | string | 활성 WaferInfo 에서 복사된 슬롯 식별자. |
+| `foupId` | string | 활성 WaferInfo 에서 복사된 FOUP 식별자. |
+| `chamberId` | string | 활성 WaferInfo 에서 복사된 챔버 식별자. |
+| `overallResult` | string | 공개 요약 결과 값. |
+| `defectCount` | number | 요약에 포함된 모든 결함 범주의 총개수. |
+| `imageRelativePath` | string | 관련 이미지 산출물의 상대 경로 문자열. |
+| `resultRelativePath` | string | 관련 결과 산출물의 상대 경로 문자열. |
+| `imagePath` | string | 시뮬레이터 Result prefix 를 적용한 뒤의 공개 이미지 경로. |
+| `previewImagePath` | string | 시뮬레이터 Result prefix 를 적용한 뒤의 공개 미리보기 이미지 경로. |
+| `resultPath` | string | 시뮬레이터 Result prefix 를 적용한 뒤의 공개 결과 경로. |
 
-Result summaries는 summary-only입니다. Defect lists, die lists, crop lists, image binaries, private inspection internals는 포함하지 않습니다.
+결과 요약은 의도적으로 요약만 포함합니다. 결함 목록, 다이 목록, 크롭 목록, 이미지 바이너리, 비공개 검사 내부 정보는 포함하지 않습니다.
+
+시뮬레이터/샘플 검증:
+
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. WaferInfo 를 적용하고 **Initialize** 를 클릭한 뒤 **Start Cycle** 또는 **Emit Fake Result** 를 클릭합니다.
+3. TCP 또는 MQTT 샘플이 `result` 이벤트를 출력하는지 확인하거나, REST 지원 샘플로 `GET /api/results` 를 호출합니다.
+4. 반환된 요약에 WaferInfo 식별자와 개수 필드가 포함되지만, 결함 목록, 다이 목록, 크롭 목록, 이미지 바이너리, 비공개 검사 내부 정보는 포함되지 않는지 확인합니다.
 
 ## REST Result Query Response
 
-`ResultListDto` 는 result queries용 REST response wrapper입니다. 각 `items[]` entry는 하나의 `ResultSummaryDto` 입니다.
+`ResultListDto` 는 결과 조회를 위한 REST 응답 래퍼입니다. 각 `items[]` 항목은 하나의 `ResultSummaryDto` 입니다.
 
-Direction:
+방향:
 
-| Transport | Direction |
+| 전송 방식 | 방향 |
 | --- | --- |
-| REST | Response wrapper returned by `GET /api/results`. |
-| TCP | Not used. |
-| MQTT | Not used. |
+| REST | `GET /api/results` 가 반환하는 응답 래퍼. |
+| TCP | 사용하지 않음. |
+| MQTT | 사용하지 않음. |
 
-This wrapper is REST-only. TCP and MQTT publish a single Result Summary directly and do not use Result List.
+이 래퍼는 REST 전용입니다. TCP 와 MQTT 는 단일 Result Summary 를 직접 발행하며 Result List 를 사용하지 않습니다.
 
-When it is sent:
+전송 시점:
 
-| Scenario | Behavior |
+| 시나리오 | 동작 |
 | --- | --- |
-| Client queries result summaries | REST는 matching summary items와 count를 포함한 list wrapper를 반환합니다. |
+| 클라이언트가 결과 요약을 조회함 | REST 는 일치하는 요약 항목과 개수를 포함한 목록 래퍼를 반환합니다. |
 
-`GET /api/results` supports optional filters:
+`GET /api/results` 는 선택 필터를 지원합니다.
 
 - `lotId`
 - `waferId`
 - `recipeId`
 
-When multiple filters are supplied, they are combined with AND.
+여러 필터를 지정하면 AND 로 결합됩니다.
 
-Query examples:
+쿼리 예:
 
 ```text
 GET /api/results
@@ -310,7 +336,7 @@ GET /api/results?lotId=LOT-001&waferId=W01
 GET /api/results?lotId=LOT-001&waferId=W01&recipeId=RCP-A
 ```
 
-JSON example:
+JSON 예:
 
 ```json
 {
@@ -337,57 +363,83 @@ JSON example:
 }
 ```
 
-Field table:
+필드 표:
 
-| Field | Type | Description |
+| 필드 | 형식 | 설명 |
 | --- | --- | --- |
-| `items` | array | `ResultSummaryDto` objects 배열. |
-| `count` | number | 반환된 result summary items 수. |
+| `items` | array | `ResultSummaryDto` 객체 배열. |
+| `count` | number | 반환된 결과 요약 항목 수. |
 
-## REST Mapping
+시뮬레이터/샘플 검증:
 
-| Method and route | Direction | Payload content | Notes |
+1. 일치하는 WaferInfo 로 모의 결과를 생성합니다.
+2. REST 지원 샘플에서 `GET /api/results` 를 호출합니다.
+3. `count` 가 반환된 `items` 수와 일치하는지 확인합니다.
+
+## REST 매핑
+
+| 메서드와 라우트 | 방향 | 페이로드 내용 | 참고 |
 | --- | --- | --- | --- |
-| `GET /api/status` | Outbound response | `StatusDto` | Reads current public state. |
-| `GET /api/error` | Outbound response | `ErrorStatusDto` | Reads current public error state. |
-| `GET /api/wafer-info` | Outbound response | `WaferInfo` | Reads current public wafer context. |
-| `POST /api/wafer-info` | Inbound request | `WaferInfo` | Updates current public wafer context. |
-| `POST /api/control/initialize` | Outbound response | `ControlStatusDto` | Initializes the simulator state. |
-| `POST /api/control/terminate` | Outbound response | `ControlStatusDto` | Terminates the simulator state. |
-| `POST /api/control/start` | Outbound response | `ControlStatusDto` | Starts a simulated cycle. |
-| `POST /api/control/stop` | Outbound response | `ControlStatusDto` | Stops a simulated cycle. |
-| `GET /api/results` | Outbound response | `ResultListDto` | Optional filters: `lotId`, `waferId`, `recipeId`. Multiple filters are combined with AND. |
+| `GET /api/status` | 송신 응답 | `StatusDto` | 현재 공개 상태를 읽습니다. |
+| `GET /api/error` | 송신 응답 | `ErrorStatusDto` | 현재 공개 오류 상태를 읽습니다. |
+| `GET /api/wafer-info` | 송신 응답 | `WaferInfo` | 현재 공개 웨이퍼 컨텍스트를 읽습니다. |
+| `POST /api/wafer-info` | 수신 요청 | `WaferInfo` | 현재 공개 웨이퍼 컨텍스트를 업데이트합니다. |
+| `POST /api/control/initialize` | 송신 응답 | `ControlStatusDto` | 시뮬레이터 상태를 초기화합니다. |
+| `POST /api/control/terminate` | 송신 응답 | `ControlStatusDto` | 시뮬레이터 상태를 종료합니다. |
+| `POST /api/control/start` | 송신 응답 | `ControlStatusDto` | 모의 사이클을 시작합니다. |
+| `POST /api/control/stop` | 송신 응답 | `ControlStatusDto` | 모의 사이클을 중지합니다. |
+| `GET /api/results` | 송신 응답 | `ResultListDto` | 선택 필터: `lotId`, `waferId`, `recipeId`. 여러 필터는 AND 로 결합됩니다. |
 
-## TCP Mapping
+REST 검증:
 
-TCP messages는 JSON objects입니다. TCP outbound events에는 `type` property가 포함됩니다. TCP inbound commands는 다음 shapes를 사용합니다.
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. C# SDK, C# raw REST, C++ raw REST 샘플을 실행합니다.
+3. 샘플이 status 를 읽고, WaferInfo 를 POST 하고, 제어 작업을 실행하고, 위의 공개 페이로드를 사용해 결과 요약을 조회하는지 확인합니다.
 
-| Inbound command | Direction | JSON example | Notes |
+## TCP 매핑
+
+TCP 메시지는 JSON 객체입니다. TCP 송신 이벤트에는 `type` 속성이 포함됩니다. TCP 수신 명령은 다음 형태를 사용합니다.
+
+| 수신 명령 | 방향 | JSON 예 | 참고 |
 | --- | --- | --- | --- |
-| WaferInfo | Inbound to simulator | `{"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}` | Legacy WaferInfo frames는 `type` 을 omit할 수 있으며 parser는 WaferInfo JSON parser로 fallback합니다. |
-| Start | Inbound to simulator | `{"type":"start"}` | Starts a simulated cycle. |
-| Stop | Inbound to simulator | `{"type":"stop"}` | Stops a simulated cycle. |
+| WaferInfo | 시뮬레이터로 수신 | `{"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}` | 기존 WaferInfo 프레임은 `type` 을 생략할 수 있습니다. 파서는 WaferInfo JSON 파서로 대체 처리합니다. |
+| Start | 시뮬레이터로 수신 | `{"type":"start"}` | 모의 사이클을 시작합니다. |
+| Stop | 시뮬레이터로 수신 | `{"type":"stop"}` | 모의 사이클을 중지합니다. |
 
-TCP outbound events:
+TCP 송신 이벤트:
 
-| Event type | Direction | Payload content |
+| 이벤트 type | 방향 | 페이로드 내용 |
 | --- | --- | --- |
-| `status` | Outbound from simulator | `StatusDto` plus `type`. |
-| `waferInfo` | Outbound from simulator | `WaferInfo` plus `type`. |
-| `result` | Outbound from simulator | `ResultSummaryDto` plus `type`. |
-| `error` | Outbound from simulator | `ErrorStatusDto` plus `type`. |
+| `status` | 시뮬레이터에서 송신 | `StatusDto` 와 `type`. |
+| `waferInfo` | 시뮬레이터에서 송신 | `WaferInfo` 와 `type`. |
+| `result` | 시뮬레이터에서 송신 | `ResultSummaryDto` 와 `type`. |
+| `error` | 시뮬레이터에서 송신 | `ErrorStatusDto` 와 `type`. |
 
-## MQTT Mapping
+TCP 검증:
 
-MQTT is outbound-only. 모든 simulator events를 관찰하려면 base topic wildcard를 subscribe합니다.
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. raw TCP 샘플을 실행합니다.
+3. 초기 status 및 WaferInfo 프레임이 출력되는지 확인합니다.
+4. 샘플이 WaferInfo 프레임을 보내도록 하고, 시뮬레이터 Event Log 에 TCP WaferInfo 업데이트가 표시되는지 확인합니다.
+
+## MQTT 매핑
+
+MQTT는 송신 전용입니다. 모든 시뮬레이터 이벤트를 관측하려면 베이스 토픽 와일드카드를 구독합니다.
 
 ```text
 virex/#
 ```
 
-| Topic | Direction | Payload content | Notes |
+| 토픽 | 방향 | 페이로드 내용 | 참고 |
 | --- | --- | --- | --- |
-| `virex/status` | Outbound from simulator | `StatusDto` | Payload does not require `type`. |
-| `virex/wafer-info` | Outbound from simulator | `WaferInfo` | Payload does not require `type`. |
-| `virex/result` | Outbound from simulator | `ResultSummaryDto` | Payload does not require `type`. |
-| `virex/error` | Outbound from simulator | `ErrorStatusDto` | Payload does not require `type`. |
+| `virex/status` | 시뮬레이터에서 송신 | `StatusDto` | 페이로드에 `type` 이 필요하지 않습니다. |
+| `virex/wafer-info` | 시뮬레이터에서 송신 | `WaferInfo` | 페이로드에 `type` 이 필요하지 않습니다. |
+| `virex/result` | 시뮬레이터에서 송신 | `ResultSummaryDto` | 페이로드에 `type` 이 필요하지 않습니다. |
+| `virex/error` | 시뮬레이터에서 송신 | `ErrorStatusDto` | 페이로드에 `type` 이 필요하지 않습니다. |
+
+MQTT 검증:
+
+1. 시뮬레이터를 시작하고 **Start Servers** 를 클릭합니다.
+2. raw MQTT 샘플을 실행하고 구독 상태를 유지합니다.
+3. **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, **Emit Error** 를 클릭합니다.
+4. 샘플이 `wafer-info`, `status`, `result`, `error` 에 대응하는 토픽과 JSON 페이로드를 출력하는지 확인합니다.

@@ -1,22 +1,22 @@
-# TCP Socket Protocol
+# TCP ソケット プロトコル
 
-TCP は bidirectional command と event traffic が必要な direct socket integration に使用します。
+TCP は、双方向のコマンドおよびイベント通信が必要な直接ソケット連携に使用します。
 
-TCP は single port と NDJSON framing を使用します。
+TCP は単一ポートと NDJSON フレーミングを使用します。
 
 ```text
-one JSON object per line
-each frame ends with \n
-UTF-8 encoding
+1 行につき 1 つの JSON オブジェクト
+各フレームは \n で終わります
+UTF-8 エンコード
 ```
 
-C# SDK は TCP/NDJSON の読み取り中に per-frame idle timeout を適用します。Complete frames の間に長い gap があっても有効です。Frame の最初の byte を受信した後は、残りの bytes と終端 newline が `VirexClientOptions.TcpFrameTimeoutMs` 以内に到着しない場合、TCP event reader は timeout で失敗します。
+C# SDK は、TCP/NDJSON を読み取る際にフレームごとのアイドル タイムアウトを適用します。完全なフレーム同士の間に長い空白時間があっても問題ありません。ただし、フレームのいずれかのバイトが到着した後は、残りのバイトと終端の改行が `VirexClientOptions.TcpFrameTimeoutMs` 以内に到着しなければ、TCP イベント リーダーはタイムアウトで失敗します。
 
-Equipment/client は Virex.NET-compatible service に接続します。同じ connection で inbound messages を送信し、outbound events を受信できます。
+装置またはクライアントは Virex.NET 互換サービスへ接続します。同じ接続で受信メッセージを送信し、送信イベントを受け取ることができます。
 
-Field-level details と shared JSON body shapes は [Transmitted Content / Payloads](payloads.md) を参照してください。
+フィールド単位の詳細と共通 JSON 本文の形状は、[送信内容 / ペイロード](payloads.md)を参照してください。
 
-## Inbound
+## 受信
 
 ```json
 {"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}
@@ -30,9 +30,9 @@ Field-level details と shared JSON body shapes は [Transmitted Content / Paylo
 {"type":"stop"}
 ```
 
-`type` field は legacy WaferInfo frames では optional です。Start/stop には `type` が必要です。
+従来の WaferInfo フレームでは `type` フィールドを省略できます。start/stop には `type` が必要です。
 
-## Outbound
+## 送信
 
 ```json
 {"type":"status","initialized":true,"processState":"ready","recipe":"Default"}
@@ -50,4 +50,4 @@ Field-level details と shared JSON body shapes は [Transmitted Content / Paylo
 {"type":"error","message":"Recipe load failed.","initialized":true,"processState":"ready","recipe":"Default","timestamp":"2026-06-20T00:00:00+08:00"}
 ```
 
-Result event は summary-only であり、defect lists や binaries は含みません。
+result イベントは要約のみであり、欠陥リストやバイナリは含まれません。

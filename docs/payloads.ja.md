@@ -1,19 +1,19 @@
-# Payload Reference
+# ペイロード リファレンス
 
-このページは public Virex.NET integration surfaces で送受信される JSON content を説明します。Customer-visible DTOs、route/topic mappings、simulator verification steps を対象とします。Private inspection logic や runtime internals は説明しません。
+このページでは、公開 Virex.NET 連携サーフェスで送受信される JSON 内容を説明します。顧客から見える DTO、ルート/トピックの対応、シミュレーターでの検証手順を扱います。非公開の検査ロジックや実行時内部情報は説明しません。
 
-## JSON Rules
+## JSON ルール
 
-すべての REST、TCP、MQTT payloads は同じ public JSON naming rules を使用します。
+すべての REST、TCP、MQTT ペイロードは、同じ公開 JSON 命名規則を使用します。
 
-| Rule | Behavior |
+| ルール | 動作 |
 | --- | --- |
-| Property names | `camelCase` で serialized されます。 |
-| Null values | Serialized JSON から omit されます。 |
-| Incoming property names | Case-insensitive に読み取られます。 |
-| Text encoding | UTF-8 JSON。 |
+| プロパティ名 | `camelCase` としてシリアライズされます。 |
+| null 値 | シリアライズされた JSON から省略されます。 |
+| 受信プロパティ名 | 大文字小文字を区別せずに読み取ります。 |
+| テキスト エンコード | UTF-8 JSON。 |
 
-Example:
+例:
 
 ```json
 {
@@ -25,48 +25,48 @@ Example:
 
 `processState` は次のいずれかです。
 
-| Value | Meaning |
+| 値 | 意味 |
 | --- | --- |
-| `ready` | Simulator は idle で次の action を受け付け可能です。 |
-| `capturing` | Simulated capture step が active です。 |
-| `inspecting` | Simulated inspection step が active です。 |
-| `saving` | Simulated save step が active です。 |
+| `ready` | シミュレーターはアイドル状態で、次の操作を受け付けられます。 |
+| `capturing` | 模擬キャプチャ手順が実行中です。 |
+| `inspecting` | 模擬検査手順が実行中です。 |
+| `saving` | 模擬保存手順が実行中です。 |
 
-Command transitions と rejected states は [State Machine](state-machine.md) を参照してください。
+コマンド遷移と拒否される状態については、[状態遷移](state-machine.md)を参照してください。
 
-## Direction Matrix
+## 方向マトリクス
 
-| Payload | REST | TCP | MQTT |
+| ペイロード | REST | TCP | MQTT |
 | --- | --- | --- | --- |
-| Status | Outbound response from `GET /api/status` | Outbound event with `type: "status"` | Outbound event on `virex/status` |
-| Control status | Outbound response from control POST routes | Not used | Not used |
-| Error status | Outbound response from `GET /api/error` | Outbound event with `type: "error"` | Outbound event on `virex/error` |
-| WaferInfo | Inbound request to `POST /api/wafer-info`; outbound response from `GET /api/wafer-info` | Inbound command with `type: "waferInfo"`; outbound event with `type: "waferInfo"` | Outbound event on `virex/wafer-info` |
-| Result summary | Item inside `GET /api/results` response `items[]` | Outbound event with `type: "result"` | Outbound event on `virex/result` |
-| REST result query response | Response wrapper returned by `GET /api/results` | Not used | Not used |
-| Start command | Control route `POST /api/control/start` | Inbound command with `type: "start"` | Not used |
-| Stop command | Control route `POST /api/control/stop` | Inbound command with `type: "stop"` | Not used |
+| Status | `GET /api/status` からの送信応答 | `type: "status"` を持つ送信イベント | `virex/status` 上の送信イベント |
+| Control status | 制御 POST ルートからの送信応答 | 使用しません | 使用しません |
+| Error status | `GET /api/error` からの送信応答 | `type: "error"` を持つ送信イベント | `virex/error` 上の送信イベント |
+| WaferInfo | `POST /api/wafer-info` への受信リクエスト、`GET /api/wafer-info` からの送信応答 | `type: "waferInfo"` を持つ受信コマンド、`type: "waferInfo"` を持つ送信イベント | `virex/wafer-info` 上の送信イベント |
+| Result summary | `GET /api/results` 応答の `items[]` 内の項目 | `type: "result"` を持つ送信イベント | `virex/result` 上の送信イベント |
+| REST result query response | `GET /api/results` が返す応答ラッパー | 使用しません | 使用しません |
+| Start command | 制御ルート `POST /api/control/start` | `type: "start"` を持つ受信コマンド | 使用しません |
+| Stop command | 制御ルート `POST /api/control/stop` | `type: "stop"` を持つ受信コマンド | 使用しません |
 
-MQTT は outbound-only です。MQTT payloads は topic が event を識別するため、`type` property は不要です。
+MQTT は送信専用です。MQTT ペイロードでは、トピックがイベントを識別するため `type` プロパティは不要です。
 
 ## WaferInfo
 
-Direction:
+方向:
 
-| Transport | Direction |
+| トランスポート | 方向 |
 | --- | --- |
-| REST | Inbound on `POST /api/wafer-info`; outbound on `GET /api/wafer-info`. |
-| TCP | Inbound command and outbound event. |
-| MQTT | Outbound event only. |
+| REST | `POST /api/wafer-info` で受信、`GET /api/wafer-info` で送信。 |
+| TCP | 受信コマンドおよび送信イベント。 |
+| MQTT | 送信イベントのみ。 |
 
-When it is sent:
+送信されるタイミング:
 
-| Scenario | Behavior |
+| シナリオ | 動作 |
 | --- | --- |
-| Host updates wafer context | Simulated cycle の開始または query 前に REST または TCP で WaferInfo を送信します。 |
-| Simulator publishes wafer context | WaferInfo が変わると TCP と MQTT clients は event を受信します。 |
+| ホストがウェーハ コンテキストを更新する | 模擬サイクルの開始またはクエリ前に、REST または TCP で WaferInfo を送信します。 |
+| シミュレーターがウェーハ コンテキストを発行する | WaferInfo が変更されると、TCP と MQTT クライアントはイベントを受信します。 |
 
-JSON example:
+JSON 例:
 
 ```json
 {
@@ -79,22 +79,22 @@ JSON example:
 }
 ```
 
-Field table:
+フィールド表:
 
-| Field | Type | Description |
+| フィールド | 型 | 説明 |
 | --- | --- | --- |
-| `lotId` | string | Result filtering と event correlation に使用する public lot identifier。 |
-| `waferId` | string | Public wafer identifier。 |
-| `recipeId` | string | Simulated wafer context に関連する public recipe identifier。 |
-| `slot` | string | Slot identifier。 |
-| `foupId` | string | FOUP identifier。 |
-| `chamberId` | string | Chamber identifier。 |
+| `lotId` | string | 結果フィルタリングとイベント相関に使用する公開ロット識別子。 |
+| `waferId` | string | 公開ウェーハ識別子。 |
+| `recipeId` | string | 模擬ウェーハ コンテキストに関連付けられた公開レシピ識別子。 |
+| `slot` | string | スロット識別子。 |
+| `foupId` | string | FOUP 識別子。 |
+| `chamberId` | string | チャンバー識別子。 |
 
-Simulator/sample verification:
+シミュレーター/サンプル検証:
 
-1. Simulator を起動し、**Start Servers** を押します。
-2. C# SDK、raw REST sample、raw TCP sample から WaferInfo を送信するか、simulator fields を編集して **Apply WaferInfo** を押します。
-3. Simulator Event Log がすべての public fields を 1 行で出力することを確認します。
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. C# SDK、raw REST サンプル、raw TCP サンプルで WaferInfo を送信するか、シミュレーターのフィールドを編集して **Apply WaferInfo** をクリックします。
+3. シミュレーターの Event Log に、次のようにすべての公開フィールドが 1 行で出力されることを確認します。
 
 ```text
 WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
@@ -102,22 +102,22 @@ WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A
 
 ## Status
 
-Direction:
+方向:
 
-| Transport | Direction |
+| トランスポート | 方向 |
 | --- | --- |
-| REST | Outbound response from `GET /api/status`. |
-| TCP | Outbound event with `type: "status"`. |
-| MQTT | Outbound event on `virex/status`. |
+| REST | `GET /api/status` からの送信応答。 |
+| TCP | `type: "status"` を持つ送信イベント。 |
+| MQTT | `virex/status` 上の送信イベント。 |
 
-When it is sent:
+送信されるタイミング:
 
-| Scenario | Behavior |
+| シナリオ | 動作 |
 | --- | --- |
-| Client reads current simulator state | REST は current status を返します。 |
-| Simulator state changes | TCP と MQTT clients は status events を受信します。 |
+| クライアントが現在のシミュレーター状態を読む | REST が現在の status を返します。 |
+| シミュレーター状態が変わる | TCP と MQTT クライアントが status イベントを受信します。 |
 
-JSON example:
+JSON 例:
 
 ```json
 {
@@ -127,31 +127,37 @@ JSON example:
 }
 ```
 
-Field table:
+フィールド表:
 
-| Field | Type | Description |
+| フィールド | 型 | 説明 |
 | --- | --- | --- |
-| `initialized` | boolean | Simulated system が initialized されているかどうか。 |
-| `processState` | string | Current public process state: `ready`, `capturing`, `inspecting`, or `saving`. |
-| `recipe` | string | Status が報告する current public recipe value。 |
+| `initialized` | boolean | 模擬システムが初期化済みかどうか。 |
+| `processState` | string | 現在の公開処理状態: `ready`、`capturing`、`inspecting`、`saving`。 |
+| `recipe` | string | status が報告する現在の公開レシピ値。 |
+
+シミュレーター/サンプル検証:
+
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. C# SDK または raw REST サンプルを実行し、`GET /api/status` を読み取ることを確認します。
+3. **Initialize** または **Start Cycle** をクリックし、TCP または MQTT サンプルが更新後の `initialized` または `processState` 値を持つ status イベントを出力することを確認します。
 
 ## Control Status
 
-Direction:
+方向:
 
-| Transport | Direction |
+| トランスポート | 方向 |
 | --- | --- |
-| REST | Outbound response from control POST routes. |
-| TCP | Not used. |
-| MQTT | Not used. |
+| REST | 制御 POST ルートからの送信応答。 |
+| TCP | 使用しません。 |
+| MQTT | 使用しません。 |
 
-When it is sent:
+送信されるタイミング:
 
-| Scenario | Behavior |
+| シナリオ | 動作 |
 | --- | --- |
-| Client posts a control action | REST は action 後の state と public message を返します。 |
+| クライアントが制御アクションを POST する | REST はアクション後の状態と公開メッセージを返します。 |
 
-JSON example:
+JSON 例:
 
 ```json
 {
@@ -162,33 +168,39 @@ JSON example:
 }
 ```
 
-Field table:
+フィールド表:
 
-| Field | Type | Description |
+| フィールド | 型 | 説明 |
 | --- | --- | --- |
-| `initialized` | boolean | Control action 後に simulated system が initialized されているかどうか。 |
-| `processState` | string | Control action 後の public process state。 |
-| `recipe` | string | Current public recipe value。 |
-| `message` | string | Control action の public response message。 |
+| `initialized` | boolean | 制御アクション後に模擬システムが初期化済みかどうか。 |
+| `processState` | string | 制御アクション後の公開処理状態。 |
+| `recipe` | string | 現在の公開レシピ値。 |
+| `message` | string | 制御アクションの公開応答メッセージ。 |
+
+シミュレーター/サンプル検証:
+
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. REST 対応サンプルから `POST /api/control/initialize`、`POST /api/control/terminate`、`POST /api/control/start`、`POST /api/control/stop` を送信します。
+3. サンプルが `initialized`、`processState`、`recipe`、`message` を含む JSON 応答を出力することを確認します。
 
 ## Error Status
 
-Direction:
+方向:
 
-| Transport | Direction |
+| トランスポート | 方向 |
 | --- | --- |
-| REST | Outbound response from `GET /api/error`. |
-| TCP | Outbound event with `type: "error"`. |
-| MQTT | Outbound event on `virex/error`. |
+| REST | `GET /api/error` からの送信応答。 |
+| TCP | `type: "error"` を持つ送信イベント。 |
+| MQTT | `virex/error` 上の送信イベント。 |
 
-When it is sent:
+送信されるタイミング:
 
-| Scenario | Behavior |
+| シナリオ | 動作 |
 | --- | --- |
-| Client reads current error state | REST は current error status を返します。 |
-| Simulator error changes | TCP と MQTT clients は error event を受信します。 |
+| クライアントが現在のエラー状態を読む | REST が現在の error status を返します。 |
+| シミュレーターのエラーが変わる | TCP と MQTT クライアントが error イベントを受信します。 |
 
-JSON example:
+JSON 例:
 
 ```json
 {
@@ -200,36 +212,43 @@ JSON example:
 }
 ```
 
-Field table:
+フィールド表:
 
-| Field | Type | Description |
+| フィールド | 型 | 説明 |
 | --- | --- | --- |
-| `hasError` | boolean | Error が現在 active かどうか。 |
-| `message` | string | Public error message。Null の場合は omit されます。 |
-| `initialized` | boolean | Error status 時点の initialization state。 |
-| `processState` | string | Error status 時点の public process state。 |
-| `recipe` | string | Current public recipe value。 |
+| `hasError` | boolean | 現在エラーが有効かどうか。 |
+| `message` | string | 公開エラー メッセージ。null の場合は省略されます。 |
+| `initialized` | boolean | error status 時点の初期化状態。 |
+| `processState` | string | error status 時点の公開処理状態。 |
+| `recipe` | string | 現在の公開レシピ値。 |
+
+シミュレーター/サンプル検証:
+
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. TCP または MQTT サンプルを実行し、接続したままにします。
+3. シミュレーターで **Emit Error** をクリックします。
+4. サンプルが `hasError`、`message`、`initialized`、`processState`、`recipe` を含む error ペイロードを出力することを確認します。
 
 ## Result Summary
 
-`ResultSummaryDto` は単一の result summary item です。REST は `ResultListDto.items[]` に埋め込み、TCP と MQTT は直接 publish します。
+`ResultSummaryDto` は単一の結果要約項目です。REST はこれを `ResultListDto.items[]` に埋め込み、TCP と MQTT は直接発行します。
 
-Direction:
+方向:
 
-| Transport | Direction |
+| トランスポート | 方向 |
 | --- | --- |
-| REST | Item inside `GET /api/results` response `items[]`. |
-| TCP | Outbound event with `type: "result"`. |
-| MQTT | Outbound event on `virex/result`. |
+| REST | `GET /api/results` 応答の `items[]` 内の項目。 |
+| TCP | `type: "result"` を持つ送信イベント。 |
+| MQTT | `virex/result` 上の送信イベント。 |
 
-When it is sent:
+送信されるタイミング:
 
-| Scenario | Behavior |
+| シナリオ | 動作 |
 | --- | --- |
-| Simulator creates a result | TCP と MQTT clients は result summary event を受信します。 |
-| Client queries historical simulated results | REST は `ResultListDto` を返し、各 `items[]` entry は 1 つの `ResultSummaryDto` です。 |
+| シミュレーターが結果を作成する | TCP と MQTT クライアントが結果要約イベントを受信します。 |
+| クライアントが履歴の模擬結果をクエリする | REST が `ResultListDto` を返し、各 `items[]` 要素が 1 つの `ResultSummaryDto` になります。 |
 
-JSON example:
+JSON 例:
 
 ```json
 {
@@ -251,57 +270,64 @@ JSON example:
 }
 ```
 
-Field table:
+フィールド表:
 
-| Field | Type | Description |
+| フィールド | 型 | 説明 |
 | --- | --- | --- |
-| `resultId` | string | Public result identifier. |
-| `timestamp` | string | Result timestamp string. |
-| `lotId` | string | Active WaferInfo から copy された lot identifier。 |
-| `waferId` | string | Active WaferInfo から copy された wafer identifier。 |
-| `recipeId` | string | Result に関連する recipe identifier。 |
-| `slot` | string | Active WaferInfo から copy された slot identifier。 |
-| `foupId` | string | Active WaferInfo から copy された FOUP identifier。 |
-| `chamberId` | string | Active WaferInfo から copy された chamber identifier。 |
-| `overallResult` | string | Public summary result value. |
-| `defectCount` | number | Summary 内のすべての defect categories の total count。 |
-| `imageRelativePath` | string | Associated image artifact の relative path string。 |
-| `resultRelativePath` | string | Associated result artifact の relative path string。 |
-| `imagePath` | string | Simulator Result prefix 適用後の public image path。 |
-| `previewImagePath` | string | Simulator Result prefix 適用後の public preview image path。 |
-| `resultPath` | string | Simulator Result prefix 適用後の public result path。 |
+| `resultId` | string | 公開結果識別子。 |
+| `timestamp` | string | 結果タイムスタンプ文字列。 |
+| `lotId` | string | アクティブな WaferInfo からコピーされたロット識別子。 |
+| `waferId` | string | アクティブな WaferInfo からコピーされたウェーハ識別子。 |
+| `recipeId` | string | 結果に関連付けられたレシピ識別子。 |
+| `slot` | string | アクティブな WaferInfo からコピーされたスロット識別子。 |
+| `foupId` | string | アクティブな WaferInfo からコピーされた FOUP 識別子。 |
+| `chamberId` | string | アクティブな WaferInfo からコピーされたチャンバー識別子。 |
+| `overallResult` | string | 公開要約結果値。 |
+| `defectCount` | number | 要約内のすべての欠陥カテゴリの合計数。 |
+| `imageRelativePath` | string | 関連画像成果物の相対パス文字列。 |
+| `resultRelativePath` | string | 関連結果成果物の相対パス文字列。 |
+| `imagePath` | string | シミュレーターの Result prefix を適用した後の公開画像パス。 |
+| `previewImagePath` | string | シミュレーターの Result prefix を適用した後の公開プレビュー画像パス。 |
+| `resultPath` | string | シミュレーターの Result prefix を適用した後の公開結果パス。 |
 
-Result summaries は summary-only です。Defect lists、die lists、crop lists、image binaries、private inspection internals は含みません。
+結果要約は意図的に要約のみです。欠陥リスト、ダイ リスト、クロップ リスト、画像バイナリ、非公開の検査内部情報は含まれません。
+
+シミュレーター/サンプル検証:
+
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. WaferInfo を適用し、**Initialize** をクリックしてから、**Start Cycle** または **Emit Fake Result** をクリックします。
+3. TCP または MQTT サンプルが `result` イベントを出力すること、または REST 対応サンプルで `GET /api/results` を呼び出せることを確認します。
+4. 返された要約に WaferInfo 識別子と件数フィールドが含まれ、欠陥リスト、ダイ リスト、クロップ リスト、画像バイナリ、非公開の検査内部情報が含まれないことを確認します。
 
 ## REST Result Query Response
 
-`ResultListDto` は result queries 用の REST response wrapper です。各 `items[]` entry は 1 つの `ResultSummaryDto` です。
+`ResultListDto` は結果クエリ用の REST 応答ラッパーです。各 `items[]` 要素は 1 つの `ResultSummaryDto` です。
 
-Direction:
+方向:
 
-| Transport | Direction |
+| トランスポート | 方向 |
 | --- | --- |
-| REST | Response wrapper returned by `GET /api/results`. |
-| TCP | Not used. |
-| MQTT | Not used. |
+| REST | `GET /api/results` が返す応答ラッパー。 |
+| TCP | 使用しません。 |
+| MQTT | 使用しません。 |
 
-This wrapper is REST-only. TCP and MQTT publish a single Result Summary directly and do not use Result List.
+このラッパーは REST 専用です。TCP と MQTT は単一の Result Summary を直接発行し、Result List は使用しません。
 
-When it is sent:
+送信されるタイミング:
 
-| Scenario | Behavior |
+| シナリオ | 動作 |
 | --- | --- |
-| Client queries result summaries | REST は matching summary items と count を含む list wrapper を返します。 |
+| クライアントが結果要約をクエリする | REST は一致する要約項目と件数を含むリスト ラッパーを返します。 |
 
-`GET /api/results` supports optional filters:
+`GET /api/results` は任意のフィルターに対応します。
 
 - `lotId`
 - `waferId`
 - `recipeId`
 
-When multiple filters are supplied, they are combined with AND.
+複数のフィルターを指定した場合は AND で結合されます。
 
-Query examples:
+クエリ例:
 
 ```text
 GET /api/results
@@ -310,7 +336,7 @@ GET /api/results?lotId=LOT-001&waferId=W01
 GET /api/results?lotId=LOT-001&waferId=W01&recipeId=RCP-A
 ```
 
-JSON example:
+JSON 例:
 
 ```json
 {
@@ -337,57 +363,83 @@ JSON example:
 }
 ```
 
-Field table:
+フィールド表:
 
-| Field | Type | Description |
+| フィールド | 型 | 説明 |
 | --- | --- | --- |
-| `items` | array | `ResultSummaryDto` objects の array。 |
-| `count` | number | Returned result summary items の数。 |
+| `items` | array | `ResultSummaryDto` オブジェクトの配列。 |
+| `count` | number | 返された結果要約項目の数。 |
 
-## REST Mapping
+シミュレーター/サンプル検証:
 
-| Method and route | Direction | Payload content | Notes |
+1. 一致する WaferInfo で模擬結果を作成します。
+2. REST 対応サンプルから `GET /api/results` を呼び出します。
+3. `count` が返された `items` の数と一致することを確認します。
+
+## REST マッピング
+
+| メソッドとルート | 方向 | ペイロード内容 | 備考 |
 | --- | --- | --- | --- |
-| `GET /api/status` | Outbound response | `StatusDto` | Reads current public state. |
-| `GET /api/error` | Outbound response | `ErrorStatusDto` | Reads current public error state. |
-| `GET /api/wafer-info` | Outbound response | `WaferInfo` | Reads current public wafer context. |
-| `POST /api/wafer-info` | Inbound request | `WaferInfo` | Updates current public wafer context. |
-| `POST /api/control/initialize` | Outbound response | `ControlStatusDto` | Initializes the simulator state. |
-| `POST /api/control/terminate` | Outbound response | `ControlStatusDto` | Terminates the simulator state. |
-| `POST /api/control/start` | Outbound response | `ControlStatusDto` | Starts a simulated cycle. |
-| `POST /api/control/stop` | Outbound response | `ControlStatusDto` | Stops a simulated cycle. |
-| `GET /api/results` | Outbound response | `ResultListDto` | Optional filters: `lotId`, `waferId`, `recipeId`. Multiple filters are combined with AND. |
+| `GET /api/status` | 送信応答 | `StatusDto` | 現在の公開状態を読み取ります。 |
+| `GET /api/error` | 送信応答 | `ErrorStatusDto` | 現在の公開エラー状態を読み取ります。 |
+| `GET /api/wafer-info` | 送信応答 | `WaferInfo` | 現在の公開ウェーハ コンテキストを読み取ります。 |
+| `POST /api/wafer-info` | 受信リクエスト | `WaferInfo` | 現在の公開ウェーハ コンテキストを更新します。 |
+| `POST /api/control/initialize` | 送信応答 | `ControlStatusDto` | シミュレーター状態を初期化します。 |
+| `POST /api/control/terminate` | 送信応答 | `ControlStatusDto` | シミュレーター状態を終了します。 |
+| `POST /api/control/start` | 送信応答 | `ControlStatusDto` | 模擬サイクルを開始します。 |
+| `POST /api/control/stop` | 送信応答 | `ControlStatusDto` | 模擬サイクルを停止します。 |
+| `GET /api/results` | 送信応答 | `ResultListDto` | 任意フィルター: `lotId`、`waferId`、`recipeId`。複数フィルターは AND で結合されます。 |
 
-## TCP Mapping
+REST 検証:
 
-TCP messages are JSON objects. TCP outbound events include a `type` property. TCP inbound commands use the following shapes:
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. C# SDK、C# raw REST、または C++ raw REST サンプルを実行します。
+3. サンプルが status を読み取り、WaferInfo を POST し、制御アクションを実行し、上記の公開ペイロードで結果要約をクエリすることを確認します。
 
-| Inbound command | Direction | JSON example | Notes |
+## TCP マッピング
+
+TCP メッセージは JSON オブジェクトです。TCP 送信イベントには `type` プロパティが含まれます。TCP 受信コマンドは次の形状を使用します。
+
+| 受信コマンド | 方向 | JSON 例 | 備考 |
 | --- | --- | --- | --- |
-| WaferInfo | Inbound to simulator | `{"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}` | Legacy WaferInfo frames may omit `type`; parser は WaferInfo JSON parser に fallback します。 |
-| Start | Inbound to simulator | `{"type":"start"}` | Starts a simulated cycle. |
-| Stop | Inbound to simulator | `{"type":"stop"}` | Stops a simulated cycle. |
+| WaferInfo | シミュレーターへの受信 | `{"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}` | 従来の WaferInfo フレームでは `type` を省略できます。パーサーは WaferInfo JSON パーサーへフォールバックします。 |
+| Start | シミュレーターへの受信 | `{"type":"start"}` | 模擬サイクルを開始します。 |
+| Stop | シミュレーターへの受信 | `{"type":"stop"}` | 模擬サイクルを停止します。 |
 
-TCP outbound events:
+TCP 送信イベント:
 
-| Event type | Direction | Payload content |
+| イベント type | 方向 | ペイロード内容 |
 | --- | --- | --- |
-| `status` | Outbound from simulator | `StatusDto` plus `type`. |
-| `waferInfo` | Outbound from simulator | `WaferInfo` plus `type`. |
-| `result` | Outbound from simulator | `ResultSummaryDto` plus `type`. |
-| `error` | Outbound from simulator | `ErrorStatusDto` plus `type`. |
+| `status` | シミュレーターから送信 | `StatusDto` と `type`。 |
+| `waferInfo` | シミュレーターから送信 | `WaferInfo` と `type`。 |
+| `result` | シミュレーターから送信 | `ResultSummaryDto` と `type`。 |
+| `error` | シミュレーターから送信 | `ErrorStatusDto` と `type`。 |
 
-## MQTT Mapping
+TCP 検証:
 
-MQTT is outbound-only. すべての simulator events を観察するには base topic wildcard を subscribe します。
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. raw TCP サンプルを実行します。
+3. 初期 status フレームと WaferInfo フレームが出力されることを確認します。
+4. サンプルに WaferInfo フレームを送信させ、シミュレーターの Event Log に TCP WaferInfo 更新が表示されることを確認します。
+
+## MQTT マッピング
+
+MQTT は送信専用です。すべてのシミュレーター イベントを観測するには、ベース トピックのワイルドカードを購読します。
 
 ```text
 virex/#
 ```
 
-| Topic | Direction | Payload content | Notes |
+| トピック | 方向 | ペイロード内容 | 備考 |
 | --- | --- | --- | --- |
-| `virex/status` | Outbound from simulator | `StatusDto` | Payload does not require `type`. |
-| `virex/wafer-info` | Outbound from simulator | `WaferInfo` | Payload does not require `type`. |
-| `virex/result` | Outbound from simulator | `ResultSummaryDto` | Payload does not require `type`. |
-| `virex/error` | Outbound from simulator | `ErrorStatusDto` | Payload does not require `type`. |
+| `virex/status` | シミュレーターから送信 | `StatusDto` | ペイロードに `type` は不要です。 |
+| `virex/wafer-info` | シミュレーターから送信 | `WaferInfo` | ペイロードに `type` は不要です。 |
+| `virex/result` | シミュレーターから送信 | `ResultSummaryDto` | ペイロードに `type` は不要です。 |
+| `virex/error` | シミュレーターから送信 | `ErrorStatusDto` | ペイロードに `type` は不要です。 |
+
+MQTT 検証:
+
+1. シミュレーターを起動し、**Start Servers** をクリックします。
+2. raw MQTT サンプルを実行し、購読したままにします。
+3. **Apply WaferInfo**、**Initialize**、**Start Cycle**、**Emit Fake Result**、**Emit Error** をクリックします。
+4. サンプルが `wafer-info`、`status`、`result`、`error` に対応するトピックと JSON ペイロードを出力することを確認します。
