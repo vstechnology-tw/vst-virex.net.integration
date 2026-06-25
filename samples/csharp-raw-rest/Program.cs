@@ -48,14 +48,37 @@ try
     Console.WriteLine("Expected Simulator Event Log:");
     Console.WriteLine("WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1");
 
-    PrintStep("Step 4 - POST /api/control/start");
+    PrintStep("Step 4 - POST /api/control/start with condition and runMode payload");
     Console.WriteLine("Expected Simulator Status: capturing -> inspecting -> saving -> ready.");
-    var start = await http.PostAsync(RestRoutes.ApiControlStart.TrimStart('/'), null);
+    var start = await http.PostAsJsonAsync(
+        RestRoutes.ApiControlStart.TrimStart('/'),
+        new ControlStartRequest { Condition = "golden-sample", RunMode = ControlRunModes.Continue },
+        ProtocolJson.Options);
     var startBody = await start.Content.ReadAsStringAsync();
     Console.WriteLine($"Start returned HTTP {(int)start.StatusCode}: {startBody}");
     start.EnsureSuccessStatusCode();
+    Console.WriteLine("Expected Simulator Event Log:");
+    Console.WriteLine("Start condition: golden-sample");
+    Console.WriteLine("Start run mode: continue");
 
-    PrintStep("Step 5 - GET /api/results by lotId");
+    PrintStep("Step 5 - POST /api/control/stop with reason payload");
+    var stopStart = http.PostAsJsonAsync(
+        RestRoutes.ApiControlStart.TrimStart('/'),
+        new ControlStartRequest { Condition = "stop-demo", RunMode = ControlRunModes.Continue },
+        ProtocolJson.Options);
+    await Task.Delay(300);
+    var stop = await http.PostAsJsonAsync(
+        RestRoutes.ApiControlStop.TrimStart('/'),
+        new ControlStopRequest { Reason = "operator-request" },
+        ProtocolJson.Options);
+    await stopStart;
+    var stopBody = await stop.Content.ReadAsStringAsync();
+    Console.WriteLine($"Stop returned HTTP {(int)stop.StatusCode}: {stopBody}");
+    stop.EnsureSuccessStatusCode();
+    Console.WriteLine("Expected Simulator Event Log:");
+    Console.WriteLine("Stopped. reason=operator-request");
+
+    PrintStep("Step 6 - GET /api/results by lotId");
     var results = await http.GetFromJsonAsync<ResultListDto>(
         RestRoutes.ApiResults.TrimStart('/') + "?lotId=" + Uri.EscapeDataString(lotId),
         ProtocolJson.Options);

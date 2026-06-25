@@ -6,9 +6,9 @@ var host = args.Length > 0 ? args[0] : "127.0.0.1";
 var port = args.Length > 1 ? int.Parse(args[1]) : 5089;
 
 PrintStep("Virex.NET C# Raw TCP Guided Demo");
-Console.WriteLine("This sample connects to the simulator TCP socket, reads the initial frames, sends WaferInfo, and waits for the update event.");
+Console.WriteLine("This sample connects to the simulator TCP socket, reads the initial frames, sends WaferInfo, and sends start/stop commands.");
 Console.WriteLine($"TCP endpoint: {host}:{port}");
-Prompt("In Simulator, press Start Servers, then press Enter here. Initialize is not required for the WaferInfo TCP demo.");
+Prompt("In Simulator, press Start Servers and Initialize, then press Enter here.");
 
 using var client = new TcpClient();
 try
@@ -52,6 +52,32 @@ Console.WriteLine("Sent waferInfo frame.");
 Console.WriteLine("Expected Simulator Event Log:");
 Console.WriteLine("WaferInfo updated from TCP: lotId=LOT-RAW-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1");
 Console.WriteLine("Waiting for echoed waferInfo update event...");
+Console.WriteLine(await reader.ReadLineAsync());
+
+PrintStep("Step 3 - Send start command with condition and runMode payload");
+var startFrame = TcpSocketEventFormatter.FormatStartCommand("golden-sample", ControlRunModes.Continue);
+bytes = Encoding.UTF8.GetBytes(startFrame);
+await stream.WriteAsync(bytes);
+await stream.FlushAsync();
+Console.WriteLine("Sent start frame:");
+Console.WriteLine(startFrame.TrimEnd());
+Console.WriteLine("Expected Simulator Event Log:");
+Console.WriteLine("Start condition: golden-sample");
+Console.WriteLine("Start run mode: continue");
+Console.WriteLine("Waiting for status transition...");
+Console.WriteLine(await reader.ReadLineAsync());
+
+PrintStep("Step 4 - Send stop command with reason payload");
+await Task.Delay(300);
+var stopFrame = TcpSocketEventFormatter.FormatStopCommand("operator-request");
+bytes = Encoding.UTF8.GetBytes(stopFrame);
+await stream.WriteAsync(bytes);
+await stream.FlushAsync();
+Console.WriteLine("Sent stop frame:");
+Console.WriteLine(stopFrame.TrimEnd());
+Console.WriteLine("Expected Simulator Event Log:");
+Console.WriteLine("Stopped. reason=operator-request");
+Console.WriteLine("Waiting for ready status...");
 Console.WriteLine(await reader.ReadLineAsync());
 
 return 0;

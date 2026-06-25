@@ -105,11 +105,13 @@ public sealed class RestSimulatorServer
             }
             else if (path == RestRoutes.ApiControlStart && context.Request.HttpMethod == "POST")
             {
-                await ControlAsync(context, await _session.StartCycleAsync(string.Empty).ConfigureAwait(false)).ConfigureAwait(false);
+                var request = await ReadOptionalJsonAsync<ControlStartRequest>(context).ConfigureAwait(false);
+                await ControlAsync(context, await _session.StartCycleAsync(string.Empty, request?.Condition, request?.RunMode).ConfigureAwait(false)).ConfigureAwait(false);
             }
             else if (path == RestRoutes.ApiControlStop && context.Request.HttpMethod == "POST")
             {
-                await ControlAsync(context, _session.Stop()).ConfigureAwait(false);
+                var request = await ReadOptionalJsonAsync<ControlStopRequest>(context).ConfigureAwait(false);
+                await ControlAsync(context, _session.Stop(request?.Reason)).ConfigureAwait(false);
             }
             else if (path == RestRoutes.ApiResults && context.Request.HttpMethod == "GET")
             {
@@ -165,6 +167,15 @@ public sealed class RestSimulatorServer
     {
         using var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
         return await reader.ReadToEndAsync().ConfigureAwait(false);
+    }
+
+    private static async Task<T?> ReadOptionalJsonAsync<T>(HttpListenerContext context)
+    {
+        if (!context.Request.HasEntityBody)
+            return default;
+
+        var body = await ReadBodyAsync(context).ConfigureAwait(false);
+        return string.IsNullOrWhiteSpace(body) ? default : ProtocolJson.Deserialize<T>(body);
     }
 
     private static Task ControlAsync(HttpListenerContext context, ControlResponse response)

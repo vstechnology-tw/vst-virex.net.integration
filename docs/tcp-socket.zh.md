@@ -23,14 +23,14 @@ Field-level details 與 shared JSON body shapes 請看 [傳送內容 / Payloads]
 ```
 
 ```json
-{"type":"start"}
+{"type":"start","condition":"golden-sample","runMode":"continue"}
 ```
 
 ```json
-{"type":"stop"}
+{"type":"stop","reason":"operator-request"}
 ```
 
-Legacy WaferInfo frames 可省略 `type` field。Start/stop 必須包含 `type`。
+Legacy WaferInfo frames 可省略 `type` field。Start/stop 必須包含 `type`。Start 的 `condition`、`runMode` 與 stop 的 `reason` 都是 optional。Start `runMode` 預設 `continue`，也支援 `single`；legacy `{"type":"start"}` 與 `{"type":"stop"}` 仍有效。
 
 ## Outbound
 

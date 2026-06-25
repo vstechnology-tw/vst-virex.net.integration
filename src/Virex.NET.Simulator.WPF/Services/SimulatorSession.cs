@@ -75,13 +75,20 @@ public sealed class SimulatorSession
         return Control("Terminated.");
     }
 
-    public async Task<ControlResponse> StartCycleAsync(string resultPathPrefix)
+    public async Task<ControlResponse> StartCycleAsync(string resultPathPrefix, string? condition = null, string? runMode = null)
     {
         if (!Status.Initialized)
             return Control("not_initialized", 409);
 
         if (Status.ProcessState != ProcessStates.Ready)
             return Control("process_active", 409);
+
+        if (!ControlRunModes.TryNormalize(runMode, out var normalizedRunMode))
+            return Control("invalid_run_mode", 400);
+
+        if (!string.IsNullOrWhiteSpace(condition))
+            LogMessage("Start condition: " + condition);
+        LogMessage("Start run mode: " + normalizedRunMode);
 
         _cycleCts = new CancellationTokenSource();
         var token = _cycleCts.Token;
@@ -104,7 +111,7 @@ public sealed class SimulatorSession
         }
     }
 
-    public ControlResponse Stop()
+    public ControlResponse Stop(string? reason = null)
     {
         if (!Status.Initialized)
             return Control("not_initialized", 409);
@@ -114,7 +121,7 @@ public sealed class SimulatorSession
 
         _cycleCts?.Cancel();
         SetStatus(true, ProcessStates.Ready, Status.Recipe);
-        LogMessage("Stopped.");
+        LogMessage(string.IsNullOrWhiteSpace(reason) ? "Stopped." : "Stopped. reason=" + reason);
         return Control("Stopped.");
     }
 

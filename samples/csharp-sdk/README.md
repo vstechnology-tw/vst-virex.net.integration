@@ -21,7 +21,7 @@ Guided demo for `Virex.NET.Client`. This is the canonical sample for learning ho
 3. When prompted, press **Initialize** and confirm `initialized=True, processState=ready`.
 4. Let the sample send WaferInfo through REST.
 5. Watch Event Log for the full WaferInfo line.
-6. Let the sample start the cycle and query results.
+6. Let the sample start the cycle with `condition` and `runMode`, stop a second cycle with a `reason`, and query results.
 
 ## Run
 
@@ -38,8 +38,9 @@ dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj -- http://127.0.0
 ## Expected Output
 
 - Before **Initialize**, the sample reports `HTTP 409 not_initialized`.
-- After **Initialize**, the sample updates WaferInfo, starts a cycle, and prints the result count.
+- After **Initialize**, the sample updates WaferInfo, starts a cycle with `condition=golden-sample` and `runMode=continue`, stops a second cycle with `reason=operator-request`, and prints the result count.
 - Event Log shows `WaferInfo updated from REST: lotId=LOT-SDK-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1`.
+- Event Log shows `Start condition: golden-sample`, `Start run mode: continue`, and `Stopped. reason=operator-request`.
 
 ## Troubleshooting
 

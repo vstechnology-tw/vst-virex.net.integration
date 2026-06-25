@@ -60,6 +60,48 @@ public sealed class VirexTcpEventClientTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => runTask);
     }
 
+    [Fact]
+    public async Task SendStartAsyncWritesConditionAndRunModeCommandFrame()
+    {
+        using var listener = StartLoopbackListener(out var port);
+        var client = new VirexTcpEventClient(new VirexClientOptions
+        {
+            TcpHost = "127.0.0.1",
+            TcpPort = port,
+        });
+
+        var sendTask = client.SendStartAsync("golden-sample", ControlRunModes.Continue);
+        using var accepted = await listener.AcceptTcpClientAsync();
+        var frame = await ReadFrameAsync(accepted);
+        await sendTask;
+
+        Assert.Equal("""{"type":"start","condition":"golden-sample","runMode":"continue"}""", frame);
+    }
+
+    [Fact]
+    public async Task SendStopAsyncWritesReasonCommandFrame()
+    {
+        using var listener = StartLoopbackListener(out var port);
+        var client = new VirexTcpEventClient(new VirexClientOptions
+        {
+            TcpHost = "127.0.0.1",
+            TcpPort = port,
+        });
+
+        var sendTask = client.SendStopAsync("operator-request");
+        using var accepted = await listener.AcceptTcpClientAsync();
+        var frame = await ReadFrameAsync(accepted);
+        await sendTask;
+
+        Assert.Equal("""{"type":"stop","reason":"operator-request"}""", frame);
+    }
+
+    private static async Task<string> ReadFrameAsync(TcpClient client)
+    {
+        using var reader = new StreamReader(client.GetStream(), Encoding.UTF8, false, 4096, true);
+        return await reader.ReadLineAsync() ?? string.Empty;
+    }
+
     private static TcpListener StartLoopbackListener(out int port)
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);

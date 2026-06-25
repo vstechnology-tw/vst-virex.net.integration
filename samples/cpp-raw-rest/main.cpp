@@ -1,9 +1,12 @@
 #include <windows.h>
 #include <winhttp.h>
 
+#include <chrono>
+#include <future>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace
@@ -210,16 +213,35 @@ int main(int argc, char* argv[])
         std::cout << "Expected Simulator Event Log:" << std::endl;
         std::cout << "WaferInfo updated from REST: lotId=LOT-CPP-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1" << std::endl;
 
-        PrintStep("Step 4 - POST /api/control/start");
+        PrintStep("Step 4 - POST /api/control/start with condition and runMode payload");
         std::cout << "Expected Simulator Status: capturing -> inspecting -> saving -> ready." << std::endl;
-        const HttpResponse start = SendRequest(url, L"POST", L"/api/control/start");
+        const HttpResponse start = SendRequest(url, L"POST", L"/api/control/start", R"({"condition":"golden-sample","runMode":"continue"})");
         std::cout << "Start returned HTTP " << start.statusCode << ": " << start.body << std::endl;
         if (start.statusCode >= 400)
         {
             throw std::runtime_error("Start failed. Confirm Initialize was pressed and processState is ready.");
         }
+        std::cout << "Expected Simulator Event Log:" << std::endl;
+        std::cout << "Start condition: golden-sample" << std::endl;
+        std::cout << "Start run mode: continue" << std::endl;
 
-        PrintStep("Step 5 - GET /api/results by lotId");
+        PrintStep("Step 5 - POST /api/control/stop with reason payload");
+        auto stopDemoStart = std::async(std::launch::async, [&url]
+        {
+            return SendRequest(url, L"POST", L"/api/control/start", R"({"condition":"stop-demo","runMode":"continue"})");
+        });
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        const HttpResponse stop = SendRequest(url, L"POST", L"/api/control/stop", R"({"reason":"operator-request"})");
+        stopDemoStart.get();
+        std::cout << "Stop returned HTTP " << stop.statusCode << ": " << stop.body << std::endl;
+        if (stop.statusCode >= 400)
+        {
+            throw std::runtime_error("Stop failed. Confirm a cycle was running.");
+        }
+        std::cout << "Expected Simulator Event Log:" << std::endl;
+        std::cout << "Stopped. reason=operator-request" << std::endl;
+
+        PrintStep("Step 6 - GET /api/results by lotId");
         const HttpResponse results = SendRequest(url, L"GET", L"/api/results?lotId=LOT-CPP-REST-001");
         std::cout << "Results returned HTTP " << results.statusCode << ": " << results.body << std::endl;
     }

@@ -96,7 +96,7 @@ await client.SetWaferInfoAsync(new WaferInfo
 });
 
 await client.InitializeAsync();
-await client.StartAsync();
+await client.StartAsync("golden-sample", ControlRunModes.Continue);
 
 var results = await client.QueryResultsAsync(lotId: "LOT-001");
 
@@ -107,7 +107,7 @@ await client.TcpEvents.SendWaferInfoAsync(new WaferInfo
     WaferId = "W01",
     RecipeId = "RCP-A",
 });
-await client.TcpEvents.SendStartAsync();
+await client.TcpEvents.SendStartAsync("golden-sample", ControlRunModes.Continue);
 
 // TCP and MQTT event listeners are started explicitly.
 using var eventCts = new CancellationTokenSource();

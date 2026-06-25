@@ -6,6 +6,12 @@ public sealed class TcpSocketMessage
 {
     public string Type { get; set; } = string.Empty;
 
+    public string? Condition { get; set; }
+
+    public string RunMode { get; set; } = ControlRunModes.Continue;
+
+    public string? Reason { get; set; }
+
     public WaferInfo? WaferInfo { get; set; }
 
     public string RawJson { get; set; } = string.Empty;
@@ -37,6 +43,9 @@ public static class TcpSocketMessageParser
                 string.Equals(type, "stop", System.StringComparison.OrdinalIgnoreCase))
             {
                 message.Type = type.ToLowerInvariant();
+                message.Condition = ReadOptionalString(root, "condition");
+                message.RunMode = ReadRunMode(root);
+                message.Reason = ReadOptionalString(root, "reason");
                 return true;
             }
 
@@ -55,4 +64,18 @@ public static class TcpSocketMessageParser
             return false;
         }
     }
+
+    private static string? ReadOptionalString(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var value) || value.ValueKind != JsonValueKind.String)
+            return null;
+
+        var text = value.GetString();
+        return string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
+    private static string ReadRunMode(JsonElement root) =>
+        ControlRunModes.TryNormalize(ReadOptionalString(root, "runMode"), out var runMode)
+            ? runMode
+            : string.Empty;
 }

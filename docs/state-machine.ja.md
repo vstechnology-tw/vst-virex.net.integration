@@ -33,8 +33,8 @@
 | --- | --- | --- |
 | **Initialize** / `POST /api/control/initialize` | `initialized=false`、`processState=ready` | `initialized=true` に設定し、`processState=ready` を維持します。 |
 | **Terminate** / `POST /api/control/terminate` | `processState=ready` | `initialized=false` に設定し、`processState=ready` を維持します。 |
-| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start"}` | `initialized=true`、`processState=ready` | `capturing`、`inspecting`、`saving` を経て、結果発行後に `ready` へ戻ります。 |
-| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop"}` | アクティブな処理状態: `capturing`、`inspecting`、`saving` | 現在のサイクルをキャンセルし、`ready` へ戻ります。 |
+| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `initialized=true`、`processState=ready` | `capturing`、`inspecting`、`saving` を経て、結果発行後に `ready` へ戻ります。`condition` is optional. `runMode` defaults to `continue`; `single` is also supported. |
+| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop","reason":"operator-request"}` | アクティブな処理状態: `capturing`、`inspecting`、`saving` | 現在のサイクルをキャンセルし、`ready` へ戻ります。`reason` is optional. |
 | **Apply WaferInfo** / WaferInfo REST または TCP 更新 | 任意の処理状態 | ウェーハ コンテキストを更新し、wafer-info イベントを発行します。`processState` は変更しません。 |
 | **Emit Fake Result** | 任意の処理状態 | 1 件の結果要約イベントを発行します。`processState` は変更しません。 |
 | **Emit Error** | 任意の処理状態 | エラー イベントを発行します。`processState` は変更しません。 |

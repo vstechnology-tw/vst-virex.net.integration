@@ -112,5 +112,5 @@ await client.SetWaferInfoAsync(new WaferInfo
 });
 
 await client.InitializeAsync();
-await client.StartAsync();
+await client.StartAsync("golden-sample", ControlRunModes.Continue);
 ```

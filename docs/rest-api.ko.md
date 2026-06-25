@@ -33,6 +33,27 @@ GET  /api/results
 
 정확한 요청 및 응답 본문 형태는 [전송 내용 / 페이로드](payloads.md)를 참조하십시오.
 
+`POST /api/control/start` accepts an optional JSON body:
+
+```json
+{
+  "condition": "golden-sample",
+  "runMode": "continue"
+}
+```
+
+`runMode` is optional. Omitted or blank values default to `continue`; `single` is also supported.
+
+`POST /api/control/stop` accepts an optional JSON body:
+
+```json
+{
+  "reason": "operator-request"
+}
+```
+
+Both bodies are backward compatible. Empty bodies and blank values are valid.
+
 ## Status
 
 ```json

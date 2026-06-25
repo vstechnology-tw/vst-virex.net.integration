@@ -26,9 +26,9 @@ def main():
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 5089
 
     print_step("Virex.NET Python Raw TCP Guided Demo")
-    print("This sample connects to the simulator TCP socket, reads initial frames, sends WaferInfo, and waits for the update event.")
+    print("This sample connects to the simulator TCP socket, reads initial frames, sends WaferInfo, and sends start/stop commands.")
     print(f"TCP endpoint: {host}:{port}")
-    prompt("Press Start Servers, then press Enter here. Initialize is not required for the WaferInfo TCP demo.")
+    prompt("Press Start Servers and Initialize, then press Enter here.")
 
     try:
         client = socket.create_connection((host, port), timeout=10)
@@ -62,6 +62,27 @@ def main():
         print("Expected Simulator Event Log:")
         print("WaferInfo updated from TCP: lotId=LOT-PY-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1")
         print("Waiting for echoed waferInfo update event...")
+        print(read_line(file))
+
+        print_step("Step 3 - Send start command with condition and runMode payload")
+        start_frame = {"type": "start", "condition": "golden-sample", "runMode": "continue"}
+        client.sendall((json.dumps(start_frame, separators=(",", ":")) + "\n").encode("utf-8"))
+        print("Sent start frame:")
+        print(json.dumps(start_frame, separators=(",", ":")))
+        print("Expected Simulator Event Log:")
+        print("Start condition: golden-sample")
+        print("Start run mode: continue")
+        print("Waiting for status transition...")
+        print(read_line(file))
+
+        print_step("Step 4 - Send stop command with reason payload")
+        stop_frame = {"type": "stop", "reason": "operator-request"}
+        client.sendall((json.dumps(stop_frame, separators=(",", ":")) + "\n").encode("utf-8"))
+        print("Sent stop frame:")
+        print(json.dumps(stop_frame, separators=(",", ":")))
+        print("Expected Simulator Event Log:")
+        print("Stopped. reason=operator-request")
+        print("Waiting for ready status...")
         print(read_line(file))
 
     return 0

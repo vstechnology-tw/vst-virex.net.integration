@@ -15,7 +15,7 @@ Guided demo for the public REST API using `HttpClient` directly.
 3. Confirm the sample reads `/api/status`.
 4. Confirm the sample shows `POST /api/control/start` returning `409 not_initialized`.
 5. Press **Initialize** when prompted.
-6. Let the sample send WaferInfo, start a cycle, and query results.
+6. Let the sample send WaferInfo, start a cycle with `condition` and `runMode`, stop a second cycle with `reason`, and query results.
 
 ## Run
 
@@ -34,7 +34,8 @@ dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj -- http:
 - Initial status shows `initialized=False` when starting from a fresh simulator state.
 - Start before **Initialize** returns HTTP `409` with `not_initialized`.
 - Event Log shows `WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1`.
-- After **Initialize**, start returns HTTP `200` and the result query prints a count.
+- After **Initialize**, start with `{"condition":"golden-sample","runMode":"continue"}` returns HTTP `200`, stop with `{"reason":"operator-request"}` returns HTTP `200`, and the result query prints a count.
+- Event Log shows `Start condition: golden-sample`, `Start run mode: continue`, and `Stopped. reason=operator-request`.
 
 ## Troubleshooting
 

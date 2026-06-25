@@ -23,14 +23,14 @@ For field-level details and shared JSON body shapes, see [Transmitted Content / 
 ```
 
 ```json
-{"type":"start"}
+{"type":"start","condition":"golden-sample","runMode":"continue"}
 ```
 
 ```json
-{"type":"stop"}
+{"type":"stop","reason":"operator-request"}
 ```
 
-The `type` field is optional for legacy WaferInfo frames. Start/stop require `type`.
+The `type` field is optional for legacy WaferInfo frames. Start/stop require `type`. Start `condition`, start `runMode`, and stop `reason` are optional. Start `runMode` defaults to `continue`; `single` is also supported. Legacy `{"type":"start"}` and `{"type":"stop"}` remain valid.
 
 ## Outbound
 

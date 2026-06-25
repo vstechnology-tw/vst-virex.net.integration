@@ -1,4 +1,7 @@
 using System.Text.Json;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using Virex.NET.Contracts;
 using Virex.NET.Simulator.WPF.Services;
 
@@ -89,6 +92,8 @@ public sealed class ProtocolFormatterTests
     {
         Assert.True(TcpSocketMessageParser.TryParse("""{"type":"start"}""", out var start, out _));
         Assert.Equal("start", start.Type);
+        Assert.Null(start.Condition);
+        Assert.Equal(ControlRunModes.Continue, start.RunMode);
 
         Assert.True(TcpSocketMessageParser.TryParse(
             """{"type":"waferInfo","lotId":"LOT-1","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}""",
@@ -96,6 +101,52 @@ public sealed class ProtocolFormatterTests
             out _));
         Assert.Equal("waferInfo", wafer.Type);
         Assert.Equal("LOT-1", wafer.WaferInfo?.LotId);
+    }
+
+    [Fact]
+    public void TcpCommandPayloadsIncludeOptionalStartConditionRunModeAndStopReason()
+    {
+        var startFrame = TcpSocketEventFormatter.FormatStartCommand("golden-sample", ControlRunModes.SingleRun);
+        var stopFrame = TcpSocketEventFormatter.FormatStopCommand("operator-request");
+
+        using var startDoc = JsonDocument.Parse(startFrame);
+        Assert.Equal("start", startDoc.RootElement.GetProperty("type").GetString());
+        Assert.Equal("golden-sample", startDoc.RootElement.GetProperty("condition").GetString());
+        Assert.Equal("single", startDoc.RootElement.GetProperty("runMode").GetString());
+
+        using var stopDoc = JsonDocument.Parse(stopFrame);
+        Assert.Equal("stop", stopDoc.RootElement.GetProperty("type").GetString());
+        Assert.Equal("operator-request", stopDoc.RootElement.GetProperty("reason").GetString());
+    }
+
+    [Fact]
+    public void TcpMessageParserReadsOptionalStartConditionRunModeAndStopReason()
+    {
+        Assert.True(TcpSocketMessageParser.TryParse(
+            """{"type":"start","condition":"golden-sample","runMode":"single"}""",
+            out var start,
+            out _));
+        Assert.Equal("start", start.Type);
+        Assert.Equal("golden-sample", start.Condition);
+        Assert.Equal(ControlRunModes.SingleRun, start.RunMode);
+
+        Assert.True(TcpSocketMessageParser.TryParse(
+            """{"type":"stop","reason":"operator-request"}""",
+            out var stop,
+            out _));
+        Assert.Equal("stop", stop.Type);
+        Assert.Equal("operator-request", stop.Reason);
+    }
+
+    [Fact]
+    public void TcpMessageParserDefaultsBlankStartRunModeToContinue()
+    {
+        Assert.True(TcpSocketMessageParser.TryParse(
+            """{"type":"start","runMode":"   "}""",
+            out var start,
+            out _));
+
+        Assert.Equal(ControlRunModes.Continue, start.RunMode);
     }
 
     [Fact]
@@ -111,5 +162,64 @@ public sealed class ProtocolFormatterTests
         Assert.True(VirexEventParser.TryParse(json, out var value, out _));
         Assert.Equal("status", value.Type);
         Assert.Equal(ProcessStates.Capturing, value.Status?.ProcessState);
+    }
+
+    [Fact]
+    public async Task TcpServerProcessesStopReasonWhileStartCommandIsRunning()
+    {
+        var session = new SimulatorSession();
+        var messages = new List<string>();
+        session.Log += (_, message) => messages.Add(message);
+        session.Initialize("Default");
+        var port = GetFreeTcpPort();
+        var server = new TcpSimulatorServer(session, port);
+        await server.StartAsync();
+
+        try
+        {
+            using var client = new TcpClient();
+            await client.ConnectAsync("127.0.0.1", port);
+            using var stream = client.GetStream();
+            using var reader = new StreamReader(stream, Encoding.UTF8, false, 4096, true);
+            await reader.ReadLineAsync();
+            await reader.ReadLineAsync();
+
+            await WriteFrameAsync(stream, TcpSocketEventFormatter.FormatStartCommand("golden-sample"));
+            Assert.Contains("capturing", await ReadLineWithTimeoutAsync(reader));
+            await WriteFrameAsync(stream, TcpSocketEventFormatter.FormatStopCommand("operator-request"));
+            Assert.Contains("ready", await ReadLineWithTimeoutAsync(reader));
+
+            Assert.Contains("Stopped. reason=operator-request", messages);
+        }
+        finally
+        {
+            await server.StopAsync();
+        }
+    }
+
+    private static async Task WriteFrameAsync(NetworkStream stream, string frame)
+    {
+        var bytes = Encoding.UTF8.GetBytes(frame);
+        await stream.WriteAsync(bytes);
+        await stream.FlushAsync();
+    }
+
+    private static async Task<string> ReadLineWithTimeoutAsync(StreamReader reader)
+    {
+        var read = reader.ReadLineAsync();
+        var completed = await Task.WhenAny(read, Task.Delay(1500));
+        if (completed != read)
+            throw new TimeoutException("Timed out waiting for TCP frame.");
+
+        return await read ?? string.Empty;
+    }
+
+    private static int GetFreeTcpPort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
     }
 }
