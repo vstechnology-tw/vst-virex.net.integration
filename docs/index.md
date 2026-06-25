@@ -82,6 +82,7 @@ using var client = new VirexClient(new VirexClientOptions
 
 var status = await client.GetStatusAsync();
 
+// REST command/query helpers are the default high-level SDK path.
 await client.SetWaferInfoAsync(new WaferInfo
 {
     LotId = "LOT-001",
@@ -96,6 +97,28 @@ await client.InitializeAsync();
 await client.StartAsync();
 
 var results = await client.QueryResultsAsync(lotId: "LOT-001");
+
+// TCP is selected explicitly through TcpEvents.
+await client.TcpEvents.SendWaferInfoAsync(new WaferInfo
+{
+    LotId = "LOT-TCP-001",
+    WaferId = "W01",
+    RecipeId = "RCP-A",
+});
+await client.TcpEvents.SendStartAsync();
+
+// TCP and MQTT event listeners are started explicitly.
+using var eventCts = new CancellationTokenSource();
+client.TcpEvents.EventReceived += (_, value) =>
+    Console.WriteLine("TCP event: " + value.Type);
+client.MqttEvents.EventReceived += (_, value) =>
+    Console.WriteLine("MQTT event: " + value.Type);
+
+_ = client.TcpEvents.RunAsync(eventCts.Token);
+_ = client.MqttEvents.RunAsync(eventCts.Token);
+
+// MQTT is event-only; it is not used for command/control.
+// Call eventCts.Cancel() when your application is done listening.
 ```
 
 Main SDK methods:

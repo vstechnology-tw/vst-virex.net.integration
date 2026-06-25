@@ -82,6 +82,7 @@ using var client = new VirexClient(new VirexClientOptions
 
 var status = await client.GetStatusAsync();
 
+// REST command/query helper 是 SDK 預設的高階路徑。
 await client.SetWaferInfoAsync(new WaferInfo
 {
     LotId = "LOT-001",
@@ -96,6 +97,28 @@ await client.InitializeAsync();
 await client.StartAsync();
 
 var results = await client.QueryResultsAsync(lotId: "LOT-001");
+
+// TCP 要明確透過 TcpEvents 選用。
+await client.TcpEvents.SendWaferInfoAsync(new WaferInfo
+{
+    LotId = "LOT-TCP-001",
+    WaferId = "W01",
+    RecipeId = "RCP-A",
+});
+await client.TcpEvents.SendStartAsync();
+
+// TCP 與 MQTT event listener 也需要明確啟動。
+using var eventCts = new CancellationTokenSource();
+client.TcpEvents.EventReceived += (_, value) =>
+    Console.WriteLine("TCP event: " + value.Type);
+client.MqttEvents.EventReceived += (_, value) =>
+    Console.WriteLine("MQTT event: " + value.Type);
+
+_ = client.TcpEvents.RunAsync(eventCts.Token);
+_ = client.MqttEvents.RunAsync(eventCts.Token);
+
+// MQTT 只做 event，不用於 command/control。
+// 應用程式不再監聽時呼叫 eventCts.Cancel()。
 ```
 
 主要 SDK 方法：
