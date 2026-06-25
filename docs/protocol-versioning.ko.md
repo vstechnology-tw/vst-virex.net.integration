@@ -1,19 +1,19 @@
-# Protocol Versioning
+# 프로토콜 버전 관리
 
-Public packages 및 protocol changes에는 semantic versioning을 사용합니다.
+공개 패키지와 프로토콜 변경에는 시맨틱 버전 관리를 사용합니다.
 
-Examples:
+예:
 
 ```text
-1.0.0 Initial REST/MQTT/TCP integration contract.
-1.1.0 Backward-compatible field or endpoint added.
-2.0.0 Breaking payload, route, topic, or behavior change.
+1.0.0 초기 REST/MQTT/TCP 연동 계약.
+1.1.0 하위 호환 필드 또는 엔드포인트 추가.
+2.0.0 페이로드, 라우트, 토픽, 동작의 호환성을 깨는 변경.
 ```
 
-Rules:
+규칙:
 
-- Minor version에서 public JSON fields를 삭제하거나 rename하지 마십시오.
-- Minor version에서는 additive fields를 추가할 수 있습니다.
-- Breaking changes에는 major version이 필요합니다.
-- Simulator, SDK, docs, contract tests는 동일한 version으로 유지하십시오.
-- Public DTO, route, topic, event-shape가 변경되면 [Transmitted Content / Payloads](payloads.md)도 동기화하십시오.
+- 마이너 버전에서는 공개 JSON 필드를 제거하거나 이름을 바꾸지 마십시오.
+- 마이너 버전에서는 필드 추가가 허용됩니다.
+- 호환성을 깨는 변경에는 메이저 버전이 필요합니다.
+- 시뮬레이터, SDK, 문서, 계약 테스트는 같은 버전으로 유지하십시오.
+- 공개 DTO, 라우트, 토픽, 이벤트 형태가 변경되면 [전송 내용 / 페이로드](payloads.md)를 함께 맞추십시오.

@@ -1,23 +1,23 @@
 # REST API
 
-REST は command/query フローに使用します。status の読み取り、WaferInfo の送信、cycle の制御、result summary の照会を行います。
+REST は、状態の読み取り、WaferInfo の送信、サイクル制御、結果要約のクエリなど、コマンド/クエリの流れに使用します。
 
-Default simulator base URL:
+既定のシミュレーター ベース URL:
 
 ```text
 http://127.0.0.1:5088
 ```
 
-**Start Servers** 後、simulator は次も公開します。
+**Start Servers** の後、シミュレーターは次も公開します。
 
 ```text
 Scalar:       http://127.0.0.1:5088/scalar
 OpenAPI JSON: http://127.0.0.1:5088/openapi/v1.json
 ```
 
-Scalar page を使うと、`vst-virex.net.wpf` と同じ public REST surface を手動で検証できます。
+Scalar ページを使用すると、`vst-virex.net.wpf` が公開するものと同じ公開 REST サーフェスを手動で検証できます。
 
-Endpoints:
+エンドポイント:
 
 ```text
 GET  /api/status
@@ -31,7 +31,7 @@ POST /api/control/stop
 GET  /api/results
 ```
 
-正確な request / response body shape は [Transmitted Content / Payloads](payloads.md) を参照してください。
+正確なリクエスト本文とレスポンス本文の形状は、[送信内容 / ペイロード](payloads.md)を参照してください。
 
 ## Status
 
@@ -67,9 +67,9 @@ saving
 
 ## Results
 
-`GET /api/results` は固定サイズの summary のみを返します。defect list、die list、crop list、image binary は含みません。
+`GET /api/results` は固定サイズの要約のみを返します。欠陥リスト、ダイ リスト、クロップ リスト、画像バイナリは含まれません。
 
-Supported query parameters:
+対応するクエリ パラメーター:
 
 ```text
 lotId
@@ -77,6 +77,6 @@ waferId
 recipeId
 ```
 
-複数の parameters は AND 条件で結合されます。
+複数のパラメーターを指定した場合は AND で結合されます。
 
-REST result summary は public integration summary です。private inspection internals は公開しません。
+REST の結果要約は公開連携用の要約です。非公開の検査内部情報は公開しません。

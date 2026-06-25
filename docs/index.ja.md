@@ -1,70 +1,70 @@
 # Virex.NET Integration Kit
 
-Virex.NET Integration Kit は、Virex.NET-compatible services と連携する customer systems 向けの public SDK、simulator、sample、protocol documentation package です。Public communication contracts と simulator で検証できる behavior のみを文書化します。
+Virex.NET Integration Kit は、Virex.NET 互換サービスと連携する顧客側システム向けの公開 SDK、シミュレーター、サンプル、プロトコル文書をまとめたパッケージです。このリポジトリでは、公開通信契約とシミュレーターで検証できる動作のみを説明します。
 
-Private Virex.NET application はこの repository には含まれません。
+非公開の Virex.NET アプリケーションは、このリポジトリには含まれていません。
 
-## Default Simulator Endpoints
+## 既定のシミュレーター エンドポイント
 
-| Interface | Default |
+| インターフェイス | 既定値 |
 | --- | --- |
 | REST | `http://127.0.0.1:5088` |
 | TCP | `127.0.0.1:5089` |
-| MQTT | `127.0.0.1:1883`, base topic `virex` |
+| MQTT | `127.0.0.1:1883`、ベース トピック `virex` |
 | SDK | `Virex.NET.Client` |
 
-## Product Purpose
+## 製品の目的
 
-Production-compatible service に接続する前に、customer-side integrations を構築し検証するためにこの kit を使用します。
+本番互換サービスへ接続する前に、顧客側連携を構築して検証するためにこのキットを使用します。
 
-| Area | Purpose |
+| 領域 | 目的 |
 | --- | --- |
-| `Virex.NET.Contracts` | Public DTOs、routes、topic names、TCP/NDJSON formatters、parsers。 |
-| `Virex.NET.Client` | REST commands/queries、TCP events、MQTT events 用の C# client wrappers。 |
-| `Virex.NET.Simulator.WPF` | REST、TCP、MQTT endpoints を公開する local simulator。 |
-| `samples` | C#、Python、C++ clients 向け guided demos。 |
-| `docs` | Customer documentation と raw protocol references。 |
+| `Virex.NET.Contracts` | 公開 DTO、ルート、トピック名、TCP/NDJSON フォーマッター、パーサー。 |
+| `Virex.NET.Client` | REST コマンドとクエリ、TCP イベント、MQTT イベントのための C# クライアント ラッパー。 |
+| `Virex.NET.Simulator.WPF` | REST、TCP、MQTT エンドポイントを公開するローカル シミュレーター。 |
+| `samples` | C#、Python、C++ クライアント向けのガイド付きデモ。 |
+| `docs` | 顧客向け文書と生プロトコルのリファレンス。 |
 
-## Quick Start
+## クイック スタート
 
-初回利用者は simulator と C# SDK sample を実行してください。Sample は **Start Servers**、**Initialize** 前に期待される `not_initialized` response、そして **Initialize** 後の normal cycle を案内します。
+初回利用時は、シミュレーターと C# SDK サンプルを実行してください。サンプルは、**Start Servers**、**Initialize** 前に期待される `not_initialized` 応答、そして **Initialize** 後の通常サイクルを順番に案内します。
 
-ビルド済み simulator download、NuGet packages、sample code links は [インストール / ダウンロード](installation.md) を参照してください。
+ビルド済みシミュレーターのダウンロード、NuGet パッケージ、サンプル コードのリンクについては、[インストール / ダウンロード](installation.md)を参照してください。
 
-1. Kit を build/test します。
+1. キットをビルドしてテストします。
 
    ```powershell
    dotnet test Virex.NET.Integration.slnx
    ```
 
-2. Simulator を起動します。
+2. シミュレーターを起動します。
 
    ```powershell
    dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
    ```
 
-3. Simulator window で default endpoints のまま **Start Servers** を押します。
+3. シミュレーター ウィンドウで既定のエンドポイントをそのまま使用し、**Start Servers** を押します。
 
-4. 2 つ目の terminal で SDK sample を実行します。
+4. 2 つ目のターミナルで SDK サンプルを実行します。
 
    ```powershell
    dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj
    ```
 
-5. Sample prompts に従います。最初に `HTTP 409 not_initialized` を示し、その後 **Initialize** を押すよう案内し、WaferInfo、cycle start、result query へ進みます。
+5. サンプルの案内に従います。最初に `HTTP 409 not_initialized` を確認し、その後 **Initialize** を押して、WaferInfo、サイクル開始、結果クエリへ進みます。
 
-Expected Event Log examples:
+Event Log の想定例:
 
 ```text
 WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
 WaferInfo updated from TCP: lotId=LOT-RAW-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
 ```
 
-Button-by-button workflow は [Simulator Manual](simulator.md) を参照してください。
+ボタンごとの完全な手順は、[シミュレーター マニュアル](simulator.md)を参照してください。
 
-## SDK Usage
+## SDK の使い方
 
-C# applications は `VirexClient` から開始してください。REST、TCP、MQTT settings を集約し、common integration operations を公開します。
+C# アプリケーションでは `VirexClient` から開始してください。`VirexClient` は REST、TCP、MQTT の設定を一元化し、一般的な連携操作を提供します。
 
 ```csharp
 using Virex.NET.Client;
@@ -84,7 +84,7 @@ using var client = new VirexClient(new VirexClientOptions
 
 var status = await client.GetStatusAsync();
 
-// REST command/query helpers は SDK の default high-level path です。
+// REST のコマンド/クエリ ヘルパーは、SDK の既定の高レベル経路です。
 await client.SetWaferInfoAsync(new WaferInfo
 {
     LotId = "LOT-001",
@@ -109,7 +109,7 @@ await client.TcpEvents.SendWaferInfoAsync(new WaferInfo
 });
 await client.TcpEvents.SendStartAsync();
 
-// TCP and MQTT event listeners are started explicitly.
+// TCP と MQTT のイベント リスナーは明示的に開始します。
 using var eventCts = new CancellationTokenSource();
 client.TcpEvents.EventReceived += (_, value) =>
     Console.WriteLine("TCP event: " + value.Type);
@@ -119,11 +119,11 @@ client.MqttEvents.EventReceived += (_, value) =>
 _ = client.TcpEvents.RunAsync(eventCts.Token);
 _ = client.MqttEvents.RunAsync(eventCts.Token);
 
-// MQTT は event-only で、command/control には使用しません。
-// Listening を終了するときは eventCts.Cancel() を呼び出します。
+// MQTT はイベント専用で、コマンド/制御には使用しません。
+// アプリケーションの待ち受けを終了するときは eventCts.Cancel() を呼び出します。
 ```
 
-Main SDK methods:
+主な SDK メソッド:
 
 - `GetStatusAsync`
 - `SetWaferInfoAsync`
@@ -133,61 +133,61 @@ Main SDK methods:
 - `StopAsync`
 - `QueryResultsAsync`
 
-Non-success REST responses は HTTP status code と response body を含む `VirexClientException` を throw します。Guided samples では、**Initialize** 前の `HTTP 409 not_initialized` は expected simulator state であり、connection failure ではありません。
+成功以外の REST 応答では、HTTP ステータス コードと応答本文を含む `VirexClientException` がスローされます。ガイド付きサンプルでは、**Initialize** 前の `HTTP 409 not_initialized` は想定されたシミュレーター状態であり、接続失敗ではありません。
 
-`TcpFrameTimeoutMs` は partial frame data が到着した後の TCP/NDJSON read を保護します。Complete frames の間の長い idle gap は許可されますが、client が frame の最初の byte を受信した後は、その frame の残りと `\n` が configured timeout 内に到着する必要があります。
+`TcpFrameTimeoutMs` は、TCP/NDJSON の読み取り中にフレームの一部を受信した後の待ち時間を保護します。完全なフレーム同士の間に長いアイドル時間があっても問題ありませんが、フレームの最初のバイトを受信した後は、残りのバイトと終端の `\n` が設定されたタイムアウト内に到着する必要があります。
 
-## Interface Selection
+## インターフェイスの選択
 
-| Interface | Best fit | Direction | Typical use |
+| インターフェイス | 適した用途 | 方向 | 代表的な使い方 |
 | --- | --- | --- | --- |
-| REST | Commands and queries | Client to service | Read status、send WaferInfo、control cycles、query results。 |
-| TCP / NDJSON | Direct socket integration | Bidirectional | Command frames を送信し、status、wafer-info、result、error events を受信します。 |
-| MQTT | Event subscription | Outbound events only | Broker 経由で status、wafer-info、result、error を subscribe します。MQTT は command/control には使用しません。 |
+| REST | コマンドとクエリ | クライアントからサービスへ | 状態の読み取り、WaferInfo の送信、サイクル制御、結果クエリ。 |
+| TCP / NDJSON | 直接ソケット連携 | 双方向 | コマンド フレームを送信し、status、wafer-info、result、error イベントを受信します。 |
+| MQTT | イベント購読 | 送信イベントのみ | ブローカー経由で status、wafer-info、result、error を購読します。MQTT はコマンド/制御には使用しません。 |
 
-正確な JSON bodies、fields、topics、frames は [Transmitted Content / Payloads](payloads.md) を参照してください。
+正確な JSON 本文、フィールド、トピック、フレームは、[送信内容 / ペイロード](payloads.md)を参照してください。
 
-## Typical Use Cases
+## 代表的なユースケース
 
-各 use case は simulator UI state と sample output の両方で検証します。まず condition を確認し、指定された UI button を押し、console output と Event Log を比較してください。
+各ユースケースは、シミュレーター UI の状態とサンプル出力の両方で検証します。先に条件を確認し、指定された UI ボタンを押してから、コンソール出力と Event Log を比較してください。
 
-| Use case | Required state | UI action | Sample | Expected output |
+| ユースケース | 必要な状態 | UI 操作 | サンプル | 想定出力 |
 | --- | --- | --- | --- | --- |
-| Start communication services | Simulator is open | Press **Start Servers** | Any sample | Event Log shows REST/TCP/MQTT listening; samples can connect. |
-| `not_initialized` | **Start Servers** pressed, **Initialize** not pressed | Do not press **Initialize** yet | C# SDK, raw REST | Start returns HTTP `409` / `not_initialized`. |
-| Normal cycle | `processState=ready` | Press **Initialize**, then continue the sample | C# SDK, raw REST | State transitions through `capturing`, `inspecting`, `saving`, and `ready`; a result is created. |
-| WaferInfo update verification | **Start Servers** pressed | Press **Apply WaferInfo** or send from sample | SDK, REST, TCP | Event Log lists `lotId`, `waferId`, `recipeId`, `slot`, `foupId`, and `chamberId` in one line. |
-| MQTT event observation | MQTT sample subscribed to `virex/#` | Press **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, **Emit Error** | Raw MQTT | Console shows `wafer-info`, `status`, `result`, and `error` topics. |
-| Result query | Cycle completed or **Emit Fake Result** pressed | Run result query from SDK/REST sample | SDK, REST | Console prints result count filtered by matching wafer context. |
+| 通信サービスを開始する | シミュレーターが開いている | **Start Servers** を押す | 任意のサンプル | Event Log に REST/TCP/MQTT の待ち受けが表示され、サンプルが接続できる。 |
+| `not_initialized` | **Start Servers** は押したが、**Initialize** は押していない | まだ **Initialize** を押さない | C# SDK、raw REST | Start が HTTP `409` / `not_initialized` を返す。 |
+| 通常サイクル | `processState=ready` | **Initialize** を押し、その後サンプルを続行する | C# SDK、raw REST | 状態が `capturing`、`inspecting`、`saving`、`ready` の順に遷移し、結果が作成される。 |
+| WaferInfo 更新の検証 | **Start Servers** が押されている | UI で **Apply WaferInfo** を押す、またはサンプルから送信する | SDK、REST、TCP | Event Log に `lotId`、`waferId`、`recipeId`、`slot`、`foupId`、`chamberId` が 1 行で表示される。 |
+| MQTT イベントの確認 | MQTT サンプルが `virex/#` を購読している | **Apply WaferInfo**、**Initialize**、**Start Cycle**、**Emit Fake Result**、**Emit Error** を押す | Raw MQTT | コンソールに `wafer-info`、`status`、`result`、`error` トピックが表示される。 |
+| 結果クエリ | サイクルが完了した、または **Emit Fake Result** が押されている | SDK/REST サンプルから結果クエリを実行する | SDK、REST | 一致するウェーハ コンテキストで絞り込まれた結果件数がコンソールに表示される。 |
 
-## Main Data Contracts
+## 主なデータ契約
 
-| Contract | Public fields |
+| 契約 | 公開フィールド |
 | --- | --- |
-| WaferInfo | `lotId`, `waferId`, `recipeId`, `slot`, `foupId`, `chamberId` |
-| Status | `initialized`, `processState`, `recipe` |
-| Result summary | `resultId`, `timestamp`, wafer context, `overallResult`, total `defectCount`, result/image paths |
-| Error | `hasError`, `message`, `initialized`, `processState`, `recipe` |
+| WaferInfo | `lotId`、`waferId`、`recipeId`、`slot`、`foupId`、`chamberId` |
+| Status | `initialized`、`processState`、`recipe` |
+| Result summary | `resultId`、`timestamp`、ウェーハ コンテキスト、`overallResult`、合計 `defectCount`、結果/画像パス |
+| Error | `hasError`、`message`、`initialized`、`processState`、`recipe` |
 
-Result responses と result events は summaries のみを提供します。Defect lists、die lists、crop lists、image binaries、private inspection details は含みません。
+結果応答と結果イベントは要約のみを提供します。欠陥リスト、ダイ リスト、クロップ リスト、画像バイナリ、非公開の検査詳細は含まれません。
 
-## Troubleshooting
+## トラブルシューティング
 
-| Symptom | Check |
+| 症状 | 確認事項 |
 | --- | --- |
-| REST request fails | Simulator が running であること、`RestBaseUrl` が正しいこと、firewall access が許可されていることを確認し、`VirexClientException` response body を確認します。 |
-| TCP events are missing | Host/port を確認し、各 NDJSON frame が newline で終わること、event loop が継続していることを確認します。 |
-| MQTT events are missing | Broker connectivity、port `1883`、base topic `virex`、subscription topic tree を確認します。 |
-| Result query is empty | Simulator が result を emit 済みであり、`lotId`、`waferId`、`recipeId` filters が submitted WaferInfo と一致することを確認します。 |
+| REST リクエストが失敗する | シミュレーターが実行中であること、`RestBaseUrl` が正しいこと、ファイアウォールでアクセスが許可されていることを確認し、`VirexClientException` の応答本文を確認します。 |
+| TCP イベントが届かない | ホスト/ポートを確認し、各 NDJSON フレームが改行で終わっていること、イベント ループが実行中であることを確認します。 |
+| MQTT イベントが届かない | ブローカー接続、ポート `1883`、ベース トピック `virex`、購読トピック ツリーを確認します。 |
+| 結果クエリが空になる | シミュレーターが結果を発行済みであり、`lotId`、`waferId`、`recipeId` フィルターが送信した WaferInfo と一致していることを確認します。 |
 
-## References
+## 参照
 
 - [インストール / ダウンロード](installation.md)
-- [Simulator Manual](simulator.md)
-- [State Machine](state-machine.md)
-- [Transmitted Content / Payloads](payloads.md)
-- [Samples](samples.md)
+- [シミュレーター マニュアル](simulator.md)
+- [状態遷移](state-machine.md)
+- [送信内容 / ペイロード](payloads.md)
+- [サンプル](samples.md)
 - [REST API](rest-api.md)
-- [TCP Socket Protocol](tcp-socket.md)
-- [MQTT Events](mqtt-events.md)
-- [Protocol Versioning](protocol-versioning.md)
+- [TCP ソケット プロトコル](tcp-socket.md)
+- [MQTT イベント](mqtt-events.md)
+- [プロトコル バージョニング](protocol-versioning.md)

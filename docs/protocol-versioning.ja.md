@@ -1,19 +1,19 @@
-# Protocol Versioning
+# プロトコル バージョニング
 
-Public packages と protocol changes には semantic versioning を使用します。
+公開パッケージとプロトコル変更には、セマンティック バージョニングを使用します。
 
-Examples:
+例:
 
 ```text
-1.0.0 Initial REST/MQTT/TCP integration contract.
-1.1.0 Backward-compatible field or endpoint added.
-2.0.0 Breaking payload, route, topic, or behavior change.
+1.0.0 初期 REST/MQTT/TCP 連携契約。
+1.1.0 後方互換性のあるフィールドまたはエンドポイントを追加。
+2.0.0 ペイロード、ルート、トピック、動作の破壊的変更。
 ```
 
-Rules:
+ルール:
 
-- Minor version で public JSON fields を削除または rename しないでください。
-- Minor version では additive fields を追加できます。
-- Breaking changes には major version が必要です。
-- Simulator、SDK、docs、contract tests は同じ version に揃えてください。
-- Public DTO、route、topic、event-shape が変わる場合は、[Transmitted Content / Payloads](payloads.md) も同期してください。
+- マイナー バージョンでは、公開 JSON フィールドを削除またはリネームしないでください。
+- マイナー バージョンでは、追加フィールドを許可します。
+- 破壊的変更にはメジャー バージョンが必要です。
+- シミュレーター、SDK、文書、契約テストは同じバージョンに揃えてください。
+- 公開 DTO、ルート、トピック、イベント形状を変更した場合は、[送信内容 / ペイロード](payloads.md)を必ず同期してください。

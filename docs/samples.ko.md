@@ -1,38 +1,38 @@
-# Samples
+# 샘플
 
-Sample projects는 guided demos입니다. Tester에게 어떤 simulator button을 누를지, 어떤 state를 테스트하는지, 어떤 output을 기대해야 하는지 안내합니다.
+샘플 프로젝트는 안내형 데모입니다. 테스터에게 어떤 시뮬레이터 버튼을 눌러야 하는지, 어떤 상태를 테스트하는지, 어떤 출력을 기대해야 하는지 알려 줍니다.
 
-Sample을 실행하기 전에:
+샘플을 실행하기 전에:
 
-1. Simulator를 시작합니다.
+1. 시뮬레이터를 시작합니다.
 
    ```powershell
    dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
    ```
 
-2. Default endpoints를 유지합니다.
+2. 기본 엔드포인트를 유지합니다.
 3. **Start Servers** 를 누릅니다.
 
-## C# Samples
+## C# 샘플
 
-| Sample | Command | Purpose |
+| 샘플 | 명령 | 목적 |
 | --- | --- | --- |
-| `samples/csharp-sdk` | `dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj` | 권장 .NET entry point입니다. `not_initialized`, **Initialize**, WaferInfo, start, result query를 보여줍니다. |
-| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | Direct REST status, WaferInfo, start, result query. |
-| `samples/csharp-raw-tcp` | `dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj` | TCP/NDJSON initial frames 및 WaferInfo update event. |
-| `samples/csharp-raw-mqtt` | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | MQTT status, wafer-info, result, error event observation. |
+| `samples/csharp-sdk` | `dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj` | 권장 .NET 진입점입니다. `not_initialized`, **Initialize**, WaferInfo, 시작, 결과 조회를 보여 줍니다. |
+| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | REST 상태, WaferInfo, 시작, 결과 조회를 직접 보여 줍니다. |
+| `samples/csharp-raw-tcp` | `dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj` | TCP/NDJSON 초기 프레임과 WaferInfo 업데이트 이벤트를 확인합니다. |
+| `samples/csharp-raw-mqtt` | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | MQTT status, wafer-info, result, error 이벤트 관측을 확인합니다. |
 
-## Python Samples
+## Python 샘플
 
-| Sample | Command | Purpose |
+| 샘플 | 명령 | 목적 |
 | --- | --- | --- |
-| `samples/python-raw-rest` | `python samples\python-raw-rest\main.py` | Python standard library HTTP support를 사용하는 REST calls. |
-| `samples/python-raw-tcp` | `python samples\python-raw-tcp\main.py` | TCP/NDJSON socket demo. |
-| `samples/python-raw-mqtt` | `python samples\python-raw-mqtt\main.py` | MQTT event observation demo. |
+| `samples/python-raw-rest` | `python samples\python-raw-rest\main.py` | Python 표준 라이브러리 HTTP 기능을 사용한 REST 호출. |
+| `samples/python-raw-tcp` | `python samples\python-raw-tcp\main.py` | TCP/NDJSON 소켓 데모. |
+| `samples/python-raw-mqtt` | `python samples\python-raw-mqtt\main.py` | MQTT 이벤트 관측 데모. |
 
-## C++ Samples
+## C++ 샘플
 
-Visual Studio Developer PowerShell에서 C++ samples를 build합니다.
+Visual Studio Developer PowerShell 에서 C++ 샘플을 빌드합니다.
 
 ```powershell
 cmake -S samples\cpp-raw-rest -B samples\cpp-raw-rest\build
@@ -48,19 +48,19 @@ cmake --build samples\cpp-raw-mqtt\build --config Release
 samples\cpp-raw-mqtt\build\Release\cpp-raw-mqtt.exe
 ```
 
-## Expected Guided Behavior
+## 예상 안내 동작
 
-| Flow | Expected behavior |
+| 흐름 | 예상 동작 |
 | --- | --- |
-| SDK and REST | **Initialize** 전에는 start가 `HTTP 409 not_initialized` 를 반환합니다. **Initialize** 후 sample은 WaferInfo를 업데이트하고 cycle을 시작하며 results를 query합니다. |
-| TCP | Sample은 port `5089` 에 연결하고 initial status 및 wafer-info frames를 읽고 WaferInfo NDJSON frame을 보낸 뒤 simulator가 반환한 update event를 출력합니다. |
-| MQTT | Sample은 `virex/#` 를 subscribe합니다. 실행 중에 **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, **Emit Error** 를 눌러 matching events를 확인합니다. |
+| SDK 및 REST | **Initialize** 전에는 start 가 `HTTP 409 not_initialized` 를 반환합니다. **Initialize** 후 샘플은 WaferInfo 를 업데이트하고, 사이클을 시작하고, 결과를 조회합니다. |
+| TCP | 샘플은 포트 `5089` 에 연결하고 초기 status 및 wafer-info 프레임을 읽은 뒤, WaferInfo NDJSON 프레임을 보내고 시뮬레이터가 반환한 업데이트 이벤트를 출력합니다. |
+| MQTT | 샘플은 `virex/#` 를 구독합니다. 실행 중에 **Apply WaferInfo**, **Initialize**, **Start Cycle**, **Emit Fake Result**, **Emit Error** 를 누르면 대응하는 이벤트를 확인할 수 있습니다. |
 
-## Troubleshooting
+## 문제 해결
 
-| Symptom | Resolution |
+| 증상 | 해결 방법 |
 | --- | --- |
-| Server not started | Samples를 실행하기 전에 simulator에서 **Start Servers** 를 누르십시오. |
-| `not_initialized` | SDK 및 REST guided demos에서는 **Initialize** 전의 expected behavior입니다. **Initialize** 를 누르고 계속하십시오. |
-| No MQTT events | Base topic `virex`, broker `127.0.0.1:1883`, sample이 아직 listening 중인지 확인하십시오. |
-| No result returned | **Start Cycle** 또는 **Emit Fake Result** 를 누른 뒤 matching WaferInfo fields로 query하십시오. |
+| 서버가 시작되지 않음 | 샘플을 실행하기 전에 시뮬레이터에서 **Start Servers** 를 누릅니다. |
+| `not_initialized` | SDK 및 REST 안내형 데모에서 **Initialize** 전의 예상 동작입니다. **Initialize** 를 누르고 계속 진행합니다. |
+| MQTT 이벤트가 없음 | 베이스 토픽 `virex`, 브로커 `127.0.0.1:1883`, 샘플이 아직 수신 중인지 확인합니다. |
+| 결과가 반환되지 않음 | **Start Cycle** 또는 **Emit Fake Result** 를 누른 뒤 일치하는 WaferInfo 필드로 조회합니다. |

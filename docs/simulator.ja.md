@@ -1,28 +1,28 @@
-# Simulator Manual
+# シミュレーター マニュアル
 
-Virex.NET Integration Simulator は、顧客側の連携開発で使用するローカルテストツールです。REST、TCP、MQTT エンドポイントを公開し、WaferInfo、状態遷移、結果サマリー、エラーイベントをシミュレートできます。
+Virex.NET Integration Simulator は、顧客側の連携開発に使用するローカル テスト ツールです。REST、TCP、MQTT エンドポイントを公開し、WaferInfo、状態遷移、結果要約、エラー イベントをシミュレートできます。
 
-Repository root から起動します。
+リポジトリ ルートから起動します。
 
 ```powershell
 dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 ```
 
-## Purpose
+## 目的
 
-| Purpose | What to verify |
+| 目的 | 検証内容 |
 | --- | --- |
-| Validate the SDK | `VirexClient` が状態を読み取り、WaferInfo を送信し、サイクルを開始し、結果サマリーを照会できることを確認します。 |
-| Validate raw protocols | C# 以外のシステムが REST payload、TCP/NDJSON frame、MQTT topic をテストできるようにします。 |
-| Simulate events | Production-compatible service に接続する前に、`status`、`wafer-info`、`result`、`error` イベントをローカルで送出します。 |
+| SDK を検証する | `VirexClient` が status を読み取り、WaferInfo を送信し、サイクルを開始し、結果要約をクエリできることを確認します。 |
+| 生プロトコルを検証する | C# 以外のシステムが REST ペイロード、TCP/NDJSON フレーム、MQTT トピックをテストできるようにします。 |
+| イベントをシミュレートする | 本番互換サービスへ接続する前に、status、wafer-info、result、error イベントをローカルで発行します。 |
 
-## App UI
+## アプリ UI
 
-次のスクリーンショットは、ガイド付きサンプルで使用するシミュレーター画面です。
+次のスクリーンショットは、ガイド付きサンプルで使用するシミュレーター ウィンドウを示しています。
 
 <figure>
   <div style="position: relative; width: 100%; max-width: 1008px; aspect-ratio: 1008 / 658;">
-    <img src="../assets/simulator-main-window.png" alt="Virex.NET Integration Simulator main window" style="display: block; width: 100%; height: 100%; object-fit: contain;">
+    <img src="assets/simulator-main-window.png" alt="Virex.NET Integration Simulator のメイン ウィンドウ" style="display: block; width: 100%; height: 100%; object-fit: contain;">
     <span aria-label="Area 1" style="position: absolute; left: 3%; top: 12%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">1</span>
     <span aria-label="Area 2" style="position: absolute; left: 42%; top: 12%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">2</span>
     <span aria-label="Area 3" style="position: absolute; left: 82%; top: 12%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">3</span>
@@ -32,23 +32,23 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
     <span aria-label="Area 7" style="position: absolute; left: 89%; top: 38%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">7</span>
     <span aria-label="Area 8" style="position: absolute; left: 89%; top: 47%; width: 1.8rem; height: 1.8rem; border-radius: 999px; background: #1976d2; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">8</span>
   </div>
-  <figcaption>番号マーカーは下の Area 表に対応します。</figcaption>
+  <figcaption>番号付きマーカーは、下の領域表に対応します。</figcaption>
 </figure>
 
-| Area | Name | Purpose |
+| 領域 | 名前 | 目的 |
 | --- | --- | --- |
-| 1 | Connection Settings | REST prefix、TCP port、MQTT host/port/topic、result prefix。テスト前に確認します。 |
+| 1 | Connection Settings | REST prefix、TCP ポート、MQTT ホスト/ポート/トピック、result prefix。テスト前にこの領域を確認します。 |
 | 2 | WaferInfo | Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID。 |
-| 3 | State | 現在の `initialized`、`processState`、`recipe` と主な操作ボタン。 |
-| 4 | Event Log | サービス起動、WaferInfo 更新、サイクルイベント、結果、エラーなどの実行履歴。 |
-| 5 | **Start Servers** | 最初に押すボタン。REST/TCP/MQTT サービスはこの後に利用可能です。 |
-| 6 | **Apply WaferInfo** | WaferInfo fields 編集後、現在のテスト wafer context を適用します。 |
-| 7 | **Start Cycle** | 完全なサイクル、状態遷移、結果サマリーをシミュレートします。 |
-| 8 | **Emit Fake Result** / **Emit Error** | クライアント側処理のテスト用に、結果またはエラーイベントを手動送出します。 |
+| 3 | State | 現在の `initialized`、`processState`、`recipe`、主な操作ボタン。 |
+| 4 | Event Log | サーバー起動、WaferInfo 更新、サイクル イベント、結果、エラー、その他の活動。 |
+| 5 | **Start Servers** | 最初に押すボタンです。この手順の後にだけ REST/TCP/MQTT サービスを利用できます。 |
+| 6 | **Apply WaferInfo** | WaferInfo フィールドを編集した後、現在のテスト用ウェーハ コンテキストを適用します。 |
+| 7 | **Start Cycle** | 完全なサイクル、状態遷移、結果要約をシミュレートします。 |
+| 8 | **Emit Fake Result** / **Emit Error** | クライアント側の処理テスト用に、結果イベントまたはエラー イベントを手動で発行します。 |
 
-## Standard Operating Procedure
+## 標準操作手順
 
-1. Simulator app を起動します。
+1. シミュレーター アプリを起動します。
 
    ```powershell
    dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
@@ -56,9 +56,9 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 2. 接続設定を確認します。
 
-   初回はデフォルト値を使用してください。
+   初回利用時は既定値のままにします。
 
-   | Setting | Default |
+   | 設定 | 既定値 |
    | --- | --- |
    | REST | `http://127.0.0.1:5088/` |
    | TCP | `5089` |
@@ -67,24 +67,24 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 3. **Start Servers** を押します。
 
-   起動に成功すると、Event Log に REST listening、TCP listening、MQTT started/connected の記録が表示されます。SDK とサンプルクライアントはこの後に接続できます。
+   起動に成功すると、REST listening、TCP listening、MQTT started/connected の記録が Event Log に書き込まれます。SDK とサンプル クライアントは、この手順の後にだけ接続できます。
 
-   REST 検証ページはこの時点で利用できます。
+   この手順の直後に、REST 検証ページを利用できます。
 
    ```text
    Scalar:       http://127.0.0.1:5088/scalar
    OpenAPI JSON: http://127.0.0.1:5088/openapi/v1.json
    ```
 
-   Scalar を使うと、ブラウザーから status、wafer-info、control、results endpoint を呼び出せます。
+   Scalar を使用すると、ブラウザーから status、wafer-info、control、results エンドポイントを呼び出せます。
 
-4. まず `not_initialized` を検証します。
+4. 先に `not_initialized` を検証します。
 
-   **Initialize** を押す前に SDK または REST サンプルを実行します。サンプルが start を呼ぶと、期待される戻り値は `HTTP 409 not_initialized` です。これはサンプルが UI 状態を正しく反映していることを示します。
+   **Initialize** を押す前に、SDK または REST サンプルを実行します。サンプルが start を呼び出すと、期待される戻り値は `HTTP 409 not_initialized` です。これは、サンプルが UI 状態を正しく反映していることを意味します。
 
 5. WaferInfo を入力して適用します。
 
-   Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID を入力し、**Apply WaferInfo** を押します。またはサンプルから WaferInfo を送信します。Event Log はすべてのフィールドを 1 行で表示する必要があります。
+   Lot ID、Wafer ID、Recipe ID、Slot、FOUP ID、Chamber ID を入力して **Apply WaferInfo** を押すか、サンプルに WaferInfo を送信させます。Event Log には、すべてのフィールドが 1 行で表示される必要があります。
 
    ```text
    WaferInfo updated from REST: lotId=LOT-RAW-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1
@@ -92,72 +92,72 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 6. **Initialize** と **Start Cycle** を実行します。
 
-   **Initialize** を押して initialized 状態にします。その後 **Start Cycle** を押すか、サンプルを続行します。Simulator は `capturing`、`inspecting`、`saving` を経由して `ready` に戻ります。
+   **Initialize** を押して初期化状態にします。その後 **Start Cycle** を押すか、サンプルの続行に任せます。シミュレーターは `capturing`、`inspecting`、`saving` を経て `ready` に戻ります。
 
-7. テストイベントを送出します。
+7. テスト イベントを発行します。
 
-   **Emit Fake Result** で結果処理をテストします。**Emit Error** でエラー処理をテストします。MQTT サンプル実行中は、これらのボタンが `virex/result` と `virex/error` を生成します。
+   結果処理をテストするには **Emit Fake Result** を使用します。エラー処理をテストするには **Emit Error** を使用します。MQTT サンプルの実行中にこれらのボタンを押すと、`virex/result` と `virex/error` が生成されます。
 
 8. テストを終了します。
 
-   **Stop Servers** を押すか、シミュレーター画面を閉じます。
+   **Stop Servers** を押すか、シミュレーター ウィンドウを閉じます。
 
-## シナリオ別テストフロー
+## シナリオ別テスト フロー
 
-| シナリオ | 条件 | UI SOP | 期待結果 |
+| シナリオ | 条件 | UI 手順 | 期待される結果 |
 | --- | --- | --- | --- |
-| 通信サービスの起動 | Simulator app が開いており、サービスがまだ起動していない。 | REST/TCP/MQTT 設定を確認し、**Start Servers** を押します。 | Event Log に REST listening、TCP listening、MQTT connected/started が表示され、サンプルが接続できます。 |
-| `not_initialized` | **Start Servers** は押したが、**Initialize** はまだ押していない。 | **Initialize** は押さず、C# SDK または REST サンプルの start 手順を実行します。 | コンソールに HTTP `409` / `not_initialized` が表示されます。これは接続失敗ではなく、期待される状態動作です。 |
-| 通常の initialize と cycle | **Start Servers** を押し、状態が `ready`。 | **Initialize** を押し、Status が `initialized=True` であることを確認してから、サンプルの start を続行します。 | Status が `capturing`、`inspecting`、`saving`、`ready` の順に表示され、Event Log に結果送出が記録されます。 |
-| WaferInfo 更新確認 | **Start Servers** を押している。 | UI の **Apply WaferInfo** を押すか、SDK/REST/TCP サンプルから WaferInfo を送信します。 | Event Log に `lotId`、`waferId`、`recipeId`、`slot`、`foupId`、`chamberId` が 1 行で表示されます。 |
-| MQTT イベント観察 | MQTT サンプルが `virex/#` を購読している。 | **Apply WaferInfo**、**Initialize**、**Start Cycle**、**Emit Fake Result**、**Emit Error** を押します。 | コンソールに `wafer-info`、`status`、`result`、`error` topic が表示されます。 |
-| 結果照会 | **Start Cycle** が完了している、または **Emit Fake Result** を押している。 | 現在の WaferInfo の `lotId` で SDK/REST サンプルから照会します。 | コンソールに result count が表示されます。0 の場合は query filter が WaferInfo と一致しているか確認します。 |
+| 通信サービスを開始する | シミュレーター アプリが開いており、サーバーは未開始。 | REST/TCP/MQTT 設定を確認してから **Start Servers** を押す。 | Event Log に REST listening、TCP listening、MQTT connected/started が表示され、サンプルが接続できる。 |
+| `not_initialized` | **Start Servers** は押したが、**Initialize** は押していない。 | **Initialize** は押さない。C# SDK または REST サンプルの start 手順を実行する。 | コンソールに HTTP `409` / `not_initialized` が表示される。これは想定された状態動作であり、接続失敗ではない。 |
+| 通常の初期化とサイクル | **Start Servers** が押され、状態は `ready`。 | **Initialize** を押し、Status が `initialized=True` であることを確認してから、サンプルの start を続行する。 | Status が `capturing`、`inspecting`、`saving`、`ready` と表示され、Event Log に結果発行が表示される。 |
+| WaferInfo 更新検証 | **Start Servers** が押されている。 | UI で **Apply WaferInfo** を押す、または SDK/REST/TCP サンプルに WaferInfo を送信させる。 | Event Log に `lotId`、`waferId`、`recipeId`、`slot`、`foupId`、`chamberId` が 1 行で表示される。 |
+| MQTT イベント観測 | MQTT サンプルが `virex/#` を購読している。 | **Apply WaferInfo**、**Initialize**、**Start Cycle**、**Emit Fake Result**、**Emit Error** を押す。 | コンソールに `wafer-info`、`status`、`result`、`error` トピックが表示される。 |
+| 結果クエリ | **Start Cycle** が完了した、または **Emit Fake Result** が押された。 | SDK/REST サンプルを使い、現在の WaferInfo `lotId` でクエリする。 | コンソールに結果件数が表示される。0 の場合は、クエリ フィルターが WaferInfo と一致しているか確認する。 |
 
-## Guided Validation Scenarios
+## ガイド付き検証シナリオ
 
-### Scenario A: First SDK Connection Check
+### シナリオ A: 初回 SDK 接続確認
 
-1. デフォルトの接続設定を維持します。
+1. 既定の接続設定を維持します。
 2. **Start Servers** を押します。
 3. `samples/csharp-sdk` を実行します。
-4. Event Log に WaferInfo、start、result の実行履歴が表示されることを確認します。
+4. Event Log に WaferInfo、start、result の活動が表示されることを確認します。
 
-### Scenario B: 手動 WaferInfo テスト
+### シナリオ B: 手動 WaferInfo テスト
 
-1. テスト用 wafer context を入力します。
+1. テスト用ウェーハ コンテキストを入力します。
 2. **Apply WaferInfo** を押します。
 3. **Initialize** を押します。
-4. **Start Cycle** を押し、結果サマリーを待ちます。
+4. **Start Cycle** を押し、結果要約を待ちます。
 
-### Scenario C: 結果イベント処理
+### シナリオ C: 結果イベント処理
 
 1. **Start Servers** を押します。
-2. TCP または MQTT イベントリスナーを起動します。
+2. TCP または MQTT イベント リスナーを開始します。
 3. **Emit Fake Result** を押します。
-4. クライアントが結果サマリーを受信し、Event Log にイベントが記録されることを確認します。
+4. クライアントが結果要約を受信し、Event Log にイベントが記録されることを確認します。
 
-### Scenario D: エラー処理
+### シナリオ D: エラー処理
 
 1. **Start Servers** を押します。
-2. TCP または MQTT イベントリスナーを起動します。
+2. TCP または MQTT イベント リスナーを開始します。
 3. **Emit Error** を押します。
-4. クライアントがエラーメッセージを表示または記録することを確認します。
+4. クライアントがエラー メッセージを表示または記録することを確認します。
 
 ## クライアント検証
 
-| クライアント | コマンド | 検証内容 |
+| クライアント パス | コマンド | 検証 |
 | --- | --- | --- |
-| SDK サンプル | `dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj` | 標準のガイド付きデモです。最初に `not_initialized` を確認し、**Initialize** を押して cycle と result query を完了します。 |
-| Raw REST サンプル | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | REST status、WaferInfo、start、result query を示します。 |
-| Raw TCP サンプル | `dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj` | 初期 frame と WaferInfo update event を確認します。 |
-| Raw MQTT サンプル | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | UI 操作から `status`、`wafer-info`、`result`、`error` topic を確認します。 |
+| SDK サンプル | `dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj` | 標準のガイド付きデモです。先に `not_initialized` を確認し、その後 **Initialize** を押してサイクルと結果クエリを完了します。 |
+| Raw REST サンプル | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | REST status、WaferInfo、start、結果クエリを示します。 |
+| Raw TCP サンプル | `dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj` | 初期フレームと WaferInfo 更新イベントを確認します。 |
+| Raw MQTT サンプル | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | UI 操作からの status、wafer-info、result、error トピックを確認します。 |
 
-## Troubleshooting
+## トラブルシューティング
 
-| 症状 | 対処 |
+| 症状 | 解決方法 |
 | --- | --- |
-| **Start Servers** が失敗する | REST prefix または TCP port が使用中か、MQTT broker が起動できるかを確認します。 |
-| SDK が接続できない | **Start Servers** が押されていること、SDK `RestBaseUrl`、TCP host/port、MQTT host/port/topic が UI と一致することを確認します。 |
-| `not_initialized` が表示される | **Initialize** がまだ押されていない場合は期待される結果です。**Initialize** を押し、Status を確認してサンプルを続行します。 |
-| イベントを受信できない | まず Event Log に送出済みイベントがあるか確認し、クライアントが TCP または MQTT 経由で購読していることを確認します。 |
-| 結果が返らない | 先に **Start Cycle** または **Emit Fake Result** を実行し、query filter が現在の WaferInfo と一致することを確認します。 |
+| **Start Servers** が失敗する | REST prefix または TCP ポートが使用中でないか、MQTT ブローカーを開始できるか確認します。 |
+| SDK が接続できない | **Start Servers** が押されていること、SDK の `RestBaseUrl`、TCP ホスト/ポート、MQTT ホスト/ポート/トピックが UI と一致していることを確認します。 |
+| `not_initialized` が表示される | **Initialize** を押していない場合は想定どおりです。**Initialize** を押し、Status を確認してからサンプルを続行します。 |
+| イベントを受信しない | まず Event Log に発行イベントがあるか確認し、その後クライアントが TCP または MQTT で購読/接続していることを確認します。 |
+| 結果が返らない | 先に **Start Cycle** または **Emit Fake Result** を実行し、クエリ フィルターが現在の WaferInfo と一致していることを確認します。 |
