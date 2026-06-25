@@ -1,9 +1,13 @@
 site_name: Virex.NET Integration Kit
 site_url: https://vstechnology-tw.github.io/vst-virex.net.integration/
+repo_url: https://github.com/vstechnology-tw/vst-virex.net.integration
+repo_name: vstechnology-tw/vst-virex.net.integration
 use_directory_urls: false
 
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github
   features:
     - navigation.tracking
     - navigation.sections
@@ -29,6 +33,7 @@ plugins:
           site_name: Virex.NET Integration Kit
           nav_translations:
             Home / Quick Start: 首頁 / 快速開始
+            Installation / Download: 安裝 / 下載
             Simulator Manual: Simulator 操作手冊
             Transmitted Content / Payloads: 傳送內容 / Payloads
             Samples: 範例程式
@@ -44,6 +49,7 @@ plugins:
           site_name: Virex.NET Integration Kit
           nav_translations:
             Home / Quick Start: ホーム / クイックスタート
+            Installation / Download: インストール / ダウンロード
             Simulator Manual: Simulator 操作マニュアル
             Transmitted Content / Payloads: 送受信内容 / Payloads
             Samples: サンプル
@@ -59,6 +65,7 @@ plugins:
           site_name: Virex.NET Integration Kit
           nav_translations:
             Home / Quick Start: 홈 / 빠른 시작
+            Installation / Download: 설치 / 다운로드
             Simulator Manual: Simulator 사용 설명서
             Transmitted Content / Payloads: 전송 내용 / Payloads
             Samples: 샘플
@@ -78,6 +85,7 @@ markdown_extensions:
 
 nav:
   - Home / Quick Start: index.md
+  - Installation / Download: installation.md
   - Simulator Manual: simulator.md
   - Transmitted Content / Payloads: payloads.md
   - Samples: samples.md

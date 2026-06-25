@@ -20,6 +20,12 @@ The private Virex.NET application is not included. This repository only contains
 - [Virex.NET.Contracts](https://www.nuget.org/packages/Virex.NET.Contracts/): public DTOs, routes, topic names, TCP/NDJSON formatters, and parsers.
 - [Virex.NET.Client](https://www.nuget.org/packages/Virex.NET.Client/): C# SDK for REST, TCP socket events, and MQTT events.
 
+## Installation / Download
+
+Prebuilt simulator downloads, NuGet install commands, and sample code links are documented on the customer site:
+
+https://vstechnology-tw.github.io/vst-virex.net.integration/installation.html
+
 ## Build
 
 ```powershell
