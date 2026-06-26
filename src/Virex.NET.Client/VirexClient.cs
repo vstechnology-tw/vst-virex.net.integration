@@ -54,8 +54,23 @@ public sealed class VirexClient : IDisposable
     public Task<ControlStatusDto> StartAsync(CancellationToken cancellationToken = default) =>
         Rest.StartAsync(cancellationToken);
 
+    public Task<ControlStatusDto> StartAsync(string? condition, CancellationToken cancellationToken = default) =>
+        Rest.StartAsync(condition, cancellationToken);
+
+    public Task<ControlStatusDto> StartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
+        Rest.StartAsync(condition, runMode, cancellationToken);
+
+    public Task<ControlStatusDto> StartAsync(ControlStartRequest request, CancellationToken cancellationToken = default) =>
+        Rest.StartAsync(request, cancellationToken);
+
     public Task<ControlStatusDto> StopAsync(CancellationToken cancellationToken = default) =>
         Rest.StopAsync(cancellationToken);
+
+    public Task<ControlStatusDto> StopAsync(string? reason, CancellationToken cancellationToken = default) =>
+        Rest.StopAsync(reason, cancellationToken);
+
+    public Task<ControlStatusDto> StopAsync(ControlStopRequest request, CancellationToken cancellationToken = default) =>
+        Rest.StopAsync(request, cancellationToken);
 
     public Task<ResultListDto> QueryResultsAsync(
         string? lotId = null,

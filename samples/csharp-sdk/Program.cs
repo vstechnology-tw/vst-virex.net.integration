@@ -55,12 +55,24 @@ try
     Console.WriteLine("Expected Simulator Event Log:");
     Console.WriteLine("WaferInfo updated from REST: lotId=LOT-SDK-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1");
 
-    PrintStep("Step 4 - Start a normal inspection cycle");
+    PrintStep("Step 4 - Start a normal inspection cycle with condition and runMode payload");
     Console.WriteLine("Expected Simulator Status: capturing -> inspecting -> saving -> ready.");
-    var start = await client.StartAsync();
+    var start = await client.StartAsync("golden-sample", ControlRunModes.Continue);
     Console.WriteLine($"Start returned: initialized={start.Initialized}, processState={start.ProcessState}, message={start.Message}");
+    Console.WriteLine("Expected Simulator Event Log:");
+    Console.WriteLine("Start condition: golden-sample");
+    Console.WriteLine("Start run mode: continue");
 
-    PrintStep("Step 5 - Query result summary by lotId");
+    PrintStep("Step 5 - Demonstrate Stop reason payload");
+    var stopStart = client.StartAsync("stop-demo", ControlRunModes.Continue);
+    await Task.Delay(300);
+    var stop = await client.StopAsync("operator-request");
+    await stopStart;
+    Console.WriteLine($"Stop returned: initialized={stop.Initialized}, processState={stop.ProcessState}, message={stop.Message}");
+    Console.WriteLine("Expected Simulator Event Log:");
+    Console.WriteLine("Stopped. reason=operator-request");
+
+    PrintStep("Step 6 - Query result summary by lotId");
     var results = await client.QueryResultsAsync(lotId: lotId);
     Console.WriteLine($"Result count for {lotId}: {results.Count}");
     Console.WriteLine("If the count is 0, press Start Cycle or Emit Fake Result in Simulator and verify the WaferInfo lotId.");

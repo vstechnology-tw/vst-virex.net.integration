@@ -33,6 +33,27 @@ GET  /api/results
 
 For exact request and response body shapes, see [Transmitted Content / Payloads](payloads.md).
 
+`POST /api/control/start` accepts an optional JSON body:
+
+```json
+{
+  "condition": "golden-sample",
+  "runMode": "continue"
+}
+```
+
+`runMode` is optional. Omitted or blank values default to `continue`; `single` is also supported.
+
+`POST /api/control/stop` accepts an optional JSON body:
+
+```json
+{
+  "reason": "operator-request"
+}
+```
+
+Both bodies are backward compatible. Empty bodies and blank values are valid.
+
 ## Status
 
 ```json

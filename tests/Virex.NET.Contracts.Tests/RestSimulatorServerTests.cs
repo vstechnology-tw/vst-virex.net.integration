@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Net.Sockets;
 using System.Text.Json;
 using Virex.NET.Contracts;
@@ -34,6 +35,10 @@ public sealed class RestSimulatorServerTests
             Assert.True(paths.TryGetProperty(RestRoutes.ApiResults, out var resultsPath));
             Assert.Contains("recipeId", openApi);
             Assert.Contains("previewImagePath", openApi);
+            Assert.Contains("ControlStartRequest", openApi);
+            Assert.Contains("runMode", openApi);
+            Assert.Contains("ControlStopRequest", openApi);
+            Assert.Contains("reason", openApi);
             Assert.DoesNotContain("results/latest", openApi, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("deinitialize", openApi, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("socket-info", openApi, StringComparison.OrdinalIgnoreCase);
@@ -65,6 +70,73 @@ public sealed class RestSimulatorServerTests
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             Assert.Contains("Only lotId, waferId, and recipeId", body);
+        }
+        finally
+        {
+            await server.StopAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ControlStartAcceptsOptionalConditionPayload()
+    {
+        var session = new SimulatorSession();
+        var messages = new List<string>();
+        session.Log += (_, message) => messages.Add(message);
+        var prefix = "http://127.0.0.1:" + GetFreeTcpPort() + "/";
+        var server = new RestSimulatorServer(session, prefix);
+        await server.StartAsync();
+
+        try
+        {
+            using var client = new HttpClient { BaseAddress = new Uri(prefix) };
+            var initialize = await client.PostAsync(RestRoutes.ApiControlInitialize.TrimStart('/'), null);
+            initialize.EnsureSuccessStatusCode();
+
+            var start = await client.PostAsJsonAsync(
+                RestRoutes.ApiControlStart.TrimStart('/'),
+                new ControlStartRequest { Condition = "golden-sample", RunMode = ControlRunModes.SingleRun },
+                ProtocolJson.Options);
+
+            Assert.Equal(HttpStatusCode.OK, start.StatusCode);
+            Assert.Contains("Start condition: golden-sample", messages);
+            Assert.Contains("Start run mode: single", messages);
+        }
+        finally
+        {
+            await server.StopAsync();
+        }
+    }
+
+    [Fact]
+    public async Task ControlStopAcceptsOptionalReasonPayloadAndLegacyEmptyBody()
+    {
+        var session = new SimulatorSession();
+        var messages = new List<string>();
+        session.Log += (_, message) => messages.Add(message);
+        var prefix = "http://127.0.0.1:" + GetFreeTcpPort() + "/";
+        var server = new RestSimulatorServer(session, prefix);
+        await server.StartAsync();
+
+        try
+        {
+            using var client = new HttpClient { BaseAddress = new Uri(prefix) };
+            var initialize = await client.PostAsync(RestRoutes.ApiControlInitialize.TrimStart('/'), null);
+            initialize.EnsureSuccessStatusCode();
+
+            var firstStart = client.PostAsync(RestRoutes.ApiControlStart.TrimStart('/'), null);
+            await Task.Delay(100);
+            var stop = await client.PostAsJsonAsync(
+                RestRoutes.ApiControlStop.TrimStart('/'),
+                new ControlStopRequest { Reason = "operator-request" },
+                ProtocolJson.Options);
+            await firstStart;
+
+            Assert.Equal(HttpStatusCode.OK, stop.StatusCode);
+            Assert.Contains("Stopped. reason=operator-request", messages);
+
+            var secondStart = await client.PostAsync(RestRoutes.ApiControlStart.TrimStart('/'), null);
+            Assert.Equal(HttpStatusCode.OK, secondStart.StatusCode);
         }
         finally
         {

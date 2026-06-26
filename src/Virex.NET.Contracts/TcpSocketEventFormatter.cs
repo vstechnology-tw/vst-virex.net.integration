@@ -59,5 +59,22 @@ public static class TcpSocketEventFormatter
 
     public static string FormatCommand(string type) => Format(new { type });
 
+    public static string FormatStartCommand(string? condition = null, string? runMode = null) =>
+        Format(new
+        {
+            type = "start",
+            condition = string.IsNullOrWhiteSpace(condition) ? null : condition,
+            runMode = ControlRunModes.TryNormalize(runMode, out var normalizedRunMode)
+                ? normalizedRunMode
+                : runMode,
+        });
+
+    public static string FormatStopCommand(string? reason = null) =>
+        Format(new
+        {
+            type = "stop",
+            reason = string.IsNullOrWhiteSpace(reason) ? null : reason,
+        });
+
     private static string Format(object payload) => ProtocolJson.Serialize(payload) + "\n";
 }

@@ -63,13 +63,15 @@ internal static class OpenApiDocument
             {
                 ["post"] = ControlOperation(
                     "Start inspection cycle",
-                    "Starts a fake inspection cycle. Returns 409 not_initialized if initialize has not been called."),
+                    "Starts a fake inspection cycle. Optional request body may include condition and runMode.",
+                    Ref("ControlStartRequest")),
             },
             [RestRoutes.ApiControlStop] = new Dictionary<string, object>
             {
                 ["post"] = ControlOperation(
                     "Stop inspection cycle",
-                    "Stops the current fake inspection cycle."),
+                    "Stops the current fake inspection cycle. Optional request body may include reason.",
+                    Ref("ControlStopRequest")),
             },
             [RestRoutes.ApiResults] = new Dictionary<string, object>
             {
@@ -129,6 +131,15 @@ internal static class OpenApiDocument
                     ["processState"] = StringSchema(),
                     ["recipe"] = StringSchema(),
                     ["message"] = StringSchema(),
+                }),
+                ["ControlStartRequest"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["condition"] = NullableStringSchema(),
+                    ["runMode"] = NullableStringSchema(),
+                }),
+                ["ControlStopRequest"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["reason"] = NullableStringSchema(),
                 }),
                 ["ResultSummaryDto"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -197,10 +208,23 @@ internal static class OpenApiDocument
         },
     };
 
-    private static object ControlOperation(string summary, string description) => new
+    private static object ControlOperation(string summary, string description, object? requestSchema = null) => new
     {
         summary,
         description,
+        requestBody = requestSchema is null
+            ? null
+            : new
+            {
+                required = false,
+                content = new Dictionary<string, object>
+                {
+                    ["application/json"] = new
+                    {
+                        schema = requestSchema,
+                    },
+                },
+            },
         responses = new Dictionary<string, object>
         {
             ["200"] = JsonResponse("Command accepted.", Ref("ControlStatusDto")),

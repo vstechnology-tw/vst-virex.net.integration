@@ -33,8 +33,8 @@
 | --- | --- | --- |
 | **Initialize** / `POST /api/control/initialize` | `initialized=false`, `processState=ready` | `initialized=true` 로 설정하고 `processState=ready` 를 유지합니다. |
 | **Terminate** / `POST /api/control/terminate` | `processState=ready` | `initialized=false` 로 설정하고 `processState=ready` 를 유지합니다. |
-| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start"}` | `initialized=true`, `processState=ready` | `capturing`, `inspecting`, `saving` 을 거쳐 결과 발행 후 `ready` 로 돌아갑니다. |
-| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop"}` | 활성 처리 상태: `capturing`, `inspecting`, `saving` | 현재 사이클을 취소하고 `ready` 로 돌아갑니다. |
+| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `initialized=true`, `processState=ready` | `capturing`, `inspecting`, `saving` 을 거쳐 결과 발행 후 `ready` 로 돌아갑니다. `condition` is optional. `runMode` defaults to `continue`; `single` is also supported. |
+| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop","reason":"operator-request"}` | 활성 처리 상태: `capturing`, `inspecting`, `saving` | 현재 사이클을 취소하고 `ready` 로 돌아갑니다. `reason` is optional. |
 | **Apply WaferInfo** / WaferInfo REST 또는 TCP 업데이트 | 모든 처리 상태 | 웨이퍼 컨텍스트를 업데이트하고 wafer-info 이벤트를 발행합니다. `processState` 는 변경하지 않습니다. |
 | **Emit Fake Result** | 모든 처리 상태 | 단일 결과 요약 이벤트를 발행합니다. `processState` 는 변경하지 않습니다. |
 | **Emit Error** | 모든 처리 상태 | 오류 이벤트를 발행합니다. `processState` 는 변경하지 않습니다. |

@@ -1,5 +1,7 @@
 import json
 import sys
+import threading
+import time
 import urllib.error
 import urllib.request
 
@@ -83,14 +85,39 @@ def main():
         print("Expected Simulator Event Log:")
         print("WaferInfo updated from REST: lotId=LOT-PY-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1")
 
-        print_step("Step 4 - POST /api/control/start")
+        print_step("Step 4 - POST /api/control/start with condition and runMode payload")
         print("Expected Simulator Status: capturing -> inspecting -> saving -> ready.")
-        code, body = request_json("POST", f"{base_url}/api/control/start", allow_error=True)
+        code, body = request_json("POST", f"{base_url}/api/control/start", {"condition": "golden-sample", "runMode": "continue"}, allow_error=True)
         print(f"Start returned HTTP {code}: {json.dumps(body, separators=(',', ':'))}")
         if code >= 400:
             raise RuntimeError("Start failed. Confirm Initialize was pressed and processState is ready.")
+        print("Expected Simulator Event Log:")
+        print("Start condition: golden-sample")
+        print("Start run mode: continue")
 
-        print_step("Step 5 - GET /api/results by lotId")
+        print_step("Step 5 - POST /api/control/stop with reason payload")
+        start_error = []
+
+        def start_for_stop():
+            try:
+                request_json("POST", f"{base_url}/api/control/start", {"condition": "stop-demo", "runMode": "continue"}, allow_error=True)
+            except Exception as error:
+                start_error.append(error)
+
+        start_thread = threading.Thread(target=start_for_stop)
+        start_thread.start()
+        time.sleep(0.3)
+        code, body = request_json("POST", f"{base_url}/api/control/stop", {"reason": "operator-request"}, allow_error=True)
+        start_thread.join()
+        if start_error:
+            raise start_error[0]
+        print(f"Stop returned HTTP {code}: {json.dumps(body, separators=(',', ':'))}")
+        if code >= 400:
+            raise RuntimeError("Stop failed. Confirm a cycle was running.")
+        print("Expected Simulator Event Log:")
+        print("Stopped. reason=operator-request")
+
+        print_step("Step 6 - GET /api/results by lotId")
         _, results = request_json("GET", f"{base_url}/api/results?lotId={lot_id}")
         print(f"Result count for {lot_id}: {results.get('count')}")
     except urllib.error.URLError as error:

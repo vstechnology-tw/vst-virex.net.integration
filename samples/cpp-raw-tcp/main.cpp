@@ -163,9 +163,9 @@ int main(int argc, char* argv[])
         const char* port = argc > 2 ? argv[2] : "5089";
 
         PrintStep("Virex.NET C++ Raw TCP Guided Demo");
-        std::cout << "This sample connects to the simulator TCP socket, reads initial frames, sends WaferInfo, and waits for the update event." << std::endl;
+        std::cout << "This sample connects to the simulator TCP socket, reads initial frames, sends WaferInfo, and sends start/stop commands." << std::endl;
         std::cout << "TCP endpoint: " << host << ":" << port << std::endl;
-        Prompt("Press Start Servers, then press Enter here. Initialize is not required for the WaferInfo TCP demo.");
+        Prompt("Press Start Servers and Initialize, then press Enter here.");
 
         WsaSession wsa;
         SocketHandle client = Connect(host, port);
@@ -186,6 +186,29 @@ int main(int argc, char* argv[])
         std::cout << "Expected Simulator Event Log:" << std::endl;
         std::cout << "WaferInfo updated from TCP: lotId=LOT-CPP-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1" << std::endl;
         std::cout << "Waiting for echoed waferInfo update event..." << std::endl;
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 3 - Send start command with condition and runMode payload");
+        const std::string startFrame = R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
+            "\n";
+        SendAll(client.value, startFrame);
+        std::cout << "Sent start frame:" << std::endl;
+        std::cout << R"({"type":"start","condition":"golden-sample","runMode":"continue"})" << std::endl;
+        std::cout << "Expected Simulator Event Log:" << std::endl;
+        std::cout << "Start condition: golden-sample" << std::endl;
+        std::cout << "Start run mode: continue" << std::endl;
+        std::cout << "Waiting for status transition..." << std::endl;
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 4 - Send stop command with reason payload");
+        const std::string stopFrame = R"({"type":"stop","reason":"operator-request"})"
+            "\n";
+        SendAll(client.value, stopFrame);
+        std::cout << "Sent stop frame:" << std::endl;
+        std::cout << R"({"type":"stop","reason":"operator-request"})" << std::endl;
+        std::cout << "Expected Simulator Event Log:" << std::endl;
+        std::cout << "Stopped. reason=operator-request" << std::endl;
+        std::cout << "Waiting for ready status..." << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
     }
     catch (const std::exception& ex)

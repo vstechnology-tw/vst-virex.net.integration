@@ -33,8 +33,8 @@ In the diagram, **external command** means a control command sent by a client, t
 | --- | --- | --- |
 | **Initialize** / `POST /api/control/initialize` | `initialized=false`, `processState=ready` | Sets `initialized=true`, keeps `processState=ready`. |
 | **Terminate** / `POST /api/control/terminate` | `processState=ready` | Sets `initialized=false`, keeps `processState=ready`. |
-| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start"}` | `initialized=true`, `processState=ready` | Transitions through `capturing`, `inspecting`, `saving`, then returns to `ready` after result emission. |
-| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop"}` | Active process state: `capturing`, `inspecting`, or `saving` | Cancels the current cycle and returns to `ready`. |
+| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `initialized=true`, `processState=ready` | Transitions through `capturing`, `inspecting`, `saving`, then returns to `ready` after result emission. `condition` is optional. `runMode` defaults to `continue`; `single` is also supported. |
+| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop","reason":"operator-request"}` | Active process state: `capturing`, `inspecting`, or `saving` | Cancels the current cycle and returns to `ready`. `reason` is optional. |
 | **Apply WaferInfo** / WaferInfo REST or TCP update | Any process state | Updates wafer context and emits wafer-info events. It does not change `processState`. |
 | **Emit Fake Result** | Any process state | Emits a single result summary event. It does not change `processState`. |
 | **Emit Error** | Any process state | Emits an error event. It does not change `processState`. |

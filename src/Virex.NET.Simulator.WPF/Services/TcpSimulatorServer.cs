@@ -105,9 +105,19 @@ public sealed class TcpSimulatorServer
                     if (message.Type == "waferInfo" && message.WaferInfo is not null)
                         _session.UpdateWaferInfo(message.WaferInfo, "TCP");
                     else if (message.Type == "start")
-                        await _session.StartCycleAsync(string.Empty).ConfigureAwait(false);
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _session.StartCycleAsync(string.Empty, message.Condition, message.RunMode).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                _session.WriteLog("TCP start failed: " + ex.Message);
+                            }
+                        }, token);
                     else if (message.Type == "stop")
-                        _session.Stop();
+                        _session.Stop(message.Reason);
                 }
             }
             finally

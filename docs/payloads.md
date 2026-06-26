@@ -386,8 +386,8 @@ Simulator/sample verification:
 | `POST /api/wafer-info` | Inbound request | `WaferInfo` | Updates current public wafer context. |
 | `POST /api/control/initialize` | Outbound response | `ControlStatusDto` | Initializes the simulator state. |
 | `POST /api/control/terminate` | Outbound response | `ControlStatusDto` | Terminates the simulator state. |
-| `POST /api/control/start` | Outbound response | `ControlStatusDto` | Starts a simulated cycle. |
-| `POST /api/control/stop` | Outbound response | `ControlStatusDto` | Stops a simulated cycle. |
+| `POST /api/control/start` | Optional inbound `ControlStartRequest`; outbound response `ControlStatusDto` | `condition` is optional. `runMode` is optional and defaults to `continue`; supported values are `continue` and `single`. |
+| `POST /api/control/stop` | Optional inbound `ControlStopRequest`; outbound response `ControlStatusDto` | `reason` is optional and may be omitted or blank. |
 | `GET /api/results` | Outbound response | `ResultListDto` | Optional filters: `lotId`, `waferId`, `recipeId`. Multiple filters are combined with AND. |
 
 REST verification:
@@ -403,8 +403,8 @@ TCP messages are JSON objects. TCP outbound events include a `type` property. TC
 | Inbound command | Direction | JSON example | Notes |
 | --- | --- | --- | --- |
 | WaferInfo | Inbound to simulator | `{"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}` | Legacy WaferInfo frames may omit `type`; the parser falls back to the WaferInfo JSON parser. |
-| Start | Inbound to simulator | `{"type":"start"}` | Starts a simulated cycle. |
-| Stop | Inbound to simulator | `{"type":"stop"}` | Stops a simulated cycle. |
+| Start | Inbound to simulator | `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `condition` is optional. `runMode` defaults to `continue`; legacy `{"type":"start"}` remains valid. |
+| Stop | Inbound to simulator | `{"type":"stop","reason":"operator-request"}` | `reason` is optional; legacy `{"type":"stop"}` remains valid. |
 
 TCP outbound events:
 

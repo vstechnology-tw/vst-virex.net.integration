@@ -43,8 +43,23 @@ public sealed class VirexRestClient
     public Task<ControlStatusDto> StartAsync(CancellationToken cancellationToken = default) =>
         PostControlAsync(RestRoutes.ApiControlStart, cancellationToken);
 
+    public Task<ControlStatusDto> StartAsync(string? condition, CancellationToken cancellationToken = default) =>
+        StartAsync(new ControlStartRequest { Condition = condition }, cancellationToken);
+
+    public Task<ControlStatusDto> StartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
+        StartAsync(new ControlStartRequest { Condition = condition, RunMode = runMode }, cancellationToken);
+
+    public Task<ControlStatusDto> StartAsync(ControlStartRequest request, CancellationToken cancellationToken = default) =>
+        PostControlAsync(RestRoutes.ApiControlStart, request, cancellationToken);
+
     public Task<ControlStatusDto> StopAsync(CancellationToken cancellationToken = default) =>
         PostControlAsync(RestRoutes.ApiControlStop, cancellationToken);
+
+    public Task<ControlStatusDto> StopAsync(string? reason, CancellationToken cancellationToken = default) =>
+        StopAsync(new ControlStopRequest { Reason = reason }, cancellationToken);
+
+    public Task<ControlStatusDto> StopAsync(ControlStopRequest request, CancellationToken cancellationToken = default) =>
+        PostControlAsync(RestRoutes.ApiControlStop, request, cancellationToken);
 
     public Task<ResultListDto> QueryResultsAsync(
         string? lotId = null,
@@ -59,6 +74,14 @@ public sealed class VirexRestClient
     private async Task<ControlStatusDto> PostControlAsync(string route, CancellationToken cancellationToken)
     {
         var response = await _http.PostAsync(route.TrimStart('/'), null, cancellationToken).ConfigureAwait(false);
+        await EnsureSuccessAsync(response).ConfigureAwait(false);
+        var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        return ProtocolJson.Deserialize<ControlStatusDto>(json) ?? new ControlStatusDto();
+    }
+
+    private async Task<ControlStatusDto> PostControlAsync<T>(string route, T payload, CancellationToken cancellationToken)
+    {
+        var response = await _http.PostAsync(route.TrimStart('/'), JsonContent(payload), cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         return ProtocolJson.Deserialize<ControlStatusDto>(json) ?? new ControlStatusDto();

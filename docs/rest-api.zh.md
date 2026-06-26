@@ -33,6 +33,27 @@ GET  /api/results
 
 完整 request/response body shape 請看 [傳送內容 / Payloads](payloads.md)。
 
+`POST /api/control/start` 可接受 optional JSON body：
+
+```json
+{
+  "condition": "golden-sample",
+  "runMode": "continue"
+}
+```
+
+`runMode` optional。省略或空白時預設為 `continue`；也支援 `single`。
+
+`POST /api/control/stop` 可接受 optional JSON body：
+
+```json
+{
+  "reason": "operator-request"
+}
+```
+
+兩個 body 都向下相容；empty body 與 blank value 都有效。
+
 ## Status
 
 ```json

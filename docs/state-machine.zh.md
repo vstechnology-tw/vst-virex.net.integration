@@ -33,8 +33,8 @@ Simulator 使用兩個公開值回報狀態；client 不需要知道內部實作
 | --- | --- | --- |
 | **Initialize** / `POST /api/control/initialize` | `initialized=false`、`processState=ready` | 設為 `initialized=true`，`processState` 維持 `ready`。 |
 | **Terminate** / `POST /api/control/terminate` | `processState=ready` | 設為 `initialized=false`，`processState` 維持 `ready`。 |
-| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start"}` | `initialized=true`、`processState=ready` | 依序進入 `capturing`、`inspecting`、`saving`，產生 result 後回到 `ready`。 |
-| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop"}` | Active process state：`capturing`、`inspecting` 或 `saving` | 取消目前 cycle 並回到 `ready`。 |
+| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `initialized=true`、`processState=ready` | 依序進入 `capturing`、`inspecting`、`saving`，產生 result 後回到 `ready`。`condition` optional。`runMode` 預設 `continue`，也支援 `single`。 |
+| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop","reason":"operator-request"}` | Active process state：`capturing`、`inspecting` 或 `saving` | 取消目前 cycle 並回到 `ready`。`reason` optional。 |
 | **Apply WaferInfo** / WaferInfo REST 或 TCP update | 任一 process state | 更新 wafer context 並送出 wafer-info events。不改變 `processState`。 |
 | **Emit Fake Result** | 任一 process state | 送出單筆 result summary event。不改變 `processState`。 |
 | **Emit Error** | 任一 process state | 送出 error event。不改變 `processState`。 |

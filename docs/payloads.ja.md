@@ -386,8 +386,8 @@ JSON 例:
 | `POST /api/wafer-info` | 受信リクエスト | `WaferInfo` | 現在の公開ウェーハ コンテキストを更新します。 |
 | `POST /api/control/initialize` | 送信応答 | `ControlStatusDto` | シミュレーター状態を初期化します。 |
 | `POST /api/control/terminate` | 送信応答 | `ControlStatusDto` | シミュレーター状態を終了します。 |
-| `POST /api/control/start` | 送信応答 | `ControlStatusDto` | 模擬サイクルを開始します。 |
-| `POST /api/control/stop` | 送信応答 | `ControlStatusDto` | 模擬サイクルを停止します。 |
+| `POST /api/control/start` | Optional inbound `ControlStartRequest`; outbound response `ControlStatusDto` | `condition` is optional. `runMode` is optional and defaults to `continue`; supported values are `continue` and `single`. |
+| `POST /api/control/stop` | Optional inbound `ControlStopRequest`; outbound response `ControlStatusDto` | `reason` is optional and may be omitted or blank. |
 | `GET /api/results` | 送信応答 | `ResultListDto` | 任意フィルター: `lotId`、`waferId`、`recipeId`。複数フィルターは AND で結合されます。 |
 
 REST 検証:
@@ -403,8 +403,8 @@ TCP メッセージは JSON オブジェクトです。TCP 送信イベントに
 | 受信コマンド | 方向 | JSON 例 | 備考 |
 | --- | --- | --- | --- |
 | WaferInfo | シミュレーターへの受信 | `{"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}` | 従来の WaferInfo フレームでは `type` を省略できます。パーサーは WaferInfo JSON パーサーへフォールバックします。 |
-| Start | シミュレーターへの受信 | `{"type":"start"}` | 模擬サイクルを開始します。 |
-| Stop | シミュレーターへの受信 | `{"type":"stop"}` | 模擬サイクルを停止します。 |
+| Start | シミュレーターへの受信 | `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `condition` is optional. `runMode` defaults to `continue`; legacy `{"type":"start"}` remains valid. |
+| Stop | シミュレーターへの受信 | `{"type":"stop","reason":"operator-request"}` | `reason` is optional; legacy `{"type":"stop"}` remains valid. |
 
 TCP 送信イベント:
 

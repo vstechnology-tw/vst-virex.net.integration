@@ -386,8 +386,8 @@ Simulator/sample verification:
 | `POST /api/wafer-info` | Inbound request | `WaferInfo` | 更新 current public wafer context。 |
 | `POST /api/control/initialize` | Outbound response | `ControlStatusDto` | 初始化 simulator state。 |
 | `POST /api/control/terminate` | Outbound response | `ControlStatusDto` | Terminate simulator state。 |
-| `POST /api/control/start` | Outbound response | `ControlStatusDto` | Start simulated cycle。 |
-| `POST /api/control/stop` | Outbound response | `ControlStatusDto` | Stop simulated cycle。 |
+| `POST /api/control/start` | Optional inbound `ControlStartRequest`；outbound response `ControlStatusDto` | `condition` optional。`runMode` optional 且預設 `continue`；支援 `continue` 與 `single`。 |
+| `POST /api/control/stop` | Optional inbound `ControlStopRequest`；outbound response `ControlStatusDto` | `reason` 可省略或空白，維持向下相容。 |
 | `GET /api/results` | Outbound response | `ResultListDto` | Optional filters：`lotId`、`waferId`、`recipeId`。多個 filters 以 AND 合併。 |
 
 REST verification:
@@ -403,8 +403,8 @@ TCP messages 是 JSON objects。TCP outbound events 包含 `type` property。TCP
 | Inbound command | Direction | JSON example | Notes |
 | --- | --- | --- | --- |
 | WaferInfo | Inbound to simulator | `{"type":"waferInfo","lotId":"LOT-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"}` | Legacy WaferInfo frames 可省略 `type`；parser 會 fallback 到 WaferInfo JSON parser。 |
-| Start | Inbound to simulator | `{"type":"start"}` | Start simulated cycle。 |
-| Stop | Inbound to simulator | `{"type":"stop"}` | Stop simulated cycle。 |
+| Start | Inbound to simulator | `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `condition` optional。`runMode` 預設 `continue`；legacy `{"type":"start"}` 仍有效。 |
+| Stop | Inbound to simulator | `{"type":"stop","reason":"operator-request"}` | `reason` optional；legacy `{"type":"stop"}` 仍有效。 |
 
 TCP outbound events:
 

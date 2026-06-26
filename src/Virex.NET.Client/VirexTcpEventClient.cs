@@ -41,10 +41,19 @@ public sealed class VirexTcpEventClient
         await SendFrameAsync(TcpSocketEventFormatter.FormatWaferInfo(info), cancellationToken).ConfigureAwait(false);
 
     public async Task SendStartAsync(CancellationToken cancellationToken = default) =>
-        await SendFrameAsync(TcpSocketEventFormatter.FormatCommand("start"), cancellationToken).ConfigureAwait(false);
+        await SendFrameAsync(TcpSocketEventFormatter.FormatStartCommand(), cancellationToken).ConfigureAwait(false);
+
+    public async Task SendStartAsync(string? condition, CancellationToken cancellationToken = default) =>
+        await SendFrameAsync(TcpSocketEventFormatter.FormatStartCommand(condition), cancellationToken).ConfigureAwait(false);
+
+    public async Task SendStartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
+        await SendFrameAsync(TcpSocketEventFormatter.FormatStartCommand(condition, runMode), cancellationToken).ConfigureAwait(false);
 
     public async Task SendStopAsync(CancellationToken cancellationToken = default) =>
-        await SendFrameAsync(TcpSocketEventFormatter.FormatCommand("stop"), cancellationToken).ConfigureAwait(false);
+        await SendFrameAsync(TcpSocketEventFormatter.FormatStopCommand(), cancellationToken).ConfigureAwait(false);
+
+    public async Task SendStopAsync(string? reason, CancellationToken cancellationToken = default) =>
+        await SendFrameAsync(TcpSocketEventFormatter.FormatStopCommand(reason), cancellationToken).ConfigureAwait(false);
 
     private async Task SendFrameAsync(string frame, CancellationToken cancellationToken)
     {
