@@ -22,6 +22,9 @@ on:
 permissions:
   contents: read
 
+env:
+  NO_MKDOCS_2_WARNING: "true"
+
 jobs:
   verify-docs:
     name: Build docs and verify image assets

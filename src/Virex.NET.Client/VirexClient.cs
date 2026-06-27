@@ -1,5 +1,3 @@
-using System;
-using System.Net.Http;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Client;
@@ -39,45 +37,48 @@ public sealed class VirexClient : IDisposable
 
     public VirexMqttEventSubscriber MqttEvents { get; }
 
-    public Task<StatusDto> GetStatusAsync(CancellationToken cancellationToken = default) =>
+    public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         Rest.GetStatusAsync(cancellationToken);
 
-    public Task SetWaferInfoAsync(WaferInfo info, CancellationToken cancellationToken = default) =>
-        Rest.SetWaferInfoAsync(info, cancellationToken);
+    public Task<ProductInfo> GetProductInfoAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetProductInfoAsync(cancellationToken);
 
-    public Task<ControlStatusDto> InitializeAsync(CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> SetProductInfoAsync(ProductInfo info, CancellationToken cancellationToken = default) =>
+        Rest.SetProductInfoAsync(info, cancellationToken);
+
+    public Task<CommandResponse> InitializeAsync(CancellationToken cancellationToken = default) =>
         Rest.InitializeAsync(cancellationToken);
 
-    public Task<ControlStatusDto> TerminateAsync(CancellationToken cancellationToken = default) =>
-        Rest.TerminateAsync(cancellationToken);
+    public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default) =>
+        Rest.DeinitializeAsync(cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> StartAsync(CancellationToken cancellationToken = default) =>
         Rest.StartAsync(cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(string? condition, CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> StartAsync(string? condition, CancellationToken cancellationToken = default) =>
         Rest.StartAsync(condition, cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> StartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
         Rest.StartAsync(condition, runMode, cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(ControlStartRequest request, CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> StartAsync(SystemStartRequest request, CancellationToken cancellationToken = default) =>
         Rest.StartAsync(request, cancellationToken);
 
-    public Task<ControlStatusDto> StopAsync(CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> StopAsync(CancellationToken cancellationToken = default) =>
         Rest.StopAsync(cancellationToken);
 
-    public Task<ControlStatusDto> StopAsync(string? reason, CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> StopAsync(string? reason, CancellationToken cancellationToken = default) =>
         Rest.StopAsync(reason, cancellationToken);
 
-    public Task<ControlStatusDto> StopAsync(ControlStopRequest request, CancellationToken cancellationToken = default) =>
+    public Task<CommandResponse> StopAsync(SystemStopRequest request, CancellationToken cancellationToken = default) =>
         Rest.StopAsync(request, cancellationToken);
 
-    public Task<ResultListDto> QueryResultsAsync(
-        string? lotId = null,
-        string? waferId = null,
-        string? recipeId = null,
+    public Task<ResultList> QueryResultsAsync(
+        string? lotID = null,
+        string? waferID = null,
+        string? recipe = null,
         CancellationToken cancellationToken = default) =>
-        Rest.QueryResultsAsync(lotId, waferId, recipeId, cancellationToken);
+        Rest.QueryResultsAsync(lotID, waferID, recipe, cancellationToken);
 
     public void Dispose()
     {

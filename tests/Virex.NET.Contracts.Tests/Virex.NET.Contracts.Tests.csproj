@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Virex.NET.Contracts\Virex.NET.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Virex.NET.Client\Virex.NET.Client.csproj" />
+    <ProjectReference Include="..\..\src\Virex.NET.Simulator.Core\Virex.NET.Simulator.Core.csproj" />
     <ProjectReference Include="..\..\src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj" />
   </ItemGroup>
 </Project>

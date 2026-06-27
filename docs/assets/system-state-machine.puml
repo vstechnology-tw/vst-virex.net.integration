@@ -1,0 +1,52 @@
+@startuml
+hide empty description
+skinparam linetype ortho
+skinparam nodesep 70
+skinparam ranksep 75
+skinparam backgroundColor transparent
+skinparam shadowing false
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 14
+skinparam ArrowThickness 2
+skinparam ArrowFontColor #0f172a
+skinparam ArrowFontSize 12
+skinparam state {
+  BackgroundColor #2688b0
+  BorderColor #1b6380
+  FontColor #ffffff
+  FontStyle bold
+  FontSize 16
+  RoundCorner 14
+  Padding 16
+}
+skinparam note {
+  BackgroundColor #eef7fb
+  BorderColor #78b7cf
+  FontColor #1f2937
+}
+
+state "Uninitialized" as Uninitialized
+state "Initializing" as Initializing
+state "Ready" as Ready
+state "Updating\nProductInfo" as UpdatingProductInfo
+state "Running" as Running
+state "Deinitializing" as Deinitializing
+
+Uninitialized -[#1f2937]down-> Initializing : Initialize()
+Initializing -[#f59e0b,dashed]down-> Ready : Initialization\nCompleted
+
+Ready -[#1f2937]right-> UpdatingProductInfo : SetProductInfo
+UpdatingProductInfo -[#f59e0b,dashed]left-> Ready : ProductInfo\nUpdateCompleted
+
+Ready -[#1f2937]down-> Running : Start()
+Running -[#1f2937]up-> Ready : Stop()
+Running -[#f59e0b,dashed]left-> Ready : Run\nCompleted
+
+Ready -[#1f2937]up-> Deinitializing : Deinitialize()
+Deinitializing -[#f59e0b,dashed]up-> Uninitialized : Deinitialization\nCompleted
+
+legend right
+  Solid arrow = Command
+  Dashed arrow = Event
+endlegend
+@enduml

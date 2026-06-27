@@ -1,11 +1,10 @@
-using System.Collections.Generic;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Simulator.WPF.Services;
 
 internal static class OpenApiDocument
 {
-    private static readonly string[] RequiredWaferInfoFields = ["lotId", "waferId", "slot", "foupId", "chamberId"];
+    private static readonly string[] RequiredProductInfoFields = ["waferID", "lotID", "slot", "foupID", "chamberID"];
 
     public static object Create(string baseUrl) => new
     {
@@ -13,81 +12,38 @@ internal static class OpenApiDocument
         info = new
         {
             title = "Virex.NET Simulator API",
-            version = "1.0.0",
+            version = "2.0.2",
         },
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
         {
-            [RestRoutes.Health] = new Dictionary<string, object>
+            [RestRoutes.Health] = new Dictionary<string, object> { ["get"] = Operation("Health check", "Service is reachable.", Ref("HealthResponse")) },
+            [RestRoutes.ApiStatus] = new Dictionary<string, object> { ["get"] = Operation("Get current simulator status", "Current simulator state.", Ref("SystemStatus")) },
+            [RestRoutes.ApiError] = new Dictionary<string, object> { ["get"] = Operation("Get current simulator error", "Current simulator error state.", Ref("ErrorInfo")) },
+            [RestRoutes.ApiProductInfo] = new Dictionary<string, object>
             {
-                ["get"] = Operation(
-                    "Health check",
-                    "Service is reachable.",
-                    Ref("HealthResponse")),
+                ["get"] = Operation("Get current product information", "Current product information used by the simulator.", Ref("ProductInfo")),
+                ["post"] = ProductInfoUpdateOperation(),
             },
-            [RestRoutes.ApiStatus] = new Dictionary<string, object>
-            {
-                ["get"] = Operation(
-                    "Get current simulator status",
-                    "Current simulator initialization state, process state, and recipe.",
-                    Ref("StatusDto")),
-            },
-            [RestRoutes.ApiError] = new Dictionary<string, object>
-            {
-                ["get"] = Operation(
-                    "Get current simulator error",
-                    "Current simulator error state.",
-                    Ref("ErrorStatusDto")),
-            },
-            [RestRoutes.ApiWaferInfo] = new Dictionary<string, object>
-            {
-                ["get"] = Operation(
-                    "Get current wafer information",
-                    "Current wafer information used by the simulator.",
-                    Ref("WaferInfo")),
-                ["post"] = WaferInfoUpdateOperation(),
-            },
-            [RestRoutes.ApiControlInitialize] = new Dictionary<string, object>
-            {
-                ["post"] = ControlOperation(
-                    "Initialize simulator",
-                    "Moves the simulator into the initialized ready state."),
-            },
-            [RestRoutes.ApiControlTerminate] = new Dictionary<string, object>
-            {
-                ["post"] = ControlOperation(
-                    "Terminate simulator",
-                    "Returns the simulator to the terminated ready state."),
-            },
-            [RestRoutes.ApiControlStart] = new Dictionary<string, object>
-            {
-                ["post"] = ControlOperation(
-                    "Start inspection cycle",
-                    "Starts a fake inspection cycle. Optional request body may include condition and runMode.",
-                    Ref("ControlStartRequest")),
-            },
-            [RestRoutes.ApiControlStop] = new Dictionary<string, object>
-            {
-                ["post"] = ControlOperation(
-                    "Stop inspection cycle",
-                    "Stops the current fake inspection cycle. Optional request body may include reason.",
-                    Ref("ControlStopRequest")),
-            },
+            [RestRoutes.ApiSystemInitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Initialize simulator", "Moves the simulator from Uninitialized to Ready.") },
+            [RestRoutes.ApiSystemDeinitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Deinitialize simulator", "Moves the simulator from Ready to Uninitialized.") },
+            [RestRoutes.ApiSystemStart] = new Dictionary<string, object> { ["post"] = CommandOperation("Start run", "Starts a simulated run.", Ref("SystemStartRequest")) },
+            [RestRoutes.ApiSystemStop] = new Dictionary<string, object> { ["post"] = CommandOperation("Stop run", "Stops the current simulated run.", Ref("SystemStopRequest")) },
             [RestRoutes.ApiResults] = new Dictionary<string, object>
             {
                 ["get"] = new
                 {
                     summary = "Query inspection results",
-                    description = "Only lotId, waferId, and recipeId query parameters are supported. Multiple parameters are combined with AND.",
+                    description = "Only waferID, lotID, and recipe query parameters are supported.",
                     parameters = new object[]
                     {
-                        QueryParameter("lotId", "Lot ID filter."),
-                        QueryParameter("waferId", "Wafer ID filter."),
-                        QueryParameter("recipeId", "Recipe ID filter."),
+                        QueryParameter("waferID", "Product ID filter."),
+                        QueryParameter("lotID", "Lot ID filter."),
+                        QueryParameter("recipe", "Recipe ID filter."),
                     },
                     responses = new Dictionary<string, object>
                     {
-                        ["200"] = JsonResponse("Matching saved results.", Ref("ResultListDto")),
+                        ["200"] = JsonResponse("Matching saved results.", Ref("ResultList")),
                     },
                 },
             },
@@ -96,61 +52,53 @@ internal static class OpenApiDocument
         {
             schemas = new Dictionary<string, object>
             {
-                ["HealthResponse"] = ObjectSchema(new Dictionary<string, object>
-                {
-                    ["status"] = StringSchema(),
-                }),
-                ["WaferInfo"] = ObjectSchema(
+                ["HealthResponse"] = ObjectSchema(new Dictionary<string, object> { ["status"] = StringSchema() }),
+                ["ProductInfo"] = ObjectSchema(
                     new Dictionary<string, object>
                     {
-                        ["lotId"] = StringSchema(),
-                        ["waferId"] = StringSchema(),
-                        ["recipeId"] = StringSchema(),
+                        ["waferID"] = StringSchema(),
+                        ["lotID"] = StringSchema(),
+                        ["recipe"] = StringSchema(),
                         ["slot"] = StringSchema(),
-                        ["foupId"] = StringSchema(),
-                        ["chamberId"] = StringSchema(),
+                        ["foupID"] = StringSchema(),
+                        ["chamberID"] = StringSchema(),
                     },
-                    RequiredWaferInfoFields),
-                ["StatusDto"] = ObjectSchema(new Dictionary<string, object>
-                {
-                    ["initialized"] = BoolSchema(),
-                    ["processState"] = StringSchema(),
-                    ["recipe"] = StringSchema(),
-                }),
-                ["ErrorStatusDto"] = ObjectSchema(new Dictionary<string, object>
+                    RequiredProductInfoFields),
+                ["SystemStatus"] = ObjectSchema(new Dictionary<string, object> { ["state"] = StringSchema() }),
+                ["ErrorInfo"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["hasError"] = BoolSchema(),
                     ["message"] = NullableStringSchema(),
-                    ["initialized"] = BoolSchema(),
-                    ["processState"] = StringSchema(),
-                    ["recipe"] = StringSchema(),
+                    ["state"] = StringSchema(),
                 }),
-                ["ControlStatusDto"] = ObjectSchema(new Dictionary<string, object>
+                ["CommandResponse"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["initialized"] = BoolSchema(),
-                    ["processState"] = StringSchema(),
-                    ["recipe"] = StringSchema(),
+                    ["accepted"] = BoolSchema(),
+                    ["state"] = StringSchema(),
+                    ["command"] = StringSchema(),
+                    ["errorCode"] = NullableStringSchema(),
                     ["message"] = StringSchema(),
                 }),
-                ["ControlStartRequest"] = ObjectSchema(new Dictionary<string, object>
+                ["SystemStartRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["condition"] = NullableStringSchema(),
                     ["runMode"] = NullableStringSchema(),
                 }),
-                ["ControlStopRequest"] = ObjectSchema(new Dictionary<string, object>
+                ["SystemStopRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["reason"] = NullableStringSchema(),
                 }),
-                ["ResultSummaryDto"] = ObjectSchema(new Dictionary<string, object>
+                ["ResultSummary"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["resultId"] = StringSchema(),
                     ["timestamp"] = StringSchema("date-time"),
-                    ["lotId"] = StringSchema(),
-                    ["waferId"] = StringSchema(),
-                    ["recipeId"] = StringSchema(),
+                    ["waferID"] = StringSchema(),
+                    ["lotID"] = StringSchema(),
+                    ["recipe"] = StringSchema(),
                     ["slot"] = StringSchema(),
-                    ["foupId"] = StringSchema(),
-                    ["chamberId"] = StringSchema(),
+                    ["foupID"] = StringSchema(),
+                    ["chamberID"] = StringSchema(),
+                    ["condition"] = StringSchema(),
                     ["overallResult"] = StringSchema(),
                     ["defectCount"] = IntSchema(),
                     ["imageRelativePath"] = StringSchema(),
@@ -159,19 +107,10 @@ internal static class OpenApiDocument
                     ["previewImagePath"] = StringSchema(),
                     ["resultPath"] = StringSchema(),
                 }),
-                ["ResultListDto"] = ObjectSchema(new Dictionary<string, object>
+                ["ResultList"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["items"] = new
-                    {
-                        type = "array",
-                        items = Ref("ResultSummaryDto"),
-                    },
+                    ["items"] = new { type = "array", items = Ref("ResultSummary") },
                     ["count"] = IntSchema(),
-                }),
-                ["ErrorResponse"] = ObjectSchema(new Dictionary<string, object>
-                {
-                    ["error"] = StringSchema(),
-                    ["message"] = StringSchema(),
                 }),
             },
         },
@@ -181,54 +120,37 @@ internal static class OpenApiDocument
     {
         summary,
         description,
-        responses = new Dictionary<string, object>
-        {
-            ["200"] = JsonResponse(description, schema),
-        },
+        responses = new Dictionary<string, object> { ["200"] = JsonResponse(description, schema) },
     };
 
-    private static object WaferInfoUpdateOperation() => new
+    private static object ProductInfoUpdateOperation() => new
     {
-        summary = "Update current wafer information",
+        summary = "Update current product information",
         requestBody = new
         {
             required = true,
-            content = new Dictionary<string, object>
-            {
-                ["application/json"] = new
-                {
-                    schema = Ref("WaferInfo"),
-                },
-            },
+            content = new Dictionary<string, object> { ["application/json"] = new { schema = Ref("ProductInfo") } },
         },
         responses = new Dictionary<string, object>
         {
-            ["200"] = JsonResponse("Wafer information updated.", Ref("WaferInfo")),
-            ["400"] = JsonResponse("Invalid wafer information payload.", Ref("ErrorResponse")),
+            ["200"] = JsonResponse("Product information updated.", Ref("CommandResponse")),
+            ["409"] = JsonResponse("Product information cannot be updated from the current state.", Ref("CommandResponse")),
         },
     };
 
-    private static object ControlOperation(string summary, string description, object? requestSchema = null) => new
+    private static object CommandOperation(string summary, string description, object? requestSchema = null) => new
     {
         summary,
         description,
-        requestBody = requestSchema is null
-            ? null
-            : new
-            {
-                required = false,
-                content = new Dictionary<string, object>
-                {
-                    ["application/json"] = new
-                    {
-                        schema = requestSchema,
-                    },
-                },
-            },
+        requestBody = requestSchema is null ? null : new
+        {
+            required = false,
+            content = new Dictionary<string, object> { ["application/json"] = new { schema = requestSchema } },
+        },
         responses = new Dictionary<string, object>
         {
-            ["200"] = JsonResponse("Command accepted.", Ref("ControlStatusDto")),
-            ["409"] = JsonResponse("The simulator cannot execute the command from the current state.", Ref("ControlStatusDto")),
+            ["200"] = JsonResponse("Command accepted.", Ref("CommandResponse")),
+            ["409"] = JsonResponse("The simulator cannot execute the command from the current state.", Ref("CommandResponse")),
         },
     };
 
@@ -244,13 +166,7 @@ internal static class OpenApiDocument
     private static object JsonResponse(string description, object schema) => new
     {
         description,
-        content = new Dictionary<string, object>
-        {
-            ["application/json"] = new
-            {
-                schema,
-            },
-        },
+        content = new Dictionary<string, object> { ["application/json"] = new { schema } },
     };
 
     private static object ObjectSchema(Dictionary<string, object> properties, string[]? required = null) => new
@@ -260,22 +176,11 @@ internal static class OpenApiDocument
         properties,
     };
 
-    private static object Ref(string name) => new Dictionary<string, object>
-    {
-        ["$ref"] = "#/components/schemas/" + name,
-    };
+    private static object Ref(string name) => new Dictionary<string, object> { ["$ref"] = "#/components/schemas/" + name };
 
-    private static object StringSchema(string? format = null) => new
-    {
-        type = "string",
-        format,
-    };
+    private static object StringSchema(string? format = null) => new { type = "string", format };
 
-    private static object NullableStringSchema() => new
-    {
-        type = "string",
-        nullable = true,
-    };
+    private static object NullableStringSchema() => new { type = "string", nullable = true };
 
     private static object BoolSchema() => new { type = "boolean" };
 

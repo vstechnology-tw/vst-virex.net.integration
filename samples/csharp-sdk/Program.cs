@@ -12,70 +12,39 @@ var options = new VirexClientOptions
 };
 
 using var client = new VirexClient(options);
-var lotId = "LOT-SDK-001";
 
-PrintStep("Virex.NET C# SDK Guided Demo");
-Console.WriteLine("This sample shows that the simulator UI controls the server state.");
+PrintStep("Virex.NET C# SDK ProductInfo Demo");
 Console.WriteLine($"REST: {options.RestBaseUrl}");
-Console.WriteLine($"TCP : {options.TcpHost}:{options.TcpPort}");
-Console.WriteLine($"MQTT: {options.MqttHost}:{options.MqttPort}, topic={options.MqttTopic}");
-Prompt("In Simulator, press Start Servers. Leave Initialize unpressed for the first check, then press Enter here.");
+Prompt("In Simulator, press Start Servers, then press Enter here.");
 
 try
 {
-    PrintStep("Step 1 - Read current status");
     var status = await client.GetStatusAsync();
     PrintStatus(status);
 
-    if (!status.Initialized)
+    if (status.State == SystemStates.Uninitialized)
     {
-        PrintStep("Step 2 - Expected negative check");
-        Console.WriteLine("The simulator is not initialized yet. Calling Start should return not_initialized.");
-        await ExpectNotInitializedAsync(client);
-
-        Prompt("In Simulator, press Initialize. Confirm Status shows initialized=True, processState=ready, then press Enter here.");
-        status = await client.GetStatusAsync();
-        PrintStatus(status);
-    }
-    else
-    {
-        Console.WriteLine("Simulator is already initialized, so the negative not_initialized check is skipped.");
+        var initialize = await client.InitializeAsync();
+        PrintCommand(initialize);
     }
 
-    PrintStep("Step 3 - Update WaferInfo through the SDK");
-    await client.SetWaferInfoAsync(new WaferInfo
+    var product = new ProductInfo
     {
-        LotId = lotId,
-        WaferId = "W01",
-        RecipeId = "RCP-A",
+        WaferID = "WSDK-001",
+        LotID = "LOT-SDK-001",
+        Recipe = "RCP-A",
         Slot = "1",
-        FoupId = "FOUP-A",
-        ChamberId = "CH-1",
-    });
-    Console.WriteLine("Expected Simulator Event Log:");
-    Console.WriteLine("WaferInfo updated from REST: lotId=LOT-SDK-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1");
+        FoupID = "FOUP-A",
+        ChamberID = "CH-1",
+    };
+    PrintCommand(await client.SetProductInfoAsync(product));
 
-    PrintStep("Step 4 - Start a normal inspection cycle with condition and runMode payload");
-    Console.WriteLine("Expected Simulator Status: capturing -> inspecting -> saving -> ready.");
     var start = await client.StartAsync("golden-sample", ControlRunModes.Continue);
-    Console.WriteLine($"Start returned: initialized={start.Initialized}, processState={start.ProcessState}, message={start.Message}");
-    Console.WriteLine("Expected Simulator Event Log:");
-    Console.WriteLine("Start condition: golden-sample");
-    Console.WriteLine("Start run mode: continue");
+    PrintCommand(start);
 
-    PrintStep("Step 5 - Demonstrate Stop reason payload");
-    var stopStart = client.StartAsync("stop-demo", ControlRunModes.Continue);
-    await Task.Delay(300);
-    var stop = await client.StopAsync("operator-request");
-    await stopStart;
-    Console.WriteLine($"Stop returned: initialized={stop.Initialized}, processState={stop.ProcessState}, message={stop.Message}");
-    Console.WriteLine("Expected Simulator Event Log:");
-    Console.WriteLine("Stopped. reason=operator-request");
-
-    PrintStep("Step 6 - Query result summary by lotId");
-    var results = await client.QueryResultsAsync(lotId: lotId);
-    Console.WriteLine($"Result count for {lotId}: {results.Count}");
-    Console.WriteLine("If the count is 0, press Start Cycle or Emit Fake Result in Simulator and verify the WaferInfo lotId.");
+    await Task.Delay(500);
+    var results = await client.QueryResultsAsync(waferID: product.WaferID);
+    Console.WriteLine($"Result count for {product.WaferID}: {results.Count}");
 }
 catch (HttpRequestException ex)
 {
@@ -85,28 +54,17 @@ catch (HttpRequestException ex)
 }
 catch (VirexClientException ex)
 {
-    Console.WriteLine("The simulator returned an error response:");
     Console.WriteLine($"HTTP {ex.StatusCode}: {ex.ResponseBody}");
     return 1;
 }
 
 return 0;
 
-static async Task ExpectNotInitializedAsync(VirexClient client)
-{
-    try
-    {
-        await client.StartAsync();
-        Console.WriteLine("Start succeeded because the simulator was already initialized.");
-    }
-    catch (VirexClientException ex) when (ex.StatusCode == 409 && ex.ResponseBody.Contains("not_initialized", StringComparison.OrdinalIgnoreCase))
-    {
-        Console.WriteLine("Expected response: HTTP 409 not_initialized.");
-    }
-}
+static void PrintStatus(SystemStatus status) =>
+    Console.WriteLine($"Status: state={status.State}");
 
-static void PrintStatus(StatusDto status) =>
-    Console.WriteLine($"Status: initialized={status.Initialized}, processState={status.ProcessState}, recipe={status.Recipe}");
+static void PrintCommand(CommandResponse response) =>
+    Console.WriteLine($"{response.Command}: accepted={response.Accepted}, state={response.State}, message={response.Message}");
 
 static void PrintStep(string title)
 {

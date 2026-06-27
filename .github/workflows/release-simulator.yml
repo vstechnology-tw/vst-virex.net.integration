@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Simulator version to build, for example 2.0.1"
+        description: "Simulator version to build, for example 2.0.2"
         required: true
         type: string
       upload_to_release:

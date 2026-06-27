@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
         const char* port = argc > 2 ? argv[2] : "5089";
 
         PrintStep("Virex.NET C++ Raw TCP Guided Demo");
-        std::cout << "This sample connects to the simulator TCP socket, reads initial frames, sends WaferInfo, and sends start/stop commands." << std::endl;
+        std::cout << "This sample connects to the simulator TCP socket, reads initial frames, sends ProductInfo, and sends start/stop commands." << std::endl;
         std::cout << "TCP endpoint: " << host << ":" << port << std::endl;
         Prompt("Press Start Servers and Initialize, then press Enter here.");
 
@@ -173,19 +173,19 @@ int main(int argc, char* argv[])
         PrintStep("Step 1 - Read initial TCP frames");
         std::cout << "Initial status frame:" << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
-        std::cout << "Initial WaferInfo frame:" << std::endl;
+        std::cout << "Initial ProductInfo frame:" << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
 
-        PrintStep("Step 2 - Send waferInfo frame");
+        PrintStep("Step 2 - Send productInfo frame");
         const std::string frame =
-            R"({"type":"waferInfo","lotId":"LOT-CPP-TCP-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"})"
+            R"({"type":"productInfo","waferID":"W01","lotID":"LOT-CPP-TCP-001","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"})"
             "\n";
         SendAll(client.value, frame);
 
-        std::cout << "Sent waferInfo frame." << std::endl;
+        std::cout << "Sent productInfo frame." << std::endl;
         std::cout << "Expected Simulator Event Log:" << std::endl;
-        std::cout << "WaferInfo updated from TCP: lotId=LOT-CPP-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1" << std::endl;
-        std::cout << "Waiting for echoed waferInfo update event..." << std::endl;
+        std::cout << "ProductInfo updated from TCP." << std::endl;
+        std::cout << "Waiting for echoed productInfo update event..." << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
 
         PrintStep("Step 3 - Send start command with condition and runMode payload");

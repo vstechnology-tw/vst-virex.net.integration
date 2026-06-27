@@ -8,8 +8,7 @@ var port = args.Length > 1 ? int.Parse(args[1]) : 1883;
 var baseTopic = args.Length > 2 ? args[2] : MqttTopics.DefaultBaseTopic;
 var duration = args.Length > 3 ? TimeSpan.FromSeconds(int.Parse(args[3])) : TimeSpan.FromSeconds(30);
 
-PrintStep("Virex.NET C# Raw MQTT Guided Demo");
-Console.WriteLine("This sample subscribes to simulator MQTT events and lets you trigger each event from the UI.");
+PrintStep("Virex.NET C# Raw MQTT ProductInfo Demo");
 Console.WriteLine($"MQTT endpoint: {host}:{port}");
 Console.WriteLine($"Topic filter: {MqttTopics.Combine(baseTopic, "#")}");
 Prompt("In Simulator, press Start Servers, then press Enter here.");
@@ -48,12 +47,7 @@ await client.SubscribeAsync(subscribeOptions, timeout.Token);
 
 PrintStep("Step 1 - Trigger events from Simulator");
 Console.WriteLine($"Subscribed to {baseTopic}/# for {duration.TotalSeconds:0} seconds.");
-Console.WriteLine("Expected UI actions and topics:");
-Console.WriteLine("- Press Apply WaferInfo: expect virex/wafer-info.");
-Console.WriteLine("- Press Initialize: expect virex/status with initialized=true.");
-Console.WriteLine("- Press Start Cycle: expect virex/status transitions.");
-Console.WriteLine("- Press Emit Fake Result: expect virex/result.");
-Console.WriteLine("- Press Emit Error: expect virex/error.");
+Console.WriteLine($"Expect topics such as {baseTopic}/{MqttTopics.StatusChanged}, {baseTopic}/{MqttTopics.ProductInfoChanged}, and {baseTopic}/{MqttTopics.ResultCreated}.");
 
 try
 {

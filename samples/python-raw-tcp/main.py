@@ -26,7 +26,7 @@ def main():
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 5089
 
     print_step("Virex.NET Python Raw TCP Guided Demo")
-    print("This sample connects to the simulator TCP socket, reads initial frames, sends WaferInfo, and sends start/stop commands.")
+    print("This sample connects to the simulator TCP socket, reads initial frames, sends ProductInfo, and sends start/stop commands.")
     print(f"TCP endpoint: {host}:{port}")
     prompt("Press Start Servers and Initialize, then press Enter here.")
 
@@ -43,25 +43,25 @@ def main():
         print_step("Step 1 - Read initial TCP frames")
         print("Initial status frame:")
         print(read_line(file))
-        print("Initial WaferInfo frame:")
+        print("Initial ProductInfo frame:")
         print(read_line(file))
 
-        print_step("Step 2 - Send waferInfo frame")
+        print_step("Step 2 - Send productInfo frame")
         frame = {
-            "type": "waferInfo",
-            "lotId": "LOT-PY-TCP-001",
-            "waferId": "W01",
-            "recipeId": "RCP-A",
+            "type": "productInfo",
+            "waferID": "W01",
+            "lotID": "LOT-PY-TCP-001",
+            "recipe": "RCP-A",
             "slot": "1",
-            "foupId": "FOUP-A",
-            "chamberId": "CH-1",
+            "foupID": "FOUP-A",
+            "chamberID": "CH-1",
         }
 
         client.sendall((json.dumps(frame, separators=(",", ":")) + "\n").encode("utf-8"))
-        print("Sent waferInfo frame.")
+        print("Sent productInfo frame.")
         print("Expected Simulator Event Log:")
-        print("WaferInfo updated from TCP: lotId=LOT-PY-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1")
-        print("Waiting for echoed waferInfo update event...")
+        print("ProductInfo updated from TCP.")
+        print("Waiting for echoed productInfo update event...")
         print(read_line(file))
 
         print_step("Step 3 - Send start command with condition and runMode payload")

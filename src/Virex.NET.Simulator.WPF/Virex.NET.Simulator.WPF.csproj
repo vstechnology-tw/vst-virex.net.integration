@@ -8,8 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mediator.SourceGenerator" PrivateAssets="all" />
     <PackageReference Include="MQTTnet" />
     <PackageReference Include="System.Text.Json" />
     <ProjectReference Include="..\Virex.NET.Contracts\Virex.NET.Contracts.csproj" />
+    <ProjectReference Include="..\Virex.NET.Simulator.Core\Virex.NET.Simulator.Core.csproj" />
   </ItemGroup>
 </Project>

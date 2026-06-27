@@ -6,7 +6,7 @@ This repository is intended to be public. Do not add private Virex.NET implement
 
 Allowed:
 
-- Communication DTOs and protocol constants.
+- Communication payload schemas and protocol constants.
 - REST, MQTT, and TCP/NDJSON payload formatters/parsers.
 - C# SDK wrappers for public communication APIs.
 - Simulator behavior that mimics externally visible Virex.NET state transitions.

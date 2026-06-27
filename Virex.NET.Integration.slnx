@@ -15,6 +15,7 @@
   <Folder Name="/src/">
     <Project Path="src/Virex.NET.Client/Virex.NET.Client.csproj" />
     <Project Path="src/Virex.NET.Contracts/Virex.NET.Contracts.csproj" />
+    <Project Path="src/Virex.NET.Simulator.Core/Virex.NET.Simulator.Core.csproj" />
     <Project Path="src/Virex.NET.Simulator.WPF/Virex.NET.Simulator.WPF.csproj" />
   </Folder>
   <Folder Name="/tests/">

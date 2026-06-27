@@ -1,61 +1,48 @@
-# 啟動順序與狀態轉移
+# 系統狀態機
 
-本頁用簡化狀態圖說明 client 與 simulator 整合時的啟動順序，以及外部 command 會造成的公開狀態變化。圖中只保留客戶整合時需要判斷的狀態，不列出所有內部可能狀態。
+狀態機定義系統生命週期中，哪些命令在目前狀態下是合法的。Client 送出命令前，應該以目前狀態作為判斷依據。
 
-Simulator 使用兩個公開值回報狀態；client 不需要知道內部實作細節，只要依照這兩個欄位判斷下一步是否可執行。
+## 狀態
 
-| Field | 意義 |
+| 狀態 | 意義 |
 | --- | --- |
-| `initialized` | 模擬服務是否已 initialize。 |
-| `processState` | 目前 process 狀態。`ready` 代表可接受下一個 cycle；`capturing`、`inspecting`、`saving` 是 cycle 進度回報。 |
+| `Uninitialized` | 尚未初始化，只能送出初始化命令。 |
+| `Initializing` | 初始化命令已接受，等待完成事件。 |
+| `Ready` | 閒置中，可接受 ProductInfo、啟動、反初始化命令。 |
+| `UpdatingProductInfo` | ProductInfo 更新已接受，等待完成事件。 |
+| `Running` | 執行中。內部執行階段不對外公開。 |
+| `Deinitializing` | 反初始化命令已接受，等待完成事件。 |
 
-`Start Servers` 只控制 REST、TCP、MQTT endpoints 是否開始 listening，不會改變 `initialized` 或 `processState`。
+## 命令與事件
 
-## 狀態示意圖
+命令是 Client 或操作人員提出的要求。只有命令符合目前狀態規則時，系統才會接受。
 
-![Virex.NET simulator 狀態轉移示意圖](assets/state-machine-flow.zh.svg)
+事件是系統產生的結果，用來完成中間狀態，或表示長時間動作已結束。
 
-圖中的 **external command** 是 client、SDK、REST 或 TCP 送出的控制指令。`capturing`、`inspecting`、`saving` 是 simulator 在 cycle 內部自行推進後對外回報的進度狀態；client 通常只需要等待 status/result events，或在需要中止時送出 **Stop**。
+## 狀態轉移
 
-## Client 應記住的規則
+![系統狀態機](assets/system-state-machine.svg)
 
-| 規則 | Client 端判斷方式 |
-| --- | --- |
-| **Start Servers** 是通訊前置條件 | REST/TCP/MQTT endpoints listening 後，client 才能連線。 |
-| **Initialize** 是 cycle 前置條件 | `initialized=false` 時，start 會回 `409 not_initialized`。 |
-| **Start Cycle** 只應在 ready 且 initialized 後送出 | `initialized=true` 且 `processState=ready` 時，start 才會進入 cycle。 |
-| Cycle 中的狀態是進度回報 | `capturing`、`inspecting`、`saving` 表示目前 cycle 正在進行，client 應等待 status/result event 或送 stop。 |
-| Result event 後回到 ready | 收到 result summary 後，狀態會回到 `processState=ready`，可開始下一個 cycle。 |
+實線轉移代表命令。虛線轉移代表事件。
 
-## Commands 與 transitions
+## 命令合法性
 
-| Command 或 UI action | Required state | Result |
+| 命令 | 合法狀態 | 接受後結果 |
 | --- | --- | --- |
-| **Initialize** / `POST /api/control/initialize` | `initialized=false`、`processState=ready` | 設為 `initialized=true`，`processState` 維持 `ready`。 |
-| **Terminate** / `POST /api/control/terminate` | `processState=ready` | 設為 `initialized=false`，`processState` 維持 `ready`。 |
-| **Start Cycle** / `POST /api/control/start` / TCP `{"type":"start","condition":"golden-sample","runMode":"continue"}` | `initialized=true`、`processState=ready` | 依序進入 `capturing`、`inspecting`、`saving`，產生 result 後回到 `ready`。`condition` optional。`runMode` 預設 `continue`，也支援 `single`。 |
-| **Stop** / `POST /api/control/stop` / TCP `{"type":"stop","reason":"operator-request"}` | Active process state：`capturing`、`inspecting` 或 `saving` | 取消目前 cycle 並回到 `ready`。`reason` optional。 |
-| **Apply WaferInfo** / WaferInfo REST 或 TCP update | 任一 process state | 更新 wafer context 並送出 wafer-info events。不改變 `processState`。 |
-| **Emit Fake Result** | 任一 process state | 送出單筆 result summary event。不改變 `processState`。 |
-| **Emit Error** | 任一 process state | 送出 error event。不改變 `processState`。 |
+| `Initialize` | `Uninitialized` | 進入 `Initializing`；`InitializationCompleted` 讓狀態變成 `Ready`。 |
+| `SetProductInfo` | `Ready` | 進入 `UpdatingProductInfo`；`ProductInfoUpdateCompleted` 讓狀態回到 `Ready`。 |
+| `Start` | `Ready` | 保存目前 ProductInfo 快照，並進入 `Running`。 |
+| `Stop` | `Running` | 停止目前執行，並讓狀態回到 `Ready`。 |
+| `Deinitialize` | `Ready` | 進入 `Deinitializing`；`DeinitializationCompleted` 讓狀態變成 `Uninitialized`。 |
 
-## 常見 rejected commands
+## 拒絕的命令
 
-| Condition | Command | Response |
-| --- | --- | --- |
-| `initialized=false` | Start cycle | HTTP `409` / `not_initialized`；state 維持 `initialized=false`、`processState=ready`。 |
-| `processState` 是 `capturing`、`inspecting` 或 `saving` | Start cycle | HTTP `409` / `process_active`；目前 cycle 繼續。 |
-| `initialized=false` | Stop | HTTP `409` / `not_initialized`；state 不變。 |
-| `initialized=true`、`processState=ready` | Stop | HTTP `409` / `not_running`；state 不變。 |
-| `processState` 不是 `ready` | Terminate | HTTP `409`；state 不變。 |
+任何不在上表合法狀態內送出的命令都屬於非法命令。非法命令必須被一致地拒絕，而且不能改變目前狀態。
 
-## Event visibility
+例如，`Running` 狀態下送出 `SetProductInfo` 是非法的，因為 ProductInfo 只能在 `Ready` 狀態改變。
 
-State changes 可透過以下方式觀察：
+## 結果快照
 
-- REST `GET /api/status`
-- TCP `status` events
-- MQTT `virex/status` events
-- SDK `GetStatusAsync`
+`Start` 會立即保存目前的 `ProductInfo`。後續產生的結果會使用這份快照，即使未來實作允許執行中改變產品資料，也不應影響已啟動執行的結果。
 
-Result、wafer-info 與 error events 是獨立 event types。它們可能在 simulator 為 `ready` 時發生，但不是額外的 `processState` 值。
+在目前狀態機中，`SetProductInfo` 只在 `Ready` 合法，因此 `Running` 期間不能改變 ProductInfo。

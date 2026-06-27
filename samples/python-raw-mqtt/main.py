@@ -115,11 +115,9 @@ def main():
         print_step("Step 1 - Trigger events from Simulator")
         print(f"Subscribed to {topic_filter} for {duration_seconds} seconds.")
         print("Expected UI actions and topics:")
-        print("- Press Apply WaferInfo: expect virex/wafer-info.")
-        print("- Press Initialize: expect virex/status with initialized=true.")
-        print("- Press Start Cycle: expect virex/status transitions.")
-        print("- Press Emit Fake Result: expect virex/result.")
-        print("- Press Emit Error: expect virex/error.")
+        print("- Press Apply ProductInfo: expect virex/productInfoChanged.")
+        print("- Press Initialize: expect virex/statusChanged with state=Ready.")
+        print("- Press Start Cycle: expect virex/statusChanged and virex/resultCreated.")
 
         deadline = time.monotonic() + duration_seconds
         while time.monotonic() < deadline:

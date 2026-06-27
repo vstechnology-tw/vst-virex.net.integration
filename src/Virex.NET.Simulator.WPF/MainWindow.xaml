@@ -58,7 +58,7 @@
         </Grid>
       </GroupBox>
 
-      <GroupBox Grid.Column="1" Header="WaferInfo" Padding="12" Margin="0,0,12,0">
+      <GroupBox Grid.Column="1" Header="ProductInfo" Padding="12" Margin="0,0,12,0">
         <Grid>
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="95" />
@@ -74,32 +74,30 @@
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <TextBlock Text="Lot ID" VerticalAlignment="Center" />
-          <TextBox x:Name="LotIdBox" Grid.Column="1" Text="LOT-001" Margin="0,2" />
+          <TextBox x:Name="LotIDBox" Grid.Column="1" Text="LOT-001" Margin="0,2" />
           <TextBlock Grid.Row="1" Text="Wafer ID" VerticalAlignment="Center" />
-          <TextBox x:Name="WaferIdBox" Grid.Row="1" Grid.Column="1" Text="W01" Margin="0,2" />
-          <TextBlock Grid.Row="2" Text="Recipe ID" VerticalAlignment="Center" />
-          <TextBox x:Name="RecipeIdBox" Grid.Row="2" Grid.Column="1" Text="RCP-A" Margin="0,2" />
+          <TextBox x:Name="WaferIDBox" Grid.Row="1" Grid.Column="1" Text="W01" Margin="0,2" />
+          <TextBlock Grid.Row="2" Text="Recipe" VerticalAlignment="Center" />
+          <TextBox x:Name="RecipeBox" Grid.Row="2" Grid.Column="1" Text="RCP-A" Margin="0,2" />
           <TextBlock Grid.Row="3" Text="Slot" VerticalAlignment="Center" />
           <TextBox x:Name="SlotBox" Grid.Row="3" Grid.Column="1" Text="1" Margin="0,2" />
-          <TextBlock Grid.Row="4" Text="FOUP ID" VerticalAlignment="Center" />
-          <TextBox x:Name="FoupIdBox" Grid.Row="4" Grid.Column="1" Text="FOUP-A" Margin="0,2" />
+          <TextBlock Grid.Row="4" Text="Foup ID" VerticalAlignment="Center" />
+          <TextBox x:Name="FoupIDBox" Grid.Row="4" Grid.Column="1" Text="FOUP-A" Margin="0,2" />
           <TextBlock Grid.Row="5" Text="Chamber ID" VerticalAlignment="Center" />
-          <TextBox x:Name="ChamberIdBox" Grid.Row="5" Grid.Column="1" Text="CH-1" Margin="0,2" />
-          <Button Grid.Row="6" Grid.Column="1" Content="Apply WaferInfo" Click="ApplyWaferInfo_Click" Margin="0,8,0,0" />
+          <TextBox x:Name="ChamberIDBox" Grid.Row="5" Grid.Column="1" Text="CH-1" Margin="0,2" />
+          <Button Grid.Row="6" Grid.Column="1" Content="Apply ProductInfo" Click="ApplyProductInfo_Click" Margin="0,8,0,0" />
         </Grid>
       </GroupBox>
 
       <GroupBox Grid.Column="2" Header="State" Padding="12">
         <StackPanel>
-          <TextBlock x:Name="StatusText" Text="initialized=false, processState=ready" Margin="0,0,0,10" TextWrapping="Wrap" />
+          <TextBlock x:Name="StatusText" Text="state=Uninitialized" Margin="0,0,0,10" TextWrapping="Wrap" />
           <Button Content="Start Servers" Click="StartServers_Click" Margin="0,0,0,6" />
           <Button Content="Stop Servers" Click="StopServers_Click" Margin="0,0,0,12" />
           <Button Content="Initialize" Click="Initialize_Click" Margin="0,0,0,6" />
-          <Button Content="Terminate" Click="Terminate_Click" Margin="0,0,0,6" />
+          <Button Content="Deinitialize" Click="Deinitialize_Click" Margin="0,0,0,6" />
           <Button Content="Start Cycle" Click="StartCycle_Click" Margin="0,0,0,6" />
           <Button Content="Stop" Click="Stop_Click" Margin="0,0,0,6" />
-          <Button Content="Emit Fake Result" Click="EmitResult_Click" Margin="0,0,0,6" />
-          <Button Content="Emit Error" Click="EmitError_Click" />
         </StackPanel>
       </GroupBox>
     </Grid>

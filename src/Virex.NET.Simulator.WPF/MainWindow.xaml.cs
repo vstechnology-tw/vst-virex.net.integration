@@ -1,7 +1,6 @@
-using System;
-using System.Threading.Tasks;
 using System.Windows;
 using Virex.NET.Contracts;
+using Virex.NET.Simulator.Core;
 using Virex.NET.Simulator.WPF.Services;
 
 namespace Virex.NET.Simulator.WPF;
@@ -58,39 +57,44 @@ public partial class MainWindow : Window
         AppendLog("Servers stopped.");
     }
 
-    private void ApplyWaferInfo_Click(object sender, RoutedEventArgs e)
+    private async void ApplyProductInfo_Click(object sender, RoutedEventArgs e)
     {
-        _session.UpdateWaferInfo(ReadWaferInfo(), "UI");
+        var response = await _session.SetProductInfoAsync(ReadProductInfo());
+        AppendCommandResponse(response);
     }
 
-    private void Initialize_Click(object sender, RoutedEventArgs e) => _session.Initialize("Default");
+    private async void Initialize_Click(object sender, RoutedEventArgs e) =>
+        AppendCommandResponse(await _session.InitializeAsync());
 
-    private void Terminate_Click(object sender, RoutedEventArgs e) => _session.Terminate();
+    private async void Deinitialize_Click(object sender, RoutedEventArgs e) =>
+        AppendCommandResponse(await _session.DeinitializeAsync());
 
     private async void StartCycle_Click(object sender, RoutedEventArgs e) =>
-        await _session.StartCycleAsync(ResultPrefixBox.Text);
+        AppendCommandResponse(await _session.StartAsync(new SystemStartRequest()));
 
-    private void Stop_Click(object sender, RoutedEventArgs e) => _session.Stop();
+    private async void Stop_Click(object sender, RoutedEventArgs e) =>
+        AppendCommandResponse(await _session.StopAsync());
 
-    private void EmitResult_Click(object sender, RoutedEventArgs e) => _session.EmitResult(ResultPrefixBox.Text);
-
-    private void EmitError_Click(object sender, RoutedEventArgs e) => _session.EmitError("Simulator injected error.");
-
-    private WaferInfo ReadWaferInfo() =>
-        new WaferInfo
+    private ProductInfo ReadProductInfo() =>
+        new ProductInfo
         {
-            LotId = LotIdBox.Text,
-            WaferId = WaferIdBox.Text,
-            RecipeId = RecipeIdBox.Text,
+            WaferID = WaferIDBox.Text,
+            LotID = LotIDBox.Text,
+            Recipe = RecipeBox.Text,
             Slot = SlotBox.Text,
-            FoupId = FoupIdBox.Text,
-            ChamberId = ChamberIdBox.Text,
+            FoupID = FoupIDBox.Text,
+            ChamberID = ChamberIDBox.Text,
         };
 
     private void RefreshStatus()
     {
-        var status = _session.Status;
-        StatusText.Text = $"initialized={status.Initialized}, processState={status.ProcessState}, recipe={status.Recipe}";
+        StatusText.Text = $"state={_session.Status.State}";
+    }
+
+    private void AppendCommandResponse(CommandResponse response)
+    {
+        if (!response.Accepted)
+            AppendLog($"{response.Command} rejected: {response.ErrorCode}, state={response.State}");
     }
 
     private void AppendLog(string message)

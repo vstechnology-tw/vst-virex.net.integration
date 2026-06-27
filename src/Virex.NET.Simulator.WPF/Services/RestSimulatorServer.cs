@@ -1,17 +1,14 @@
-using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Virex.NET.Contracts;
+using Virex.NET.Simulator.Core;
 
 namespace Virex.NET.Simulator.WPF.Services;
 
 public sealed class RestSimulatorServer
 {
-    private static readonly string[] AllowedResultQueryKeys = ["lotId", "waferId", "recipeId"];
+    private static readonly string[] AllowedResultQueryKeys = ["waferID", "lotID", "recipe"];
 
     private readonly SimulatorSession _session;
     private readonly string _prefix;
@@ -84,34 +81,33 @@ public sealed class RestSimulatorServer
             {
                 await JsonAsync(context, _session.Error).ConfigureAwait(false);
             }
-            else if (path == RestRoutes.ApiWaferInfo && context.Request.HttpMethod == "GET")
+            else if (path == RestRoutes.ApiProductInfo && context.Request.HttpMethod == "GET")
             {
-                await JsonAsync(context, _session.WaferInfo).ConfigureAwait(false);
+                await JsonAsync(context, _session.ProductInfo).ConfigureAwait(false);
             }
-            else if (path == RestRoutes.ApiWaferInfo && context.Request.HttpMethod == "POST")
+            else if (path == RestRoutes.ApiProductInfo && context.Request.HttpMethod == "POST")
             {
                 var body = await ReadBodyAsync(context).ConfigureAwait(false);
-                var info = ProtocolJson.Deserialize<WaferInfo>(body) ?? new WaferInfo();
-                _session.UpdateWaferInfo(info, "REST");
-                await JsonAsync(context, info).ConfigureAwait(false);
+                var info = ProtocolJson.Deserialize<ProductInfo>(body) ?? new ProductInfo();
+                await CommandAsync(context, await _session.SetProductInfoAsync(info).ConfigureAwait(false)).ConfigureAwait(false);
             }
-            else if (path == RestRoutes.ApiControlInitialize && context.Request.HttpMethod == "POST")
+            else if (path == RestRoutes.ApiSystemInitialize && context.Request.HttpMethod == "POST")
             {
-                await ControlAsync(context, _session.Initialize("Default")).ConfigureAwait(false);
+                await CommandAsync(context, await _session.InitializeAsync().ConfigureAwait(false)).ConfigureAwait(false);
             }
-            else if (path == RestRoutes.ApiControlTerminate && context.Request.HttpMethod == "POST")
+            else if (path == RestRoutes.ApiSystemDeinitialize && context.Request.HttpMethod == "POST")
             {
-                await ControlAsync(context, _session.Terminate()).ConfigureAwait(false);
+                await CommandAsync(context, await _session.DeinitializeAsync().ConfigureAwait(false)).ConfigureAwait(false);
             }
-            else if (path == RestRoutes.ApiControlStart && context.Request.HttpMethod == "POST")
+            else if (path == RestRoutes.ApiSystemStart && context.Request.HttpMethod == "POST")
             {
-                var request = await ReadOptionalJsonAsync<ControlStartRequest>(context).ConfigureAwait(false);
-                await ControlAsync(context, await _session.StartCycleAsync(string.Empty, request?.Condition, request?.RunMode).ConfigureAwait(false)).ConfigureAwait(false);
+                var request = await ReadOptionalJsonAsync<SystemStartRequest>(context).ConfigureAwait(false) ?? new SystemStartRequest();
+                await CommandAsync(context, await _session.StartAsync(request).ConfigureAwait(false)).ConfigureAwait(false);
             }
-            else if (path == RestRoutes.ApiControlStop && context.Request.HttpMethod == "POST")
+            else if (path == RestRoutes.ApiSystemStop && context.Request.HttpMethod == "POST")
             {
-                var request = await ReadOptionalJsonAsync<ControlStopRequest>(context).ConfigureAwait(false);
-                await ControlAsync(context, _session.Stop(request?.Reason)).ConfigureAwait(false);
+                var request = await ReadOptionalJsonAsync<SystemStopRequest>(context).ConfigureAwait(false) ?? new SystemStopRequest();
+                await CommandAsync(context, await _session.StopAsync(request).ConfigureAwait(false)).ConfigureAwait(false);
             }
             else if (path == RestRoutes.ApiResults && context.Request.HttpMethod == "GET")
             {
@@ -124,14 +120,17 @@ public sealed class RestSimulatorServer
                     context.Response.StatusCode = 400;
                     await JsonAsync(context, new
                     {
-                        error = "Only lotId, waferId, and recipeId are supported query parameters.",
+                        error = "Only waferID, lotID, and recipe are supported query parameters.",
                         invalid,
                     }).ConfigureAwait(false);
                     return;
                 }
 
-                var items = FilterResults(context.Request.QueryString["lotId"], context.Request.QueryString["waferId"], context.Request.QueryString["recipeId"]);
-                await JsonAsync(context, new ResultListDto { Items = items, Count = items.Length }).ConfigureAwait(false);
+                var items = _session.QueryResults(
+                    context.Request.QueryString["waferID"],
+                    context.Request.QueryString["lotID"],
+                    context.Request.QueryString["recipe"]);
+                await JsonAsync(context, new ResultList { Items = items, Count = items.Length }).ConfigureAwait(false);
             }
             else if (path == RestRoutes.OpenApiJson)
             {
@@ -154,15 +153,6 @@ public sealed class RestSimulatorServer
         }
     }
 
-    private ResultSummaryDto[] FilterResults(string? lotId, string? waferId, string? recipeId) =>
-        _session.Results
-            .Where(x => Match(x.LotId, lotId) && Match(x.WaferId, waferId) && Match(x.RecipeId, recipeId))
-            .Take(100)
-            .ToArray();
-
-    private static bool Match(string value, string? filter) =>
-        string.IsNullOrWhiteSpace(filter) || string.Equals(value, filter, StringComparison.OrdinalIgnoreCase);
-
     private static async Task<string> ReadBodyAsync(HttpListenerContext context)
     {
         using var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
@@ -178,10 +168,11 @@ public sealed class RestSimulatorServer
         return string.IsNullOrWhiteSpace(body) ? default : ProtocolJson.Deserialize<T>(body);
     }
 
-    private static Task ControlAsync(HttpListenerContext context, ControlResponse response)
+    private static Task CommandAsync(HttpListenerContext context, CommandResponse response)
     {
-        context.Response.StatusCode = response.StatusCode;
-        return JsonAsync(context, response.Body);
+        if (!response.Accepted)
+            context.Response.StatusCode = response.ErrorCode == CommandErrorCodes.InvalidRunMode ? 400 : 409;
+        return JsonAsync(context, response);
     }
 
     private static Task JsonAsync<T>(HttpListenerContext context, T value) =>
