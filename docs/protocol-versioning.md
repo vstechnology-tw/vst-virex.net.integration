@@ -1,19 +1,17 @@
-# Protocol Versioning
+# Version
 
-Use semantic versioning for public packages and protocol changes.
+Use semantic versioning for public package and protocol changes.
 
-Examples:
+| Version | Meaning |
+| --- | --- |
+| `1.0.0` | Initial public integration contract. |
+| `1.1.0` | Additive fields, endpoints, topics, or events. |
+| `2.0.0` | Breaking data content, route, topic, or behavior changes. |
 
-```text
-1.0.0 Initial REST/MQTT/TCP integration contract.
-1.1.0 Backward-compatible field or endpoint added.
-2.0.0 Breaking payload, route, topic, or behavior change.
-```
+## Version rules
 
-Rules:
-
-- Do not remove or rename public JSON fields in a minor version.
-- Additive fields are allowed in a minor version.
+- Minor versions do not remove or rename public JSON fields.
+- Minor versions may add additive fields.
 - Breaking changes require a major version.
-- Keep simulator, SDK, docs, and contract tests on the same version.
-- Keep [Transmitted Content / Payloads](payloads.md) aligned with any public DTO, route, topic, or event-shape change.
+- The simulator, SDK, documentation, and contract tests must be synchronized.
+- [Payload Reference](payloads.md) must be aligned with the public payload models, routes, topics, and event structures.

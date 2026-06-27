@@ -1,12 +1,11 @@
-﻿using System.Net.Sockets;
+using System.Net.Sockets;
 using System.Text;
 using Virex.NET.Contracts;
 
 var host = args.Length > 0 ? args[0] : "127.0.0.1";
 var port = args.Length > 1 ? int.Parse(args[1]) : 5089;
 
-PrintStep("Virex.NET C# Raw TCP Guided Demo");
-Console.WriteLine("This sample connects to the simulator TCP socket, reads the initial frames, sends WaferInfo, and sends start/stop commands.");
+PrintStep("Virex.NET C# Raw TCP ProductInfo Demo");
 Console.WriteLine($"TCP endpoint: {host}:{port}");
 Prompt("In Simulator, press Start Servers and Initialize, then press Enter here.");
 
@@ -25,62 +24,37 @@ catch (SocketException ex)
 using var stream = client.GetStream();
 using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
 
-PrintStep("Step 1 - Read initial TCP frames");
-var initialStatus = await reader.ReadLineAsync();
-var initialWaferInfo = await reader.ReadLineAsync();
-Console.WriteLine("Initial status frame:");
-Console.WriteLine(initialStatus);
-Console.WriteLine("Initial WaferInfo frame:");
-Console.WriteLine(initialWaferInfo);
+Console.WriteLine(await reader.ReadLineAsync());
+Console.WriteLine(await reader.ReadLineAsync());
 
-PrintStep("Step 2 - Send waferInfo frame");
-var frame = TcpSocketEventFormatter.FormatWaferInfo(new WaferInfo
+var frame = TcpSocketEventFormatter.FormatProductInfo(new ProductInfo
 {
-    LotId = "LOT-RAW-TCP-001",
-    WaferId = "W01",
-    RecipeId = "RCP-A",
+    WaferID = "W01",
+    LotID = "LOT-RAW-TCP-001",
+    Recipe = "RCP-A",
     Slot = "1",
-    FoupId = "FOUP-A",
-    ChamberId = "CH-1",
+    FoupID = "FOUP-A",
+    ChamberID = "CH-1",
 });
 
-var bytes = Encoding.UTF8.GetBytes(frame);
-await stream.WriteAsync(bytes);
-await stream.FlushAsync();
-
-Console.WriteLine("Sent waferInfo frame.");
-Console.WriteLine("Expected Simulator Event Log:");
-Console.WriteLine("WaferInfo updated from TCP: lotId=LOT-RAW-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1");
-Console.WriteLine("Waiting for echoed waferInfo update event...");
+await WriteFrameAsync(stream, frame);
 Console.WriteLine(await reader.ReadLineAsync());
 
-PrintStep("Step 3 - Send start command with condition and runMode payload");
-var startFrame = TcpSocketEventFormatter.FormatStartCommand("golden-sample", ControlRunModes.Continue);
-bytes = Encoding.UTF8.GetBytes(startFrame);
-await stream.WriteAsync(bytes);
-await stream.FlushAsync();
-Console.WriteLine("Sent start frame:");
-Console.WriteLine(startFrame.TrimEnd());
-Console.WriteLine("Expected Simulator Event Log:");
-Console.WriteLine("Start condition: golden-sample");
-Console.WriteLine("Start run mode: continue");
-Console.WriteLine("Waiting for status transition...");
+await WriteFrameAsync(stream, TcpSocketEventFormatter.FormatStartCommand("golden-sample", ControlRunModes.Continue));
 Console.WriteLine(await reader.ReadLineAsync());
 
-PrintStep("Step 4 - Send stop command with reason payload");
 await Task.Delay(300);
-var stopFrame = TcpSocketEventFormatter.FormatStopCommand("operator-request");
-bytes = Encoding.UTF8.GetBytes(stopFrame);
-await stream.WriteAsync(bytes);
-await stream.FlushAsync();
-Console.WriteLine("Sent stop frame:");
-Console.WriteLine(stopFrame.TrimEnd());
-Console.WriteLine("Expected Simulator Event Log:");
-Console.WriteLine("Stopped. reason=operator-request");
-Console.WriteLine("Waiting for ready status...");
+await WriteFrameAsync(stream, TcpSocketEventFormatter.FormatStopCommand("operator-request"));
 Console.WriteLine(await reader.ReadLineAsync());
 
 return 0;
+
+static async Task WriteFrameAsync(NetworkStream stream, string frame)
+{
+    var bytes = Encoding.UTF8.GetBytes(frame);
+    await stream.WriteAsync(bytes);
+    await stream.FlushAsync();
+}
 
 static void PrintStep(string title)
 {

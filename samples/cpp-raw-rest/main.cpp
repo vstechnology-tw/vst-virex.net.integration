@@ -187,51 +187,51 @@ int main(int argc, char* argv[])
         const HttpResponse status = SendRequest(url, L"GET", L"/api/status");
         std::cout << "Status returned HTTP " << status.statusCode << ": " << status.body << std::endl;
 
-        if (status.body.find("\"initialized\":false") != std::string::npos)
+        if (status.body.find("\"state\":\"Uninitialized\"") != std::string::npos)
         {
             PrintStep("Step 2 - Expected negative check");
-            std::cout << "Calling POST /api/control/start before Initialize should return HTTP 409 not_initialized." << std::endl;
-            const HttpResponse negative = SendRequest(url, L"POST", L"/api/control/start");
+            std::cout << "Calling POST /api/system/start before Initialize should return HTTP 409 invalid_state." << std::endl;
+            const HttpResponse negative = SendRequest(url, L"POST", L"/api/system/start");
             std::cout << "Start returned HTTP " << negative.statusCode << ": " << negative.body << std::endl;
-            if (negative.statusCode != 409 || negative.body.find("not_initialized") == std::string::npos)
+            if (negative.statusCode != 409 || negative.body.find("invalid_state") == std::string::npos)
             {
-                throw std::runtime_error("Expected HTTP 409 not_initialized. Confirm the simulator was not initialized.");
+                throw std::runtime_error("Expected HTTP 409 invalid_state. Confirm the simulator was not initialized.");
             }
 
-            Prompt("Press Initialize. Confirm Status shows initialized=True, processState=ready, then press Enter here.");
+            SendRequest(url, L"POST", L"/api/system/initialize");
         }
 
-        PrintStep("Step 3 - POST /api/wafer-info");
-        const std::string waferInfo =
-            R"({"lotId":"LOT-CPP-REST-001","waferId":"W01","recipeId":"RCP-A","slot":"1","foupId":"FOUP-A","chamberId":"CH-1"})";
-        const HttpResponse waferResponse = SendRequest(url, L"POST", L"/api/wafer-info", waferInfo);
+        PrintStep("Step 3 - POST /api/product-info");
+        const std::string productInfo =
+            R"({"waferID":"WCPP-REST-001","lotID":"LOT-CPP-REST-001","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"})";
+        const HttpResponse waferResponse = SendRequest(url, L"POST", L"/api/product-info", productInfo);
         if (waferResponse.statusCode >= 400)
         {
-            throw std::runtime_error("WaferInfo update failed: " + waferResponse.body);
+            throw std::runtime_error("ProductInfo update failed: " + waferResponse.body);
         }
 
         std::cout << "Expected Simulator Event Log:" << std::endl;
-        std::cout << "WaferInfo updated from REST: lotId=LOT-CPP-REST-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1" << std::endl;
+        std::cout << "ProductInfo updated from REST." << std::endl;
 
-        PrintStep("Step 4 - POST /api/control/start with condition and runMode payload");
+        PrintStep("Step 4 - POST /api/system/start with condition and runMode payload");
         std::cout << "Expected Simulator Status: capturing -> inspecting -> saving -> ready." << std::endl;
-        const HttpResponse start = SendRequest(url, L"POST", L"/api/control/start", R"({"condition":"golden-sample","runMode":"continue"})");
+        const HttpResponse start = SendRequest(url, L"POST", L"/api/system/start", R"({"condition":"golden-sample","runMode":"continue"})");
         std::cout << "Start returned HTTP " << start.statusCode << ": " << start.body << std::endl;
         if (start.statusCode >= 400)
         {
-            throw std::runtime_error("Start failed. Confirm Initialize was pressed and processState is ready.");
+            throw std::runtime_error("Start failed. Confirm Initialize was pressed and state is Ready.");
         }
         std::cout << "Expected Simulator Event Log:" << std::endl;
         std::cout << "Start condition: golden-sample" << std::endl;
         std::cout << "Start run mode: continue" << std::endl;
 
-        PrintStep("Step 5 - POST /api/control/stop with reason payload");
+        PrintStep("Step 5 - POST /api/system/stop with reason payload");
         auto stopDemoStart = std::async(std::launch::async, [&url]
         {
-            return SendRequest(url, L"POST", L"/api/control/start", R"({"condition":"stop-demo","runMode":"continue"})");
+            return SendRequest(url, L"POST", L"/api/system/start", R"({"condition":"stop-demo","runMode":"continue"})");
         });
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
-        const HttpResponse stop = SendRequest(url, L"POST", L"/api/control/stop", R"({"reason":"operator-request"})");
+        const HttpResponse stop = SendRequest(url, L"POST", L"/api/system/stop", R"({"reason":"operator-request"})");
         stopDemoStart.get();
         std::cout << "Stop returned HTTP " << stop.statusCode << ": " << stop.body << std::endl;
         if (stop.statusCode >= 400)
@@ -241,8 +241,8 @@ int main(int argc, char* argv[])
         std::cout << "Expected Simulator Event Log:" << std::endl;
         std::cout << "Stopped. reason=operator-request" << std::endl;
 
-        PrintStep("Step 6 - GET /api/results by lotId");
-        const HttpResponse results = SendRequest(url, L"GET", L"/api/results?lotId=LOT-CPP-REST-001");
+        PrintStep("Step 6 - GET /api/results by lotID");
+        const HttpResponse results = SendRequest(url, L"GET", L"/api/results?lotID=LOT-CPP-REST-001");
         std::cout << "Results returned HTTP " << results.statusCode << ": " << results.body << std::endl;
     }
     catch (const std::exception& ex)

@@ -15,6 +15,9 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  NO_MKDOCS_2_WARNING: "true"
+
 jobs:
   build:
     runs-on: ubuntu-latest

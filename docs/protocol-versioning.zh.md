@@ -1,19 +1,17 @@
-# Protocol 版本規則
+# 版本
 
-Public packages 與 protocol changes 使用 semantic versioning。
-
-Examples:
+公開套件與通訊協定變更使用語意化版本。
 
 ```text
-1.0.0 Initial REST/MQTT/TCP integration contract.
-1.1.0 Backward-compatible field or endpoint added.
-2.0.0 Breaking payload, route, topic, or behavior change.
+1.0.0 初始公開整合合約。
+1.1.0 新增累加式欄位、端點、主題或事件。
+2.0.0 破壞性的資料內容、路由、主題或行為變更。
 ```
 
-Rules:
+## 版本規則
 
-- Minor version 不可移除或改名 public JSON fields。
-- Minor version 可以加入 additive fields。
-- Breaking changes 需要 major version。
-- Simulator、SDK、docs、contract tests 必須保持同一個 version。
-- 任何 public DTO、route、topic 或 event-shape change 都要同步更新 [傳送內容 / Payloads](payloads.md)。
+- Minor version 不移除或重新命名公開 JSON 欄位。
+- Minor version 可以新增累加式欄位。
+- 破壞性變更需要 major version。
+- 模擬器、SDK、文件、合約測試必須同步。
+- [資料模型參考](payloads.md) 必須與公開資料模型、路由、主題、事件結構對齊。

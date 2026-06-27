@@ -1,11 +1,9 @@
-using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Virex.NET.Contracts;
+using Virex.NET.Simulator.Core;
 
 namespace Virex.NET.Simulator.WPF.Services;
 
@@ -75,20 +73,22 @@ public sealed class TcpSimulatorServer
         using (var reader = new StreamReader(stream, Encoding.UTF8, false, 4096, true))
         using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 4096, true) { AutoFlush = true, NewLine = "\n" })
         {
-            void OnStatus(object? sender, StatusDto status) => SafeWrite(writer, TcpSocketEventFormatter.FormatStatus(status));
-            void OnWaferInfo(object? sender, WaferInfo info) => SafeWrite(writer, TcpSocketEventFormatter.FormatWaferInfo(info));
-            void OnResult(object? sender, ResultSummaryDto result) => SafeWrite(writer, TcpSocketEventFormatter.FormatResult(result));
-            void OnError(object? sender, ErrorStatusDto error) => SafeWrite(writer, TcpSocketEventFormatter.FormatError(error));
+            void OnStatus(object? sender, SystemStatus status) => SafeWrite(writer, TcpSocketEventFormatter.FormatStatus(status));
+            void OnProductInfo(object? sender, ProductInfo info) => SafeWrite(writer, TcpSocketEventFormatter.FormatProductInfo(info));
+            void OnResult(object? sender, ResultSummary result) => SafeWrite(writer, TcpSocketEventFormatter.FormatResult(result));
+            void OnError(object? sender, ErrorInfo error) => SafeWrite(writer, TcpSocketEventFormatter.FormatError(error));
+            void OnRejected(object? sender, CommandResponse response) => SafeWrite(writer, TcpSocketEventFormatter.FormatCommandRejected(response));
 
             _session.StatusChanged += OnStatus;
-            _session.WaferInfoChanged += OnWaferInfo;
+            _session.ProductInfoChanged += OnProductInfo;
             _session.ResultCreated += OnResult;
             _session.ErrorChanged += OnError;
+            _session.CommandRejected += OnRejected;
 
             try
             {
                 SafeWrite(writer, TcpSocketEventFormatter.FormatStatus(_session.Status));
-                SafeWrite(writer, TcpSocketEventFormatter.FormatWaferInfo(_session.WaferInfo));
+                SafeWrite(writer, TcpSocketEventFormatter.FormatProductInfo(_session.ProductInfo));
                 while (!token.IsCancellationRequested)
                 {
                     var line = await ReadLineAsync(reader, token).ConfigureAwait(false);
@@ -102,14 +102,14 @@ public sealed class TcpSimulatorServer
                     }
 
                     _session.WriteLog("TCP inbound: " + message.Type);
-                    if (message.Type == "waferInfo" && message.WaferInfo is not null)
-                        _session.UpdateWaferInfo(message.WaferInfo, "TCP");
+                    if (message.Type == "productInfo" && message.ProductInfo is not null)
+                        await _session.SetProductInfoAsync(message.ProductInfo, token).ConfigureAwait(false);
                     else if (message.Type == "start")
                         _ = Task.Run(async () =>
                         {
                             try
                             {
-                                await _session.StartCycleAsync(string.Empty, message.Condition, message.RunMode).ConfigureAwait(false);
+                                await _session.StartAsync(new SystemStartRequest { Condition = message.Condition, RunMode = message.RunMode }, token).ConfigureAwait(false);
                             }
                             catch (Exception ex)
                             {
@@ -117,15 +117,16 @@ public sealed class TcpSimulatorServer
                             }
                         }, token);
                     else if (message.Type == "stop")
-                        _session.Stop(message.Reason);
+                        await _session.StopAsync(new SystemStopRequest { Reason = message.Reason }, token).ConfigureAwait(false);
                 }
             }
             finally
             {
                 _session.StatusChanged -= OnStatus;
-                _session.WaferInfoChanged -= OnWaferInfo;
+                _session.ProductInfoChanged -= OnProductInfo;
                 _session.ResultCreated -= OnResult;
                 _session.ErrorChanged -= OnError;
+                _session.CommandRejected -= OnRejected;
             }
         }
     }

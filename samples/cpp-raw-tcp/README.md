@@ -1,23 +1,10 @@
 # C++ Raw TCP Sample
 
-Guided demo for the TCP/NDJSON event socket using Winsock.
+Demonstrates TCP/NDJSON frames for the current public protocol.
 
-## Simulator Prerequisites
+Run the simulator first and press **Start Servers**.
 
-- Start the simulator and keep TCP at `127.0.0.1:5089`.
-- Press **Start Servers**.
-- Press **Initialize** before the command demo so `start` can run.
-
-## UI SOP
-
-1. Press **Start Servers** and **Initialize**.
-2. Run the sample.
-3. Confirm the initial `status` and `waferInfo` frames.
-4. Let the sample send WaferInfo.
-5. Let the sample send `{"type":"start","condition":"golden-sample","runMode":"continue"}` and `{"type":"stop","reason":"operator-request"}`.
-6. Check Event Log for the full TCP WaferInfo update, start condition, and stop reason.
-
-## Build and Run
+Build from Visual Studio Developer PowerShell:
 
 ```powershell
 cmake -S samples\cpp-raw-tcp -B samples\cpp-raw-tcp\build
@@ -25,23 +12,4 @@ cmake --build samples\cpp-raw-tcp\build --config Release
 samples\cpp-raw-tcp\build\Release\cpp-raw-tcp.exe
 ```
 
-Optional host and port:
-
-```powershell
-samples\cpp-raw-tcp\build\Release\cpp-raw-tcp.exe 127.0.0.1 5089
-```
-
-## Expected Output
-
-- Initial status frame.
-- Initial WaferInfo frame.
-- Echoed WaferInfo update event.
-- Event Log shows `WaferInfo updated from TCP: lotId=LOT-CPP-TCP-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1`.
-- Status transitions after start/stop, and Event Log shows `Start condition: golden-sample`, `Start run mode: continue`, and `Stopped. reason=operator-request`.
-
-## Troubleshooting
-
-- Server not started: press **Start Servers**.
-- `not_initialized`: press **Initialize** before the start/stop command step.
-- No result returned: this TCP command demo does not query results.
-- No MQTT events: this sample uses TCP.
+Expected events include `statusChanged`, `productInfoChanged`, `runStarted`, `runCompleted`, and `resultCreated`.

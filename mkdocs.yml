@@ -17,6 +17,24 @@ theme:
     - content.code.copy
     - toc.follow
 
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  alternate:
+    - name: English
+      link: /vst-virex.net.integration/
+      lang: en
+    - name: 繁體中文
+      link: /vst-virex.net.integration/zh/
+      lang: zh
+    - name: 日本語
+      link: /vst-virex.net.integration/ja/
+      lang: ja
+    - name: 한국어
+      link: /vst-virex.net.integration/ko/
+      lang: ko
+
 plugins:
   - search
   - i18n:
@@ -32,49 +50,82 @@ plugins:
           build: true
           site_name: Virex.NET Integration Kit
           nav_translations:
-            Home / Quick Start: 首頁 / 快速開始
+            Home / Overview: 首頁 / 概觀
             Installation / Download: 安裝 / 下載
-            Simulator Manual: Simulator 操作手冊
-            Transmitted Content / Payloads: 傳送內容 / Payloads
-            Samples: 範例程式
+            Integration Model: 整合模型
+            Quick Start: 快速開始
+            Simulator Guide: Simulator 指南
             State Machine: 狀態機
             Protocol Reference: 通訊協定參考
             REST API: REST API
             TCP Socket: TCP Socket
             MQTT Events: MQTT Events
-            Protocol Versioning: Protocol 版本規則
+            Payload Reference: Payload Reference
+            Payload Overview: Payload 總覽
+            System Payloads: System Payloads
+            Product Payloads: Product Payloads
+            Command Payloads: Command Payloads
+            Result Payloads: Result Payloads
+            SDK: SDK
+            C# SDK Guide: C# SDK 指南
+            Samples: 範例程式
+            Validation Checklist: 驗證清單
+            Versioning: 版本
+            Troubleshooting: 疑難排解
         - locale: ja
           name: 日本語
           build: true
           site_name: Virex.NET Integration Kit
           nav_translations:
-            Home / Quick Start: ホーム / クイックスタート
+            Home / Overview: ホーム / 概要
             Installation / Download: インストール / ダウンロード
-            Simulator Manual: Simulator 操作マニュアル
-            Transmitted Content / Payloads: 送受信内容 / Payloads
-            Samples: サンプル
-            State Machine: 状態遷移
-            Protocol Reference: プロトコル参照
+            Integration Model: 統合モデル
+            Quick Start: クイックスタート
+            Simulator Guide: Simulator ガイド
+            State Machine: 状態機械
+            Protocol Reference: プロトコルリファレンス
             REST API: REST API
             TCP Socket: TCP Socket
             MQTT Events: MQTT Events
-            Protocol Versioning: Protocol Versioning
+            Payload Reference: Payload リファレンス
+            Payload Overview: Payload 概要
+            System Payloads: System Payloads
+            Product Payloads: Product Payloads
+            Command Payloads: Command Payloads
+            Result Payloads: Result Payloads
+            SDK: SDK
+            C# SDK Guide: C# SDK ガイド
+            Samples: サンプル
+            Validation Checklist: 検証チェックリスト
+            Versioning: バージョン
+            Troubleshooting: トラブルシューティング
         - locale: ko
           name: 한국어
           build: true
           site_name: Virex.NET Integration Kit
           nav_translations:
-            Home / Quick Start: 홈 / 빠른 시작
+            Home / Overview: 홈 / 개요
             Installation / Download: 설치 / 다운로드
-            Simulator Manual: Simulator 사용 설명서
-            Transmitted Content / Payloads: 전송 내용 / Payloads
-            Samples: 샘플
-            State Machine: 상태 전이
+            Integration Model: 통합 모델
+            Quick Start: 빠른 시작
+            Simulator Guide: Simulator 가이드
+            State Machine: 상태 머신
             Protocol Reference: 프로토콜 참조
             REST API: REST API
             TCP Socket: TCP Socket
             MQTT Events: MQTT Events
-            Protocol Versioning: Protocol Versioning
+            Payload Reference: Payload 참조
+            Payload Overview: Payload 개요
+            System Payloads: System Payloads
+            Product Payloads: Product Payloads
+            Command Payloads: Command Payloads
+            Result Payloads: Result Payloads
+            SDK: SDK
+            C# SDK Guide: C# SDK 가이드
+            Samples: 샘플
+            Validation Checklist: 검증 체크리스트
+            Versioning: 버전
+            Troubleshooting: 문제 해결
 
 markdown_extensions:
   - pymdownx.superfences:
@@ -82,16 +133,38 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
 
 nav:
-  - Home / Quick Start: index.md
+  - Home / Overview: index.md
   - Installation / Download: installation.md
-  - Simulator Manual: simulator.md
-  - Transmitted Content / Payloads: payloads.md
-  - Samples: samples.md
+  - Integration Model: integration-model.md
+  - Quick Start: quick-start.md
+  - Simulator Guide: simulator.md
   - State Machine: state-machine.md
   - Protocol Reference:
       - REST API: rest-api.md
       - TCP Socket: tcp-socket.md
       - MQTT Events: mqtt-events.md
-      - Protocol Versioning: protocol-versioning.md
+      - Payload Reference:
+          - Payload Overview: payloads.md
+          - System Payloads:
+              - SystemStatus: payloads/system/system-status.md
+              - ErrorInfo: payloads/system/error-info.md
+          - Product Payloads:
+              - ProductInfo: payloads/product/product-info.md
+          - Command Payloads:
+              - CommandResponse: payloads/commands/command-response.md
+              - SystemStartRequest: payloads/commands/system-start-request.md
+              - SystemStopRequest: payloads/commands/system-stop-request.md
+              - ControlRunModes: payloads/commands/control-run-modes.md
+          - Result Payloads:
+              - ResultSummary: payloads/results/result-summary.md
+              - ResultList: payloads/results/result-list.md
+  - SDK:
+      - C# SDK Guide: csharp-sdk.md
+  - Samples: samples.md
+  - Validation Checklist: validation-checklist.md
+  - Versioning: protocol-versioning.md
+  - Troubleshooting: troubleshooting.md

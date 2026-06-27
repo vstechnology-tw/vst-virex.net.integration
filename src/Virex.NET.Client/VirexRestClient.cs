@@ -1,8 +1,4 @@
-using System;
-using System.Net.Http;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Client;
@@ -16,75 +12,69 @@ public sealed class VirexRestClient
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-    public Task<StatusDto> GetStatusAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<StatusDto>(RestRoutes.ApiStatus, cancellationToken);
+    public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
 
-    public Task<ErrorStatusDto> GetErrorAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<ErrorStatusDto>(RestRoutes.ApiError, cancellationToken);
+    public Task<ErrorInfo> GetErrorAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<ErrorInfo>(RestRoutes.ApiError, cancellationToken);
 
-    public Task<WaferInfo> GetWaferInfoAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<WaferInfo>(RestRoutes.ApiWaferInfo, cancellationToken);
+    public Task<ProductInfo> GetProductInfoAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<ProductInfo>(RestRoutes.ApiProductInfo, cancellationToken);
 
-    public async Task SetWaferInfoAsync(WaferInfo info, CancellationToken cancellationToken = default)
-    {
-        var response = await _http.PostAsync(
-            RestRoutes.ApiWaferInfo.TrimStart('/'),
-            JsonContent(info),
-            cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(response).ConfigureAwait(false);
-    }
+    public Task<CommandResponse> SetProductInfoAsync(ProductInfo info, CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiProductInfo, info, cancellationToken);
 
-    public Task<ControlStatusDto> InitializeAsync(CancellationToken cancellationToken = default) =>
-        PostControlAsync(RestRoutes.ApiControlInitialize, cancellationToken);
+    public Task<CommandResponse> InitializeAsync(CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiSystemInitialize, cancellationToken);
 
-    public Task<ControlStatusDto> TerminateAsync(CancellationToken cancellationToken = default) =>
-        PostControlAsync(RestRoutes.ApiControlTerminate, cancellationToken);
+    public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiSystemDeinitialize, cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(CancellationToken cancellationToken = default) =>
-        PostControlAsync(RestRoutes.ApiControlStart, cancellationToken);
+    public Task<CommandResponse> StartAsync(CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiSystemStart, cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(string? condition, CancellationToken cancellationToken = default) =>
-        StartAsync(new ControlStartRequest { Condition = condition }, cancellationToken);
+    public Task<CommandResponse> StartAsync(string? condition, CancellationToken cancellationToken = default) =>
+        StartAsync(new SystemStartRequest { Condition = condition }, cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
-        StartAsync(new ControlStartRequest { Condition = condition, RunMode = runMode }, cancellationToken);
+    public Task<CommandResponse> StartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
+        StartAsync(new SystemStartRequest { Condition = condition, RunMode = runMode }, cancellationToken);
 
-    public Task<ControlStatusDto> StartAsync(ControlStartRequest request, CancellationToken cancellationToken = default) =>
-        PostControlAsync(RestRoutes.ApiControlStart, request, cancellationToken);
+    public Task<CommandResponse> StartAsync(SystemStartRequest request, CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiSystemStart, request, cancellationToken);
 
-    public Task<ControlStatusDto> StopAsync(CancellationToken cancellationToken = default) =>
-        PostControlAsync(RestRoutes.ApiControlStop, cancellationToken);
+    public Task<CommandResponse> StopAsync(CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiSystemStop, cancellationToken);
 
-    public Task<ControlStatusDto> StopAsync(string? reason, CancellationToken cancellationToken = default) =>
-        StopAsync(new ControlStopRequest { Reason = reason }, cancellationToken);
+    public Task<CommandResponse> StopAsync(string? reason, CancellationToken cancellationToken = default) =>
+        StopAsync(new SystemStopRequest { Reason = reason }, cancellationToken);
 
-    public Task<ControlStatusDto> StopAsync(ControlStopRequest request, CancellationToken cancellationToken = default) =>
-        PostControlAsync(RestRoutes.ApiControlStop, request, cancellationToken);
+    public Task<CommandResponse> StopAsync(SystemStopRequest request, CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiSystemStop, request, cancellationToken);
 
-    public Task<ResultListDto> QueryResultsAsync(
-        string? lotId = null,
-        string? waferId = null,
-        string? recipeId = null,
+    public Task<ResultList> QueryResultsAsync(
+        string? lotID = null,
+        string? waferID = null,
+        string? recipe = null,
         CancellationToken cancellationToken = default)
     {
-        var query = QueryString(lotId, waferId, recipeId);
-        return GetAsync<ResultListDto>(RestRoutes.ApiResults + query, cancellationToken);
+        var query = QueryString(lotID, waferID, recipe);
+        return GetAsync<ResultList>(RestRoutes.ApiResults + query, cancellationToken);
     }
 
-    private async Task<ControlStatusDto> PostControlAsync(string route, CancellationToken cancellationToken)
+    private async Task<CommandResponse> PostAsync(string route, CancellationToken cancellationToken)
     {
         var response = await _http.PostAsync(route.TrimStart('/'), null, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        return ProtocolJson.Deserialize<ControlStatusDto>(json) ?? new ControlStatusDto();
+        return ProtocolJson.Deserialize<CommandResponse>(json) ?? new CommandResponse();
     }
 
-    private async Task<ControlStatusDto> PostControlAsync<T>(string route, T payload, CancellationToken cancellationToken)
+    private async Task<CommandResponse> PostAsync<T>(string route, T payload, CancellationToken cancellationToken)
     {
         var response = await _http.PostAsync(route.TrimStart('/'), JsonContent(payload), cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-        return ProtocolJson.Deserialize<ControlStatusDto>(json) ?? new ControlStatusDto();
+        return ProtocolJson.Deserialize<CommandResponse>(json) ?? new CommandResponse();
     }
 
     private async Task<T> GetAsync<T>(string route, CancellationToken cancellationToken)
@@ -107,12 +97,12 @@ public sealed class VirexRestClient
         throw new VirexClientException((int)response.StatusCode, body);
     }
 
-    private static string QueryString(string? lotId, string? waferId, string? recipeId)
+    private static string QueryString(string? lotID, string? waferID, string? recipe)
     {
         var parts = new List<string>();
-        Add(parts, "lotId", lotId);
-        Add(parts, "waferId", waferId);
-        Add(parts, "recipeId", recipeId);
+        Add(parts, "waferID", waferID);
+        Add(parts, "lotID", lotID);
+        Add(parts, "recipe", recipe);
         return parts.Count == 0 ? string.Empty : "?" + string.Join("&", parts);
     }
 

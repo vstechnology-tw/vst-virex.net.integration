@@ -1,50 +1,24 @@
 # C# SDK Sample
 
-Guided demo for `Virex.NET.Client`. This is the canonical sample for learning how simulator UI state controls API behavior.
+Demonstrates the current public `Virex.NET.Client` workflow:
 
-## Simulator Prerequisites
+1. Read `GET /api/status`.
+2. Send `POST /api/system/initialize`.
+3. Update `ProductInfo`.
+4. Send `POST /api/system/start`.
+5. Observe run completion.
+6. Query `GET /api/results`.
 
-- Start the simulator:
-
-  ```powershell
-  dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
-  ```
-
-- Keep the default endpoints.
-- Press **Start Servers**.
-- Do not press **Initialize** before the first guided check. The sample intentionally shows `not_initialized`.
-
-## UI SOP
-
-1. Press **Start Servers**.
-2. Run the sample and follow the console prompts.
-3. When prompted, press **Initialize** and confirm `initialized=True, processState=ready`.
-4. Let the sample send WaferInfo through REST.
-5. Watch Event Log for the full WaferInfo line.
-6. Let the sample start the cycle with `condition` and `runMode`, stop a second cycle with a `reason`, and query results.
-
-## Run
+Run the simulator first and press **Start Servers**.
 
 ```powershell
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj
 ```
 
-Optional REST base URL:
+Expected result:
 
-```powershell
-dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj -- http://127.0.0.1:5088
-```
-
-## Expected Output
-
-- Before **Initialize**, the sample reports `HTTP 409 not_initialized`.
-- After **Initialize**, the sample updates WaferInfo, starts a cycle with `condition=golden-sample` and `runMode=continue`, stops a second cycle with `reason=operator-request`, and prints the result count.
-- Event Log shows `WaferInfo updated from REST: lotId=LOT-SDK-001, waferId=W01, recipeId=RCP-A, slot=1, foupId=FOUP-A, chamberId=CH-1`.
-- Event Log shows `Start condition: golden-sample`, `Start run mode: continue`, and `Stopped. reason=operator-request`.
-
-## Troubleshooting
-
-- Server not started: press **Start Servers** and verify `http://127.0.0.1:5088`.
-- `not_initialized`: expected before **Initialize**; press **Initialize** when prompted.
-- No result returned: run the cycle again or press **Emit Fake Result** and verify the lot ID.
-- No MQTT events: this sample does not require MQTT observation; use the raw MQTT samples for event-only validation.
+- Initialize returns `Ready`.
+- ProductInfo update returns `Ready`.
+- Start returns `Running`.
+- Results use the ProductInfo snapshot captured at start.

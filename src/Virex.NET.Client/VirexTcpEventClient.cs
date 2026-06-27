@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Client;
@@ -37,8 +32,8 @@ public sealed class VirexTcpEventClient
         }
     }
 
-    public async Task SendWaferInfoAsync(WaferInfo info, CancellationToken cancellationToken = default) =>
-        await SendFrameAsync(TcpSocketEventFormatter.FormatWaferInfo(info), cancellationToken).ConfigureAwait(false);
+    public async Task SendProductInfoAsync(ProductInfo info, CancellationToken cancellationToken = default) =>
+        await SendFrameAsync(TcpSocketEventFormatter.FormatProductInfo(info), cancellationToken).ConfigureAwait(false);
 
     public async Task SendStartAsync(CancellationToken cancellationToken = default) =>
         await SendFrameAsync(TcpSocketEventFormatter.FormatStartCommand(), cancellationToken).ConfigureAwait(false);
