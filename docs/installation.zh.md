@@ -54,4 +54,4 @@ dotnet add package Virex.NET.Contracts --version 2.0.3
 
 - 第一次驗證整合流程：看 [快速開始](quick-start.zh.md)。
 - 需要完整 C# SDK 呼叫方式：看 [C# SDK 指南](csharp-sdk.zh.md)。
-- 需要不同語言或 raw protocol 範例：看 [範例程式](samples.zh.md)。
+- 需要不同語言或直接使用通訊協定的範例：看 [範例程式](samples.zh.md)。

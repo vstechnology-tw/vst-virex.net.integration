@@ -1,6 +1,6 @@
 # TCP Socket 通訊協定
 
-TCP Socket 是雙向整合通道，適合需要用同一個簡單串流協定送出命令並接收事件的 Client。
+TCP Socket 是雙向整合通道，適合需要用同一個簡單串流協定送出命令並接收事件的用戶端。
 
 ## 基本資訊
 
@@ -10,37 +10,37 @@ TCP Socket 是雙向整合通道，適合需要用同一個簡單串流協定送
 | 預設 port | `5089` |
 | 分幀方式 | NDJSON |
 | 編碼 | UTF-8 |
-| 方向 | Client 傳送命令 frame；服務傳送事件 frame |
+| 方向 | 用戶端傳送命令資料框；服務傳送事件資料框 |
 
-每個 frame 是一個 JSON object，並以 `\n` 結尾。
+每個資料框都是一個 JSON 物件，並以 `\n` 結尾。
 
 ```text
 {"type":"start","condition":"golden-sample","runMode":"continue"}\n
 ```
 
-C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整 frame 之間可以有較長等待；但只要某個 frame 已經收到任何 byte，剩餘內容與結尾 newline 必須在 `VirexClientOptions.TcpFrameTimeoutMs` 內抵達，否則 TCP event reader 會回報逾時。
+C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個完整資料框之間可以有較長等待；但只要某個資料框已經收到任何位元組，剩餘內容與結尾換行必須在 `VirexClientOptions.TcpFrameTimeoutMs` 內抵達，否則 TCP 事件讀取器會回報逾時。
 
-## Frame 總覽
+## 資料框總覽
 
 ### 傳入命令
 
-| Frame Type | Payload | 合法狀態 | 結果 |
+| 資料框類型 | 資料內容 | 合法狀態 | 結果 |
 | --- | --- | --- | --- |
-| `productInfo` | [ProductInfo](payloads/product/product-info.md) 加上 `type` | `Ready` | 更新 ProductInfo 並發出 `productInfoChanged`。 |
-| `start` | [SystemStartRequest](payloads/commands/system-start-request.md) 加上 `type` | `Ready` | 進入 `Running`；完成結果由事件與 results 提供。 |
-| `stop` | [SystemStopRequest](payloads/commands/system-stop-request.md) 加上 `type` | `Running` | 停止執行並回到 `Ready`。 |
+| `productInfo` | [ProductInfo](payloads/product/product-info.zh.md) 加上 `type` | `Ready` | 更新 ProductInfo 並發出 `productInfoChanged`。 |
+| `start` | [SystemStartRequest](payloads/commands/system-start-request.zh.md) 加上 `type` | `Ready` | 進入 `Running`；完成結果由事件與結果查詢提供。 |
+| `stop` | [SystemStopRequest](payloads/commands/system-stop-request.zh.md) 加上 `type` | `Running` | 停止執行並回到 `Ready`。 |
 
 ### 傳出事件
 
-| Frame Type | Payload | 發送時機 |
+| 資料框類型 | 資料內容 | 發送時機 |
 | --- | --- | --- |
-| `statusChanged` | [SystemStatus](payloads/system/system-status.md) 加上 `type` | 公開狀態改變。 |
-| `productInfoChanged` | [ProductInfo](payloads/product/product-info.md) 加上 `type` | ProductInfo 更新完成。 |
-| `runStarted` | [SystemStatus](payloads/system/system-status.md) 加上 `type` | 狀態進入 `Running`。 |
-| `runCompleted` | [SystemStatus](payloads/system/system-status.md) 加上 `type` | 一次執行離開 `Running` 並回到 `Ready`。 |
-| `resultCreated` | [ResultSummary](payloads/results/result-summary.md) 加上 `type` | 建立結果摘要。 |
-| `errorChanged` | [ErrorInfo](payloads/system/error-info.md) 加上 `type` | 公開錯誤狀態改變。 |
-| `commandRejected` | [CommandResponse](payloads/commands/command-response.md) 加上 `type` | 命令被拒絕。 |
+| `statusChanged` | [SystemStatus](payloads/system/system-status.zh.md) 加上 `type` | 公開狀態改變。 |
+| `productInfoChanged` | [ProductInfo](payloads/product/product-info.zh.md) 加上 `type` | ProductInfo 更新完成。 |
+| `runStarted` | [SystemStatus](payloads/system/system-status.zh.md) 加上 `type` | 狀態進入 `Running`。 |
+| `runCompleted` | [SystemStatus](payloads/system/system-status.zh.md) 加上 `type` | 一次執行離開 `Running` 並回到 `Ready`。 |
+| `resultCreated` | [ResultSummary](payloads/results/result-summary.zh.md) 加上 `type` | 建立結果摘要。 |
+| `errorChanged` | [ErrorInfo](payloads/system/error-info.zh.md) 加上 `type` | 公開錯誤狀態改變。 |
+| `commandRejected` | [CommandResponse](payloads/commands/command-response.zh.md) 加上 `type` | 命令被拒絕。 |
 
 ## 連線範例
 
@@ -99,15 +99,15 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 透過 TCP 更新目前 ProductInfo。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"productInfo","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
 ```
 
-### Payload
+### 資料內容
 
-[ProductInfo](payloads/product/product-info.md) 加上 `type: "productInfo"`。
+[ProductInfo](payloads/product/product-info.zh.md) 加上 `type: "productInfo"`。
 
 ### 狀態限制
 
@@ -129,17 +129,17 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 ### 用途
 
-透過 TCP 啟動一次執行。系統進入 `Running` 時命令即視為接受；執行完成會稍後透過事件與結果 frame 傳遞。
+透過 TCP 啟動一次執行。系統進入 `Running` 時命令即視為接受；執行完成會稍後透過事件與結果資料框傳遞。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"start","condition":"golden-sample","runMode":"continue"}
 ```
 
-### Payload
+### 資料內容
 
-[SystemStartRequest](payloads/commands/system-start-request.md) 加上 `type: "start"`。
+[SystemStartRequest](payloads/commands/system-start-request.zh.md) 加上 `type: "start"`。
 
 ### 狀態限制
 
@@ -163,15 +163,15 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 透過 TCP 停止目前執行。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"stop","reason":"operator-request"}
 ```
 
-### Payload
+### 資料內容
 
-[SystemStopRequest](payloads/commands/system-stop-request.md) 加上 `type: "stop"`。
+[SystemStopRequest](payloads/commands/system-stop-request.zh.md) 加上 `type: "stop"`。
 
 ### 狀態限制
 
@@ -193,37 +193,37 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 ### 用途
 
-通知 Client 公開系統狀態已改變。
+通知用戶端公開系統狀態已改變。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"statusChanged","state":"Ready"}
 ```
 
-### Payload
+### 資料內容
 
-[SystemStatus](payloads/system/system-status.md) 加上 `type: "statusChanged"`。
+[SystemStatus](payloads/system/system-status.zh.md) 加上 `type: "statusChanged"`。
 
 ### 說明
 
-用這個事件同步 Client UI 與命令可用性。
+用這個事件同步用戶端 UI 與命令可用性。
 
 ## productInfoChanged 事件
 
 ### 用途
 
-通知 Client ProductInfo 更新完成。
+通知用戶端 ProductInfo 更新完成。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"productInfoChanged","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
 ```
 
-### Payload
+### 資料內容
 
-[ProductInfo](payloads/product/product-info.md) 加上 `type: "productInfoChanged"`。
+[ProductInfo](payloads/product/product-info.zh.md) 加上 `type: "productInfoChanged"`。
 
 ### 說明
 
@@ -233,17 +233,17 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 ### 用途
 
-通知 Client 執行已開始，狀態為 `Running`。
+通知用戶端執行已開始，狀態為 `Running`。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"runStarted","state":"Running"}
 ```
 
-### Payload
+### 資料內容
 
-[SystemStatus](payloads/system/system-status.md) 加上 `type: "runStarted"`。
+[SystemStatus](payloads/system/system-status.zh.md) 加上 `type: "runStarted"`。
 
 ### 說明
 
@@ -253,17 +253,17 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 ### 用途
 
-通知 Client 執行生命週期已完成，狀態回到 `Ready`。
+通知用戶端執行生命週期已完成，狀態回到 `Ready`。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"runCompleted","state":"Ready"}
 ```
 
-### Payload
+### 資料內容
 
-[SystemStatus](payloads/system/system-status.md) 加上 `type: "runCompleted"`。
+[SystemStatus](payloads/system/system-status.zh.md) 加上 `type: "runCompleted"`。
 
 ### 說明
 
@@ -273,17 +273,17 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 ### 用途
 
-通知 Client 已建立公開結果摘要。
+通知用戶端已建立公開結果摘要。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"resultCreated","resultId":"RID-1","timestamp":"2026-06-20T15:30:12+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1","condition":"golden-sample","overallResult":"OK","defectCount":0,"imageRelativePath":"20260620/LOT-001/20260620_153012_W01.tiff","resultRelativePath":"20260620/LOT-001/20260620_153012_W01.json","imagePath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.tiff","previewImagePath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.jpg","resultPath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.json"}
 ```
 
-### Payload
+### 資料內容
 
-[ResultSummary](payloads/results/result-summary.md) 加上 `type: "resultCreated"`。
+[ResultSummary](payloads/results/result-summary.zh.md) 加上 `type: "resultCreated"`。
 
 ### 說明
 
@@ -293,42 +293,42 @@ C# SDK 讀取 TCP/NDJSON 時會套用單一 frame 的閒置逾時。兩個完整
 
 ### 用途
 
-通知 Client 公開錯誤狀態已改變。
+通知用戶端公開錯誤狀態已改變。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"errorChanged","hasError":true,"message":"Camera timeout.","state":"Running"}
 ```
 
-### Payload
+### 資料內容
 
-[ErrorInfo](payloads/system/error-info.md) 加上 `type: "errorChanged"`。
+[ErrorInfo](payloads/system/error-info.zh.md) 加上 `type: "errorChanged"`。
 
 ### 說明
 
-這是應用層事件。Socket 斷線、逾時、JSON 格式錯誤、frame 不完整屬於 transport 錯誤。
+這是應用層事件。Socket 斷線、逾時、JSON 格式錯誤、資料框不完整屬於傳輸錯誤。
 
 ## commandRejected 事件
 
 ### 用途
 
-通知 Client 命令被拒絕。
+通知用戶端命令被拒絕。
 
-### Frame
+### 資料框
 
 ```json
 {"type":"commandRejected","accepted":false,"state":"Running","command":"SetProductInfo","errorCode":"invalid_state","message":"SetProductInfo is not valid while state is Running."}
 ```
 
-### Payload
+### 資料內容
 
-[CommandResponse](payloads/commands/command-response.md) 加上 `type: "commandRejected"`。
+[CommandResponse](payloads/commands/command-response.zh.md) 加上 `type: "commandRejected"`。
 
 ### 說明
 
-Client 不應把這個事件視為 transport failure。它是有效的應用層回應，代表命令未被接受。
+用戶端不應把這個事件視為傳輸失敗。它是有效的應用層回應，代表命令未被接受。
 
 ## 錯誤處理
 
-JSON 格式錯誤、缺少 newline 結尾、不支援的 frame type、socket 斷線與讀取逾時都屬於 transport/protocol failure。狀態不合法、run mode 不合法、命令被拒絕則由 `commandRejected` 回報。
+JSON 格式錯誤、缺少換行結尾、不支援的資料框類型、socket 斷線與讀取逾時都屬於傳輸或通訊協定錯誤。狀態不合法、run mode 不合法、命令被拒絕則由 `commandRejected` 回報。

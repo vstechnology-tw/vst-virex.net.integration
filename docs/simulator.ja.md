@@ -38,7 +38,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | REST ブラウザ | `http://127.0.0.1:5088/scalar` |
 | OpenAPI JSON | `http://127.0.0.1:5088/openapi/v1.json` |
 | TCP | `127.0.0.1:5089` |
-| MQTT | `127.0.0.1:1883`、ルートトピック `virex` |
+| MQTT | `127.0.0.1:1883`、トピックプレフィックス `virex` |
 
 ## ボタンの動作
 

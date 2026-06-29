@@ -25,4 +25,4 @@
 | REST | `POST /api/system/start` 要求內容。 |
 | TCP | 傳入 `type: "start"` 命令資料框。 |
 
-允許的 `runMode` 值請看 [ControlRunModes](control-run-modes.md)。
+允許的 `runMode` 值請看 [ControlRunModes](control-run-modes.zh.md)。
