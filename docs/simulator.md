@@ -8,6 +8,19 @@ Launch from the repository root:
 dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 ```
 
+The simulator starts as a WPF window:
+
+![Simulator main window with numbered UI regions](assets/simulator-main-window-annotated.png)
+
+## Simulator window walkthrough
+
+| Region | Area | What it is used for |
+| --- | --- | --- |
+| 1 | **Connection Settings** | Defines the endpoints exposed by the simulator. Use **REST prefix** for the HTTP base address, **TCP port** for the NDJSON socket listener, **MQTT host** and **MQTT port/topic** for the embedded MQTT broker and topic prefix, and **Result prefix** only when result IDs or result paths need a test prefix. |
+| 2 | **ProductInfo** | Defines the product context sent into the simulated system. Fill in Lot ID, Wafer ID, Recipe, Slot, Foup ID, and Chamber ID, then press **Apply ProductInfo** after the system is `Ready`. |
+| 3 | **State** | Shows the current simulator state and provides the main interaction buttons. **Start Servers** opens the REST, TCP, and MQTT endpoints. **Initialize**, **Deinitialize**, **Start Cycle**, and **Stop** drive the same public state transitions that an external client can call through REST. |
+| 4 | **Event Log** | Shows local simulator activity, server start/stop messages, command rejections, and other diagnostic output. Use this area to confirm that button actions and client commands reached the simulator. |
+
 ## Simulator purpose
 
 | Purpose | What To Verify |
@@ -26,7 +39,7 @@ The simulator is not a production inspection engine and does not expose private 
 4. Connect a sample or vendor client.
 5. Initialize the system.
 6. Send ProductInfo.
-7. Start a run.
+7. Press **Start Cycle** or send the equivalent client command.
 8. Observe `runStarted`, `runCompleted`, `resultCreated`.
 9. Query `GET /api/results`.
 
@@ -48,7 +61,7 @@ The simulator is not a production inspection engine and does not expose private 
 | **Initialize** | Sends the initialize command. Only valid in `Uninitialized`. |
 | **Deinitialize** | Sends the deinitialize command. Only valid in `Ready`. |
 | **Apply ProductInfo** | Updates the current ProductInfo. Only valid in `Ready`. |
-| **Start** | Starts a run. Only valid in `Ready`; the response state is `Running`. |
+| **Start Cycle** | Starts a run. Only valid in `Ready`; the response state is `Running`. |
 | **Stop** | Stops the active run. Only valid in `Running`; the response state is `Ready`. |
 
 ## Observable behavior
