@@ -1,6 +1,6 @@
 # C# SDK 指南
 
-`Virex.NET.Client` 提供 REST、TCP、MQTT 公開整合介面的 typed wrapper。
+`Virex.NET.Client` 為公開 REST、TCP、MQTT 整合 API 提供強型別封裝。
 
 ## 安裝
 
@@ -14,7 +14,7 @@ dotnet add package Virex.NET.Client
 dotnet add package Virex.NET.Contracts
 ```
 
-## 建立 Client
+## 建立用戶端
 
 ```csharp
 using Virex.NET.Client;

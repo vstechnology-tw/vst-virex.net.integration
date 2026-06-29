@@ -4,7 +4,7 @@
 
 ## REST
 
-| 확인 | 예상결과 |
+| 확인 | 예상 결과 |
 | --- | --- |
 | 상태 읽기 | `GET /api/status`는 `state`와 함께 `SystemStatus`를 반환합니다. |
 | 초기화 | `POST /api/system/initialize`는 `Uninitialized`에서 허용되며 `Ready`를 반환합니다. |
@@ -29,8 +29,8 @@
 
 | 확인 | 예상결과 |
 | --- | --- |
-| 구독 | 클라이언트는 `virex/#` 또는 구성된 루트 토픽을 구독할 수 있습니다. |
-| 국가 행사 | 클라이언트는 `statusChanged`, `runStarted` 및 `runCompleted`를 받습니다. |
+| 구독 | 클라이언트는 `virex/#` 또는 구성된 토픽 접두사를 구독할 수 있습니다. |
+| 상태 이벤트 | 클라이언트는 `statusChanged`, `runStarted` 및 `runCompleted`를 받습니다. |
 | ProductInfo 이벤트 | 클라이언트는 `productInfoChanged`를 받습니다. |
 | 결과 이벤트 | 클라이언트는 `resultCreated`를 받습니다. |
 | 거절 이벤트 | 명령이 거부되면 클라이언트는 `commandRejected`를 수신합니다. |

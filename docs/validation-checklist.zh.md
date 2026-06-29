@@ -19,21 +19,21 @@
 
 | 檢查項目 | 預期結果 |
 | --- | --- |
-| 連線 | Client 可以連上設定的 TCP 連接埠。 |
+| 連線 | 用戶端可以連上設定的 TCP 連接埠。 |
 | 分幀 | 每個資料框是一個 UTF-8 JSON 物件，並以 `\n` 結尾。 |
 | ProductInfo 命令 | `type: "productInfo"` 在 `Ready` 更新 ProductInfo。 |
 | 啟動/停止命令 | `type: "start"` 與 `type: "stop"` 遵守 REST 相同狀態規則。 |
-| 事件解析 | Client 可處理 `statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、`commandRejected`。 |
+| 事件解析 | 用戶端可處理 `statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、`commandRejected`。 |
 
 ## MQTT
 
 | 檢查項目 | 預期結果 |
 | --- | --- |
-| 訂閱 | Client 可訂閱 `virex/#` 或設定的根主題。 |
-| 狀態事件 | Client 收到 `statusChanged`、`runStarted`、`runCompleted`。 |
-| ProductInfo 事件 | Client 收到 `productInfoChanged`。 |
-| 結果事件 | Client 收到 `resultCreated`。 |
-| 拒絕事件 | 發佈拒絕命令事件時，Client 收到 `commandRejected`。 |
+| 訂閱 | 用戶端可訂閱 `virex/#` 或設定的 topic 前綴。 |
+| 狀態事件 | 用戶端收到 `statusChanged`、`runStarted`、`runCompleted`。 |
+| ProductInfo 事件 | 用戶端收到 `productInfoChanged`。 |
+| 結果事件 | 用戶端收到 `resultCreated`。 |
+| 拒絕事件 | 服務發布拒絕命令事件時，用戶端收到 `commandRejected`。 |
 
 ## 可攜性
 

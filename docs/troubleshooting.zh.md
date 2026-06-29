@@ -36,18 +36,18 @@
 檢查：
 
 - TCP host/port 正確。
-- Client 保持 socket 開啟。
+- 用戶端保持 socket 開啟。
 - 每個傳入資料框以 `\n` 結尾。
-- Client 正在解析目前事件名稱，例如 `statusChanged` 與 `resultCreated`。
+- 用戶端正在解析目前事件名稱，例如 `statusChanged` 與 `resultCreated`。
 
 ## MQTT 事件遺失
 
 檢查：
 
 - Broker host/port 正確。
-- 訂閱符合根主題，例如 `virex/#`。
+- 訂閱符合 topic 前綴，例如 `virex/#`。
 - MQTT 只用於傳出事件。
-- Client 監聽文件定義的主題名稱，例如 `productInfoChanged`。
+- 用戶端監聽文件定義的 topic 名稱，例如 `productInfoChanged`。
 
 ## 文件預覽與 GitHub Pages 不一致
 

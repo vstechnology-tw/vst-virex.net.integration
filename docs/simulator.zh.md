@@ -23,7 +23,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 1. 啟動模擬器。
 2. 確認端點設定。
 3. 按 **Start Servers**。
-4. 連接範例程式或廠商 Client。
+4. 連接範例程式或廠商用戶端。
 5. 初始化系統。
 6. 送出 ProductInfo。
 7. 啟動執行。
@@ -38,7 +38,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | REST 瀏覽器 | `http://127.0.0.1:5088/scalar` |
 | OpenAPI JSON | `http://127.0.0.1:5088/openapi/v1.json` |
 | TCP | `127.0.0.1:5089` |
-| MQTT | `127.0.0.1:1883`，根主題 `virex` |
+| MQTT | `127.0.0.1:1883`，topic 前綴 `virex` |
 
 ## 按鈕行為
 
@@ -55,11 +55,11 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 | 動作 | 預期外部觀察結果 |
 | --- | --- |
-| Initialize | REST 命令回 `Ready`；發佈狀態事件。 |
-| ProductInfo 更新 | REST 命令回 `Ready`；發佈 ProductInfo 事件。 |
-| Start | REST 命令回 `Running`；發佈執行開始事件。 |
-| Run completes | 狀態回到 `Ready`；發佈執行完成與結果建立事件。 |
-| 非法命令 | 命令回應包含 `accepted=false` 與 `errorCode=invalid_state`；可能發佈拒絕事件。 |
+| Initialize | REST 命令回 `Ready`；發布狀態事件。 |
+| ProductInfo 更新 | REST 命令回 `Ready`；發布 ProductInfo 事件。 |
+| Start | REST 命令回 `Running`；發布執行開始事件。 |
+| Run completes | 狀態回到 `Ready`；發布執行完成與結果建立事件。 |
+| 非法命令 | 命令回應包含 `accepted=false` 與 `errorCode=invalid_state`；可能發布拒絕事件。 |
 
 ## 建議的模擬器驗收流程
 
