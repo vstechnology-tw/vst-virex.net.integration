@@ -8,6 +8,19 @@
 dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 ```
 
+シミュレーターを起動すると、次の WPF ウィンドウが表示されます。
+
+![番号付きのシミュレーター メイン ウィンドウ](assets/simulator-main-window-annotated.png)
+
+## シミュレーター ウィンドウの見方
+
+| 領域 | 画面領域 | 用途 |
+| --- | --- | --- |
+| 1 | **Connection Settings** | シミュレーターが公開するエンドポイントを設定します。**REST prefix** は HTTP のベース アドレス、**TCP port** は NDJSON socket の待ち受けポート、**MQTT host** と **MQTT port/topic** は組み込み MQTT broker とトピック プレフィックス、**Result prefix** は結果 ID または結果パスにテスト用プレフィックスが必要な場合だけ使用します。 |
+| 2 | **ProductInfo** | 模擬システムへ送る製品コンテキストを設定します。Lot ID、Wafer ID、Recipe、Slot、Foup ID、Chamber ID を入力し、システムが `Ready` になってから **Apply ProductInfo** を押します。 |
+| 3 | **State** | 現在のシミュレーター状態を表示し、主要な操作ボタンを提供します。**Start Servers** は REST、TCP、MQTT エンドポイントを開きます。**Initialize**、**Deinitialize**、**Start Cycle**、**Stop** は、外部 REST クライアントから呼び出せるものと同じ公開状態遷移を実行します。 |
+| 4 | **Event Log** | ローカル シミュレーターの動作、サーバーの起動/停止メッセージ、コマンド拒否、その他の診断出力を表示します。ボタン操作やクライアント コマンドがシミュレーターに届いたことを確認するために使用します。 |
+
 ## シミュレーターの目的
 
 |目的 |何を確認するか |
@@ -26,7 +39,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 4. サンプルまたはベンダーのクライアントを接続します。
 5. システムを初期化します。
 6. 製品情報を送信します。
-7. 実行を開始します。
+7. **Start Cycle** を押すか、同等のクライアント コマンドを送信します。
 8. `runStarted`、`runCompleted`、`resultCreated` を観察します。
 9. `GET /api/results` をクエリします。
 
@@ -48,7 +61,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | **Initialize** |初期化コマンドを送信します。 `Uninitialized` でのみ有効です。 |
 | **Deinitialize** |初期化解除コマンドを送信します。 `Ready` でのみ有効です。 |
 | **Apply ProductInfo** |現在の ProductInfo を更新します。 `Ready` でのみ有効です。 |
-| **Start** |実行を開始します。 `Ready` でのみ有効です。応答状態は `Running` です。 |
+| **Start Cycle** |実行を開始します。 `Ready` でのみ有効です。応答状態は `Running` です。 |
 | **Stop** |アクティブな実行を停止します。 `Running` でのみ有効です。応答状態は `Ready` です。 |
 
 ## 観察可能な動作
