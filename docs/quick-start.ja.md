@@ -16,7 +16,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- |
 | REST | `http://127.0.0.1:5088` |
 | TCP | `127.0.0.1:5089` |
-| MQTT | `127.0.0.1:1883`、ルートトピック `virex` |
+| MQTT | `127.0.0.1:1883`、トピックプレフィックス `virex` |
 
 ## 2. SDK サンプルを実行します。
 
