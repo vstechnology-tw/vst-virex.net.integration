@@ -14,4 +14,4 @@
 - Minor version 可以新增累加式欄位。
 - 破壞性變更需要 major version。
 - 模擬器、SDK、文件、合約測試必須同步。
-- [資料模型參考](payloads.zh.md) 必須與公開資料模型、路由、主題、事件結構對齊。
+- [資料模型參考](payloads.zh-Hant.md) 必須與公開資料模型、路由、主題、事件結構對齊。

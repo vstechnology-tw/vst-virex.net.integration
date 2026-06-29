@@ -1,6 +1,6 @@
 # ControlRunModes
 
-`ControlRunModes` 定義 [SystemStartRequest](system-start-request.zh.md) 允許的 `runMode` 值。
+`ControlRunModes` 定義 [SystemStartRequest](system-start-request.zh-Hant.md) 允許的 `runMode` 值。
 
 ## 值
 

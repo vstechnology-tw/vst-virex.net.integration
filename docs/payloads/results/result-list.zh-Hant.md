@@ -15,7 +15,7 @@
 
 | 欄位 | 型別 | 必填 | 說明 |
 | --- | --- | --- | --- |
-| `items` | array of [ResultSummary](result-summary.zh.md) | 是 | 符合條件的結果摘要。 |
+| `items` | array of [ResultSummary](result-summary.zh-Hant.md) | 是 | 符合條件的結果摘要。 |
 | `count` | number | 是 | 回傳項目數量。 |
 
 ## 使用位置
