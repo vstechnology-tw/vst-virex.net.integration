@@ -1,4 +1,6 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using Virex.NET.Contracts;
 using Virex.NET.Simulator.Core;
 using Virex.NET.Simulator.WPF.Services;
@@ -8,6 +10,12 @@ namespace Virex.NET.Simulator.WPF;
 public partial class MainWindow : Window
 {
     private readonly SimulatorSession _session = new SimulatorSession();
+    private static readonly Brush InactiveStateBackground = new SolidColorBrush(Color.FromRgb(229, 231, 235));
+    private static readonly Brush InactiveStateBorder = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+    private static readonly Brush InactiveStateForeground = new SolidColorBrush(Color.FromRgb(17, 24, 39));
+    private static readonly Brush ActiveStateBackground = new SolidColorBrush(Color.FromRgb(38, 136, 176));
+    private static readonly Brush ActiveStateBorder = new SolidColorBrush(Color.FromRgb(27, 99, 128));
+    private static readonly Brush ActiveStateForeground = Brushes.White;
     private RestSimulatorServer? _rest;
     private TcpSimulatorServer? _tcp;
     private EmbeddedMqttBroker? _mqttBroker;
@@ -69,8 +77,11 @@ public partial class MainWindow : Window
     private async void Deinitialize_Click(object sender, RoutedEventArgs e) =>
         AppendCommandResponse(await _session.DeinitializeAsync());
 
-    private async void StartCycle_Click(object sender, RoutedEventArgs e) =>
-        AppendCommandResponse(await _session.StartAsync(new SystemStartRequest()));
+    private async void StartSingle_Click(object sender, RoutedEventArgs e) =>
+        AppendCommandResponse(await _session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.SingleRun }));
+
+    private async void StartContinue_Click(object sender, RoutedEventArgs e) =>
+        AppendCommandResponse(await _session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue }));
 
     private async void Stop_Click(object sender, RoutedEventArgs e) =>
         AppendCommandResponse(await _session.StopAsync());
@@ -89,6 +100,26 @@ public partial class MainWindow : Window
     private void RefreshStatus()
     {
         StatusText.Text = $"state={_session.Status.State}";
+        RefreshStateGraph(_session.Status.State);
+    }
+
+    private void RefreshStateGraph(string state)
+    {
+        SetStateNode(UninitializedNode, state == SystemStates.Uninitialized);
+        SetStateNode(InitializingNode, state == SystemStates.Initializing);
+        SetStateNode(ReadyNode, state == SystemStates.Ready);
+        SetStateNode(UpdatingProductInfoNode, state == SystemStates.UpdatingProductInfo);
+        SetStateNode(RunningNode, state == SystemStates.Running);
+        SetStateNode(DeinitializingNode, state == SystemStates.Deinitializing);
+    }
+
+    private static void SetStateNode(Border node, bool isActive)
+    {
+        node.Background = isActive ? ActiveStateBackground : InactiveStateBackground;
+        node.BorderBrush = isActive ? ActiveStateBorder : InactiveStateBorder;
+
+        if (node.Child is TextBlock label)
+            label.Foreground = isActive ? ActiveStateForeground : InactiveStateForeground;
     }
 
     private void AppendCommandResponse(CommandResponse response)

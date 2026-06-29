@@ -96,20 +96,156 @@
           <Button Content="Stop Servers" Click="StopServers_Click" Margin="0,0,0,12" />
           <Button Content="Initialize" Click="Initialize_Click" Margin="0,0,0,6" />
           <Button Content="Deinitialize" Click="Deinitialize_Click" Margin="0,0,0,6" />
-          <Button Content="Start Cycle" Click="StartCycle_Click" Margin="0,0,0,6" />
+          <Button Content="Start Single" Click="StartSingle_Click" Margin="0,0,0,6" />
+          <Button Content="Start Continue" Click="StartContinue_Click" Margin="0,0,0,6" />
           <Button Content="Stop" Click="Stop_Click" Margin="0,0,0,6" />
         </StackPanel>
       </GroupBox>
     </Grid>
 
-    <GroupBox Grid.Row="2" Header="Event Log" Padding="8">
-      <TextBox x:Name="LogBox"
-               FontFamily="Consolas"
-               FontSize="12"
-               IsReadOnly="True"
-               AcceptsReturn="True"
-               VerticalScrollBarVisibility="Auto"
-               HorizontalScrollBarVisibility="Auto" />
-    </GroupBox>
+    <Grid Grid.Row="2">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="0.85*" />
+        <ColumnDefinition Width="1.15*" />
+      </Grid.ColumnDefinitions>
+
+      <GroupBox Header="Event Log" Padding="8" Margin="0,0,12,0">
+        <TextBox x:Name="LogBox"
+                 FontFamily="Consolas"
+                 FontSize="12"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto" />
+      </GroupBox>
+
+      <GroupBox Grid.Column="1" Header="State Machine" Padding="8">
+        <Viewbox Stretch="Uniform">
+          <Canvas Width="560" Height="360">
+            <Canvas.Resources>
+              <Style x:Key="StateNodeStyle" TargetType="Border">
+                <Setter Property="Width" Value="140" />
+                <Setter Property="Height" Value="44" />
+                <Setter Property="Background" Value="#E5E7EB" />
+                <Setter Property="BorderBrush" Value="#94A3B8" />
+                <Setter Property="BorderThickness" Value="2" />
+                <Setter Property="CornerRadius" Value="8" />
+              </Style>
+              <Style x:Key="StateNodeTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#111827" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Center" />
+              </Style>
+              <Style x:Key="CommandLabelStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#1F2937" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Style>
+              <Style x:Key="EventLabelStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#92400E" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Style>
+              <Style x:Key="GraphLabelStyle" TargetType="Border">
+                <Setter Property="Background" Value="White" />
+                <Setter Property="Padding" Value="3,1" />
+                <Setter Property="CornerRadius" Value="3" />
+              </Style>
+            </Canvas.Resources>
+
+            <Line X1="90" Y1="69" X2="90" Y2="110" Stroke="#1F2937" StrokeThickness="2" />
+            <Polygon Points="90,119 85,109 95,109" Fill="#1F2937" />
+
+            <Line X1="160" Y1="142" X2="211" Y2="179" Stroke="#F59E0B" StrokeThickness="2" StrokeDashArray="4 3" />
+            <Polygon Points="219,185 207,181 214,173" Fill="#F59E0B" />
+
+            <Line X1="360" Y1="192" X2="395" Y2="192" Stroke="#1F2937" StrokeThickness="2" />
+            <Polygon Points="404,192 394,187 394,197" Fill="#1F2937" />
+
+            <Line X1="405" Y1="214" X2="370" Y2="214" Stroke="#F59E0B" StrokeThickness="2" StrokeDashArray="4 3" />
+            <Polygon Points="361,214 371,209 371,219" Fill="#F59E0B" />
+
+            <Line X1="290" Y1="214" X2="290" Y2="270" Stroke="#1F2937" StrokeThickness="2" />
+            <Polygon Points="290,279 285,269 295,269" Fill="#1F2937" />
+
+            <Line X1="270" Y1="280" X2="270" Y2="224" Stroke="#1F2937" StrokeThickness="2" />
+            <Polygon Points="270,215 265,225 275,225" Fill="#1F2937" />
+
+            <Line X1="250" Y1="280" X2="250" Y2="224" Stroke="#F59E0B" StrokeThickness="2" StrokeDashArray="4 3" />
+            <Polygon Points="250,215 245,225 255,225" Fill="#F59E0B" />
+
+            <Line X1="323" Y1="170" X2="430" Y2="72" Stroke="#1F2937" StrokeThickness="2" />
+            <Polygon Points="437,65 433,76 426,69" Fill="#1F2937" />
+
+            <Line X1="405" Y1="47" X2="169" Y2="47" Stroke="#F59E0B" StrokeThickness="2" StrokeDashArray="4 3" />
+            <Polygon Points="160,47 170,42 170,52" Fill="#F59E0B" />
+
+            <Border x:Name="UninitializedNode" Canvas.Left="20" Canvas.Top="25" Style="{StaticResource StateNodeStyle}">
+              <TextBlock Text="Uninitialized" Style="{StaticResource StateNodeTextStyle}" />
+            </Border>
+            <Border x:Name="InitializingNode" Canvas.Left="20" Canvas.Top="120" Style="{StaticResource StateNodeStyle}">
+              <TextBlock Text="Initializing" Style="{StaticResource StateNodeTextStyle}" />
+            </Border>
+            <Border x:Name="ReadyNode" Canvas.Left="220" Canvas.Top="170" Style="{StaticResource StateNodeStyle}">
+              <TextBlock Text="Ready" Style="{StaticResource StateNodeTextStyle}" />
+            </Border>
+            <Border x:Name="UpdatingProductInfoNode" Canvas.Left="405" Canvas.Top="170" Style="{StaticResource StateNodeStyle}">
+              <TextBlock Text="Updating&#x0a;ProductInfo" Style="{StaticResource StateNodeTextStyle}" />
+            </Border>
+            <Border x:Name="RunningNode" Canvas.Left="220" Canvas.Top="280" Style="{StaticResource StateNodeStyle}">
+              <TextBlock Text="Running" Style="{StaticResource StateNodeTextStyle}" />
+            </Border>
+            <Border x:Name="DeinitializingNode" Canvas.Left="405" Canvas.Top="25" Style="{StaticResource StateNodeStyle}">
+              <TextBlock Text="Deinitializing" Style="{StaticResource StateNodeTextStyle}" />
+            </Border>
+
+            <Border Canvas.Left="100" Canvas.Top="82" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="ƒ Initialize" Style="{StaticResource CommandLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="166" Canvas.Top="144" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="⚡ InitializationCompleted" Style="{StaticResource EventLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="374" Canvas.Top="148" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="ƒ SetProductInfo" Style="{StaticResource CommandLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="356" Canvas.Top="226" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="⚡ ProductInfoUpdateCompleted" Style="{StaticResource EventLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="298" Canvas.Top="238" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="ƒ Start single/continue" Style="{StaticResource CommandLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="220" Canvas.Top="238" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="ƒ Stop" Style="{StaticResource CommandLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="124" Canvas.Top="246" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="⚡ RunCompleted" Style="{StaticResource EventLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="345" Canvas.Top="112" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="ƒ Deinitialize" Style="{StaticResource CommandLabelStyle}" />
+            </Border>
+            <Border Canvas.Left="216" Canvas.Top="25" Style="{StaticResource GraphLabelStyle}">
+              <TextBlock Text="⚡ DeinitializationCompleted" Style="{StaticResource EventLabelStyle}" />
+            </Border>
+
+            <Border Canvas.Left="20" Canvas.Top="292" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Background="White" Padding="8">
+              <StackPanel>
+                <TextBlock Text="Legend" Foreground="#475569" FontSize="11" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                  <TextBlock Text="ƒ command" Style="{StaticResource CommandLabelStyle}" Width="82" />
+                  <Line X1="0" Y1="8" X2="42" Y2="8" Stroke="#1F2937" StrokeThickness="2" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="⚡ event" Style="{StaticResource EventLabelStyle}" Width="82" />
+                  <Line X1="0" Y1="8" X2="42" Y2="8" Stroke="#F59E0B" StrokeThickness="2" StrokeDashArray="4 3" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </Canvas>
+        </Viewbox>
+      </GroupBox>
+    </Grid>
   </Grid>
 </Window>

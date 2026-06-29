@@ -18,8 +18,9 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- | --- |
 | 1 | **Connection Settings** | 設定模擬器對外提供的端點。**REST prefix** 是 HTTP 基底位址，**TCP port** 是 NDJSON socket 監聽埠，**MQTT host** 與 **MQTT port/topic** 是內建 MQTT broker 與 topic 前綴，**Result prefix** 只在測試結果 ID 或結果路徑需要前綴時使用。 |
 | 2 | **ProductInfo** | 設定要送入模擬系統的產品脈絡。填入 Lot ID、Wafer ID、Recipe、Slot、Foup ID、Chamber ID，並在系統為 `Ready` 後按 **Apply ProductInfo**。 |
-| 3 | **State** | 顯示目前模擬器狀態，並提供主要互動按鈕。**Start Servers** 會開啟 REST、TCP、MQTT 端點。**Initialize**、**Deinitialize**、**Start Cycle**、**Stop** 會驅動與外部 REST 用戶端相同的公開狀態轉換。 |
-| 4 | **Event Log** | 顯示本機模擬器活動、伺服器啟停訊息、命令拒絕與其他診斷輸出。可用來確認按鈕操作或用戶端命令已送達模擬器。 |
+| 3 | **State** | 顯示目前模擬器狀態，並提供主要互動按鈕。**Start Servers** 會開啟 REST、TCP、MQTT 端點。**Initialize**、**Deinitialize**、**Start Single**、**Start Continue**、**Stop** 會驅動與外部 REST 用戶端相同的公開狀態轉換。 |
+| 4 | **Event Log** | 顯示本機模擬器活動、伺服器啟停訊息、命令拒絕、產生的結果與其他診斷輸出。可用來確認按鈕操作或用戶端命令已送達模擬器。 |
+| 5 | **State Machine** | 顯示即時狀態圖。高亮區塊會跟隨目前模擬器狀態。`ƒ` 標籤代表 command，`⚡` 標籤代表 event。`Initializing`、`UpdatingProductInfo`、`Deinitializing` 等中間狀態會短暫停留，方便檢查轉換路徑。 |
 
 ## 模擬器用途
 
@@ -39,9 +40,10 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 4. 連接範例程式或廠商用戶端。
 5. 初始化系統。
 6. 送出 ProductInfo。
-7. 按 **Start Cycle**，或送出等效的用戶端命令。
-8. 觀察 `runStarted`、`runCompleted`、`resultCreated`。
-9. 查詢 `GET /api/results`。
+7. 按 **Start Single** 執行一次自動流程，或按 **Start Continue** 持續產生結果直到按 **Stop**。
+8. 觀察 **State Machine** 高亮區塊如何跟著目前狀態移動。
+9. 依 run mode 觀察 `runStarted`、`runCompleted`、`resultCreated`，或連續的 `resultCreated` 事件。
+10. 查詢 `GET /api/results`。
 
 ## 預設端點
 
@@ -61,7 +63,8 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | **Initialize** | 送出初始化命令。只在 `Uninitialized` 合法。 |
 | **Deinitialize** | 送出反初始化命令。只在 `Ready` 合法。 |
 | **Apply ProductInfo** | 更新目前 ProductInfo。只在 `Ready` 合法。 |
-| **Start Cycle** | 啟動執行。只在 `Ready` 合法；回應狀態是 `Running`。 |
+| **Start Single** | 以 `runMode=single` 啟動單次執行。只在 `Ready` 合法；回應狀態是 `Running`。模擬器會產生結果，並在 run-completed event 後回到 `Ready`。 |
+| **Start Continue** | 以 `runMode=continue` 啟動連續執行。只在 `Ready` 合法；回應狀態是 `Running`。模擬器會持續產生結果，直到按 **Stop**。 |
 | **Stop** | 停止執行中的流程。只在 `Running` 合法；回應狀態是 `Ready`。 |
 
 ## 可觀察行為
@@ -70,14 +73,15 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- |
 | Initialize | REST 命令回 `Ready`；發布狀態事件。 |
 | ProductInfo 更新 | REST 命令回 `Ready`；發布 ProductInfo 事件。 |
-| Start | REST 命令回 `Running`；發布執行開始事件。 |
-| Run completes | 狀態回到 `Ready`；發布執行完成與結果建立事件。 |
+| Start single | REST 命令回 `Running`；狀態切到 `Running`；發布結果建立事件；run-completed 會讓狀態回到 `Ready`。 |
+| Start continue | REST 命令回 `Running`；狀態維持 `Running`；持續發布結果建立事件，直到 stop 命令被接受。 |
+| Stop | 狀態回到 `Ready`；continue mode 不需要額外的自動 run-completed event。 |
 | 非法命令 | 命令回應包含 `accepted=false` 與 `errorCode=invalid_state`；可能發布拒絕事件。 |
 
 ## 建議的模擬器驗收流程
 
 ```powershell
-dotnet test Virex.NET.Integration.sln
+dotnet test Virex.NET.Integration.slnx
 python -m mkdocs build --strict
 ```
 

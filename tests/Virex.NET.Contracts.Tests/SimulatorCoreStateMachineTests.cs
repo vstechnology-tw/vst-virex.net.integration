@@ -39,6 +39,47 @@ public sealed class SimulatorCoreStateMachineTests
     }
 
     [Fact]
+    public async Task SingleRunCompletesAutomatically()
+    {
+        var session = new SimulatorSession();
+        await session.InitializeAsync();
+        await session.SetProductInfoAsync(new ProductInfo { WaferID = "W01", LotID = "LOT-1", Recipe = "RCP-A", Slot = "1" });
+
+        var start = await session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.SingleRun });
+
+        Assert.True(start.Accepted);
+        Assert.Equal(SystemStates.Running, start.State);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(1200));
+
+        Assert.Equal(SystemStates.Ready, session.Status.State);
+        Assert.Single(session.Results);
+    }
+
+    [Fact]
+    public async Task ContinueRunStaysRunningAndEmitsResultsUntilStopped()
+    {
+        var session = new SimulatorSession();
+        await session.InitializeAsync();
+        await session.SetProductInfoAsync(new ProductInfo { WaferID = "W01", LotID = "LOT-1", Recipe = "RCP-A", Slot = "1" });
+
+        var start = await session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue });
+
+        Assert.True(start.Accepted);
+        Assert.Equal(SystemStates.Running, start.State);
+
+        await Task.Delay(TimeSpan.FromMilliseconds(2200));
+
+        Assert.Equal(SystemStates.Running, session.Status.State);
+        Assert.True(session.Results.Length >= 2);
+
+        var stop = await session.StopAsync();
+
+        Assert.True(stop.Accepted);
+        Assert.Equal(SystemStates.Ready, session.Status.State);
+    }
+
+    [Fact]
     public async Task ProductInfoIsRejectedWhileRunning()
     {
         var session = new SimulatorSession();
