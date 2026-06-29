@@ -5,12 +5,15 @@ namespace Virex.NET.Simulator.Core;
 
 public sealed class SimulatorSession
 {
+    private static readonly TimeSpan StatePreviewDelay = TimeSpan.FromSeconds(1);
     private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
     private readonly List<ResultSummary> _results = new List<ResultSummary>();
     private readonly StateMachine<SimulatorState, SimulatorTrigger> _machine;
     private int _resultSequence;
     private ProductInfo? _activeRunProductInfo;
     private string _activeRunCondition = string.Empty;
+    private CancellationTokenSource? _singleRunCompletion;
+    private CancellationTokenSource? _continuousRun;
 
     public SimulatorSession()
     {
@@ -108,6 +111,7 @@ public sealed class SimulatorSession
                 return Reject("Initialize");
 
             await FireAsync(SimulatorTrigger.Initialize).ConfigureAwait(false);
+            await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
             await FireAsync(SimulatorTrigger.InitializationCompleted).ConfigureAwait(false);
             return Accept("Initialize", "Initialized.");
         }
@@ -126,6 +130,7 @@ public sealed class SimulatorSession
                 return Reject("Deinitialize");
 
             await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
+            await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
             await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
             return Accept("Deinitialize", "Deinitialized.");
         }
@@ -147,6 +152,7 @@ public sealed class SimulatorSession
             ProductInfo = productInfo.Snapshot();
             ProductInfoChanged?.Invoke(this, ProductInfo);
             LogMessage("ProductInfo updated: " + FormatProductInfoForLog(ProductInfo));
+            await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
             await FireAsync(SimulatorTrigger.ProductInfoUpdateCompleted).ConfigureAwait(false);
             return Accept("SetProductInfo", "ProductInfo updated.");
         }
@@ -175,7 +181,17 @@ public sealed class SimulatorSession
             _activeRunProductInfo = ProductInfo.Snapshot();
             _activeRunCondition = condition;
             await FireAsync(SimulatorTrigger.Start).ConfigureAwait(false);
-            _ = CompleteRunAfterDelayAsync();
+            if (runMode == ControlRunModes.SingleRun)
+            {
+                _singleRunCompletion = new CancellationTokenSource();
+                _ = CompleteRunAfterDelayAsync(_singleRunCompletion.Token);
+            }
+            else
+            {
+                _continuousRun = new CancellationTokenSource();
+                _ = EmitContinuousResultsAsync(_continuousRun.Token);
+            }
+
             return Accept("Start", "Started.");
         }
         finally
@@ -192,6 +208,7 @@ public sealed class SimulatorSession
             if (!CanFire(SimulatorTrigger.Stop))
                 return Reject("Stop");
 
+            StopActiveRunTimers();
             await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
             LogMessage(string.IsNullOrWhiteSpace(request.Reason) ? "Stopped." : "Stopped. reason=" + request.Reason);
             return Accept("Stop", "Stopped.");
@@ -211,7 +228,10 @@ public sealed class SimulatorSession
                 return Reject(command);
 
             if (trigger == SimulatorTrigger.RunCompleted)
+            {
+                StopActiveRunTimers();
                 EmitResult(string.Empty);
+            }
 
             await FireAsync(trigger).ConfigureAwait(false);
             return Accept(command, command + ".");
@@ -256,6 +276,9 @@ public sealed class SimulatorSession
     private bool CanFire(SimulatorTrigger trigger) => _machine.CanFire(trigger);
 
     private Task FireAsync(SimulatorTrigger trigger) => _machine.FireAsync(trigger);
+
+    private static Task DelayForStatePreviewAsync(CancellationToken cancellationToken) =>
+        Task.Delay(StatePreviewDelay, cancellationToken);
 
     private CommandResponse Accept(string command, string message) =>
         new CommandResponse
@@ -320,20 +343,58 @@ public sealed class SimulatorSession
 
         LogMessage("Result emitted: " + id);
         ResultCreated?.Invoke(this, result);
-        _activeRunProductInfo = null;
-        _activeRunCondition = string.Empty;
         return result;
     }
 
-    private async Task CompleteRunAfterDelayAsync()
+    private async Task CompleteRunAfterDelayAsync(CancellationToken cancellationToken)
     {
-        await Task.Delay(300).ConfigureAwait(false);
         try
         {
-            await RunCompletedAsync().ConfigureAwait(false);
+            await Task.Delay(StatePreviewDelay, cancellationToken).ConfigureAwait(false);
+            await RunCompletedAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
         }
         catch (ObjectDisposedException)
         {
+        }
+    }
+
+    private async Task EmitContinuousResultsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(StatePreviewDelay, cancellationToken).ConfigureAwait(false);
+                if (cancellationToken.IsCancellationRequested || State != SimulatorState.Running)
+                    return;
+
+                EmitResult(string.Empty);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void StopActiveRunTimers()
+    {
+        var singleRunCompletion = _singleRunCompletion;
+        if (singleRunCompletion is not null)
+        {
+            _singleRunCompletion = null;
+            singleRunCompletion.Cancel();
+            singleRunCompletion.Dispose();
+        }
+
+        var continuousRun = _continuousRun;
+        if (continuousRun is not null)
+        {
+            _continuousRun = null;
+            continuousRun.Cancel();
+            continuousRun.Dispose();
         }
     }
 

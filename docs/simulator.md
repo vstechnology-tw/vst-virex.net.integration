@@ -18,8 +18,9 @@ The simulator starts as a WPF window:
 | --- | --- | --- |
 | 1 | **Connection Settings** | Defines the endpoints exposed by the simulator. Use **REST prefix** for the HTTP base address, **TCP port** for the NDJSON socket listener, **MQTT host** and **MQTT port/topic** for the embedded MQTT broker and topic prefix, and **Result prefix** only when result IDs or result paths need a test prefix. |
 | 2 | **ProductInfo** | Defines the product context sent into the simulated system. Fill in Lot ID, Wafer ID, Recipe, Slot, Foup ID, and Chamber ID, then press **Apply ProductInfo** after the system is `Ready`. |
-| 3 | **State** | Shows the current simulator state and provides the main interaction buttons. **Start Servers** opens the REST, TCP, and MQTT endpoints. **Initialize**, **Deinitialize**, **Start Cycle**, and **Stop** drive the same public state transitions that an external client can call through REST. |
-| 4 | **Event Log** | Shows local simulator activity, server start/stop messages, command rejections, and other diagnostic output. Use this area to confirm that button actions and client commands reached the simulator. |
+| 3 | **State** | Shows the current simulator state and provides the main interaction buttons. **Start Servers** opens the REST, TCP, and MQTT endpoints. **Initialize**, **Deinitialize**, **Start Single**, **Start Continue**, and **Stop** drive the same public state transitions that an external client can call through REST. |
+| 4 | **Event Log** | Shows local simulator activity, server start/stop messages, command rejections, emitted results, and other diagnostic output. Use this area to confirm that button actions and client commands reached the simulator. |
+| 5 | **State Machine** | Shows the live state graph. The highlighted block follows the current simulator state. `ƒ` labels are commands, and `⚡` labels are events. Intermediate states such as `Initializing`, `UpdatingProductInfo`, and `Deinitializing` stay visible briefly so the transition path is easy to inspect. |
 
 ## Simulator purpose
 
@@ -39,9 +40,10 @@ The simulator is not a production inspection engine and does not expose private 
 4. Connect a sample or vendor client.
 5. Initialize the system.
 6. Send ProductInfo.
-7. Press **Start Cycle** or send the equivalent client command.
-8. Observe `runStarted`, `runCompleted`, `resultCreated`.
-9. Query `GET /api/results`.
+7. Press **Start Single** for one automatic run, or press **Start Continue** for repeated results until **Stop** is pressed.
+8. Watch the **State Machine** highlight move through the current state.
+9. Observe `runStarted`, `runCompleted`, `resultCreated`, or repeated `resultCreated` events depending on the run mode.
+10. Query `GET /api/results`.
 
 ## Default Endpoints
 
@@ -61,7 +63,8 @@ The simulator is not a production inspection engine and does not expose private 
 | **Initialize** | Sends the initialize command. Only valid in `Uninitialized`. |
 | **Deinitialize** | Sends the deinitialize command. Only valid in `Ready`. |
 | **Apply ProductInfo** | Updates the current ProductInfo. Only valid in `Ready`. |
-| **Start Cycle** | Starts a run. Only valid in `Ready`; the response state is `Running`. |
+| **Start Single** | Starts a single run with `runMode=single`. Only valid in `Ready`; the response state is `Running`. The simulator emits a result and returns to `Ready` after the run-completed event. |
+| **Start Continue** | Starts a continuous run with `runMode=continue`. Only valid in `Ready`; the response state is `Running`. The simulator keeps emitting results until **Stop** is pressed. |
 | **Stop** | Stops the active run. Only valid in `Running`; the response state is `Ready`. |
 
 ## Observable behavior
@@ -70,14 +73,15 @@ The simulator is not a production inspection engine and does not expose private 
 | --- | --- |
 | Initialize | REST command returns `Ready`; state events are published. |
 | ProductInfo update | REST command returns `Ready`; ProductInfo events are published. |
-| Start | REST command returns `Running`; run-start events are published. |
-| Run completes | State returns to `Ready`; run-completed and result-created events are published. |
+| Start single | REST command returns `Running`; state changes to `Running`; a result-created event is published; run-completed returns the state to `Ready`. |
+| Start continue | REST command returns `Running`; state stays `Running`; result-created events continue until a stop command is accepted. |
+| Stop | State returns to `Ready`; no additional automatic run-completed event is required for continue mode. |
 | Invalid command | Command response contains `accepted=false` and `errorCode=invalid_state`; a rejection event may be published. |
 
 ## Recommended simulator acceptance process
 
 ```powershell
-dotnet test Virex.NET.Integration.sln
+dotnet test Virex.NET.Integration.slnx
 python -m mkdocs build --strict
 ```
 

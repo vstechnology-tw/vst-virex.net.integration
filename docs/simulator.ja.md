@@ -18,8 +18,9 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- | --- |
 | 1 | **Connection Settings** | シミュレーターが公開するエンドポイントを設定します。**REST prefix** は HTTP のベース アドレス、**TCP port** は NDJSON socket の待ち受けポート、**MQTT host** と **MQTT port/topic** は組み込み MQTT broker とトピック プレフィックス、**Result prefix** は結果 ID または結果パスにテスト用プレフィックスが必要な場合だけ使用します。 |
 | 2 | **ProductInfo** | 模擬システムへ送る製品コンテキストを設定します。Lot ID、Wafer ID、Recipe、Slot、Foup ID、Chamber ID を入力し、システムが `Ready` になってから **Apply ProductInfo** を押します。 |
-| 3 | **State** | 現在のシミュレーター状態を表示し、主要な操作ボタンを提供します。**Start Servers** は REST、TCP、MQTT エンドポイントを開きます。**Initialize**、**Deinitialize**、**Start Cycle**、**Stop** は、外部 REST クライアントから呼び出せるものと同じ公開状態遷移を実行します。 |
-| 4 | **Event Log** | ローカル シミュレーターの動作、サーバーの起動/停止メッセージ、コマンド拒否、その他の診断出力を表示します。ボタン操作やクライアント コマンドがシミュレーターに届いたことを確認するために使用します。 |
+| 3 | **State** | 現在のシミュレーター状態を表示し、主要な操作ボタンを提供します。**Start Servers** は REST、TCP、MQTT エンドポイントを開きます。**Initialize**、**Deinitialize**、**Start Single**、**Start Continue**、**Stop** は、外部 REST クライアントから呼び出せるものと同じ公開状態遷移を実行します。 |
+| 4 | **Event Log** | ローカル シミュレーターの動作、サーバーの起動/停止メッセージ、コマンド拒否、生成された結果、その他の診断出力を表示します。ボタン操作やクライアント コマンドがシミュレーターに届いたことを確認するために使用します。 |
+| 5 | **State Machine** | ライブ状態図を表示します。強調表示されたブロックは現在のシミュレーター状態に追従します。`ƒ` ラベルは command、`⚡` ラベルは event です。`Initializing`、`UpdatingProductInfo`、`Deinitializing` などの中間状態は短時間表示されるため、遷移経路を確認しやすくなります。 |
 
 ## シミュレーターの目的
 
@@ -39,9 +40,10 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 4. サンプルまたはベンダーのクライアントを接続します。
 5. システムを初期化します。
 6. 製品情報を送信します。
-7. **Start Cycle** を押すか、同等のクライアント コマンドを送信します。
-8. `runStarted`、`runCompleted`、`resultCreated` を観察します。
-9. `GET /api/results` をクエリします。
+7. **Start Single** を押して 1 回だけ自動実行するか、**Start Continue** を押して **Stop** まで結果を継続生成します。
+8. **State Machine** の強調表示が現在状態に合わせて移動することを確認します。
+9. run mode に応じて `runStarted`、`runCompleted`、`resultCreated`、または連続した `resultCreated` イベントを観察します。
+10. `GET /api/results` をクエリします。
 
 ## 既定のエンドポイント
 
@@ -61,7 +63,8 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | **Initialize** |初期化コマンドを送信します。 `Uninitialized` でのみ有効です。 |
 | **Deinitialize** |初期化解除コマンドを送信します。 `Ready` でのみ有効です。 |
 | **Apply ProductInfo** |現在の ProductInfo を更新します。 `Ready` でのみ有効です。 |
-| **Start Cycle** |実行を開始します。 `Ready` でのみ有効です。応答状態は `Running` です。 |
+| **Start Single** | `runMode=single` で 1 回の実行を開始します。`Ready` でのみ有効です。応答状態は `Running` です。シミュレーターは結果を生成し、run-completed event の後で `Ready` に戻ります。 |
+| **Start Continue** | `runMode=continue` で継続実行を開始します。`Ready` でのみ有効です。応答状態は `Running` です。**Stop** を押すまで結果を継続生成します。 |
 | **Stop** |アクティブな実行を停止します。 `Running` でのみ有効です。応答状態は `Ready` です。 |
 
 ## 観察可能な動作
@@ -70,14 +73,15 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- |
 | Initialize | REST コマンドは `Ready` を返します。状態イベントが公開されます。 |
 | ProductInfo アップデート | REST コマンドは `Ready` を返します。 ProductInfo イベントが公開されます。 |
-|開始 | REST コマンドは `Running` を返します。実行開始イベントが公開されます。 |
-|実行が完了しました |状態は `Ready` に戻ります。runCompletedイベントと結果作成イベントが公開されます。 |
+| Start single | REST コマンドは `Running` を返します。状態は `Running` に変わります。結果作成イベントが公開され、run-completed によって状態は `Ready` に戻ります。 |
+| Start continue | REST コマンドは `Running` を返します。状態は `Running` のままです。stop コマンドが受け入れられるまで結果作成イベントが継続します。 |
+| Stop | 状態は `Ready` に戻ります。continue mode では追加の自動 run-completed event は不要です。 |
 |無効なコマンド |コマンド応答には `accepted=false` および `errorCode=invalid_state` が含まれます。拒否イベントが公開される場合があります。 |
 
 ## 推奨されるシミュレーターの受け入れプロセス
 
 ```powershell
-dotnet test Virex.NET.Integration.sln
+dotnet test Virex.NET.Integration.slnx
 python -m mkdocs build --strict
 ```
 
