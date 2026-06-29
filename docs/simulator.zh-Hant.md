@@ -8,6 +8,19 @@
 dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 ```
 
+模擬器啟動後會顯示 WPF 視窗：
+
+![附有編號區域的模擬器主視窗](assets/simulator-main-window-annotated.png)
+
+## 模擬器視窗導覽
+
+| 區域 | 畫面區塊 | 用途 |
+| --- | --- | --- |
+| 1 | **Connection Settings** | 設定模擬器對外提供的端點。**REST prefix** 是 HTTP 基底位址，**TCP port** 是 NDJSON socket 監聽埠，**MQTT host** 與 **MQTT port/topic** 是內建 MQTT broker 與 topic 前綴，**Result prefix** 只在測試結果 ID 或結果路徑需要前綴時使用。 |
+| 2 | **ProductInfo** | 設定要送入模擬系統的產品脈絡。填入 Lot ID、Wafer ID、Recipe、Slot、Foup ID、Chamber ID，並在系統為 `Ready` 後按 **Apply ProductInfo**。 |
+| 3 | **State** | 顯示目前模擬器狀態，並提供主要互動按鈕。**Start Servers** 會開啟 REST、TCP、MQTT 端點。**Initialize**、**Deinitialize**、**Start Cycle**、**Stop** 會驅動與外部 REST 用戶端相同的公開狀態轉換。 |
+| 4 | **Event Log** | 顯示本機模擬器活動、伺服器啟停訊息、命令拒絕與其他診斷輸出。可用來確認按鈕操作或用戶端命令已送達模擬器。 |
+
 ## 模擬器用途
 
 | 目的 | 驗證項目 |
@@ -26,7 +39,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 4. 連接範例程式或廠商用戶端。
 5. 初始化系統。
 6. 送出 ProductInfo。
-7. 啟動執行。
+7. 按 **Start Cycle**，或送出等效的用戶端命令。
 8. 觀察 `runStarted`、`runCompleted`、`resultCreated`。
 9. 查詢 `GET /api/results`。
 
@@ -48,7 +61,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | **Initialize** | 送出初始化命令。只在 `Uninitialized` 合法。 |
 | **Deinitialize** | 送出反初始化命令。只在 `Ready` 合法。 |
 | **Apply ProductInfo** | 更新目前 ProductInfo。只在 `Ready` 合法。 |
-| **Start** | 啟動執行。只在 `Ready` 合法；回應狀態是 `Running`。 |
+| **Start Cycle** | 啟動執行。只在 `Ready` 合法；回應狀態是 `Running`。 |
 | **Stop** | 停止執行中的流程。只在 `Running` 合法；回應狀態是 `Ready`。 |
 
 ## 可觀察行為
