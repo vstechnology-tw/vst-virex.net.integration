@@ -26,8 +26,8 @@ extra:
       link: /vst-virex.net.integration/
       lang: en
     - name: 繁體中文
-      link: /vst-virex.net.integration/zh/
-      lang: zh
+      link: /vst-virex.net.integration/zh-Hant/
+      lang: zh-Hant
     - name: 日本語
       link: /vst-virex.net.integration/ja/
       lang: ja
@@ -45,7 +45,7 @@ plugins:
           build: true
           default: true
           site_name: Virex.NET Integration Kit
-        - locale: zh
+        - locale: zh-Hant
           name: 繁體中文
           build: true
           site_name: Virex.NET Integration Kit

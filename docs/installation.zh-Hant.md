@@ -27,7 +27,7 @@
 3. 保留預設端點，除非測試環境需要不同的連接埠。
 4. 執行 SDK 或原始通訊協定範例前，先按 **Start Servers**。
 
-模擬器按鈕、預設端點與操作流程請看 [模擬器操作手冊](simulator.zh.md)。
+模擬器按鈕、預設端點與操作流程請看 [模擬器操作手冊](simulator.zh-Hant.md)。
 
 ## NuGet 套件
 
@@ -52,6 +52,6 @@ dotnet add package Virex.NET.Contracts --version 2.0.3
 
 ## 下一步
 
-- 第一次驗證整合流程：看 [快速開始](quick-start.zh.md)。
-- 需要完整 C# SDK 呼叫方式：看 [C# SDK 指南](csharp-sdk.zh.md)。
-- 需要不同語言或直接使用通訊協定的範例：看 [範例程式](samples.zh.md)。
+- 第一次驗證整合流程：看 [快速開始](quick-start.zh-Hant.md)。
+- 需要完整 C# SDK 呼叫方式：看 [C# SDK 指南](csharp-sdk.zh-Hant.md)。
+- 需要不同語言或直接使用通訊協定的範例：看 [範例程式](samples.zh-Hant.md)。

@@ -17,10 +17,10 @@
 
 | 群組 | 模型 | 用途 |
 | --- | --- | --- |
-| System | [SystemStatus](payloads/system/system-status.zh.md), [ErrorInfo](payloads/system/error-info.zh.md) | 目前系統狀態與作用中錯誤資訊。 |
-| Product | [ProductInfo](payloads/product/product-info.zh.md) | 執行與結果關聯使用的產品資訊。 |
-| Commands | [CommandResponse](payloads/commands/command-response.zh.md), [SystemStartRequest](payloads/commands/system-start-request.zh.md), [SystemStopRequest](payloads/commands/system-stop-request.zh.md), [ControlRunModes](payloads/commands/control-run-modes.zh.md) | 命令要求與回應資料。 |
-| Results | [ResultSummary](payloads/results/result-summary.zh.md), [ResultList](payloads/results/result-list.zh.md) | 結果摘要資料與 REST 清單包裝。 |
+| System | [SystemStatus](payloads/system/system-status.zh-Hant.md), [ErrorInfo](payloads/system/error-info.zh-Hant.md) | 目前系統狀態與作用中錯誤資訊。 |
+| Product | [ProductInfo](payloads/product/product-info.zh-Hant.md) | 執行與結果關聯使用的產品資訊。 |
+| Commands | [CommandResponse](payloads/commands/command-response.zh-Hant.md), [SystemStartRequest](payloads/commands/system-start-request.zh-Hant.md), [SystemStopRequest](payloads/commands/system-stop-request.zh-Hant.md), [ControlRunModes](payloads/commands/control-run-modes.zh-Hant.md) | 命令要求與回應資料。 |
+| Results | [ResultSummary](payloads/results/result-summary.zh-Hant.md), [ResultList](payloads/results/result-list.zh-Hant.md) | 結果摘要資料與 REST 清單包裝。 |
 
 ## 關係摘要
 
