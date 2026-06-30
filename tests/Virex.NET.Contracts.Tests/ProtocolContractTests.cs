@@ -56,6 +56,12 @@ public sealed class ProtocolContractTests
     [Fact]
     public void TcpMessageParserRoutesCommandsAndProductInfo()
     {
+        Assert.True(TcpSocketMessageParser.TryParse("""{"type":"initialize"}""", out var initialize, out _));
+        Assert.Equal("initialize", initialize.Type);
+
+        Assert.True(TcpSocketMessageParser.TryParse("""{"type":"deinitialize"}""", out var deinitialize, out _));
+        Assert.Equal("deinitialize", deinitialize.Type);
+
         Assert.True(TcpSocketMessageParser.TryParse("""{"type":"start"}""", out var start, out _));
         Assert.Equal("start", start.Type);
         Assert.Null(start.Condition);

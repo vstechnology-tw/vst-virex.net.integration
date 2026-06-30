@@ -102,7 +102,11 @@ public sealed class TcpSimulatorServer
                     }
 
                     _session.WriteLog("TCP inbound: " + message.Type);
-                    if (message.Type == "productInfo" && message.ProductInfo is not null)
+                    if (message.Type == "initialize")
+                        await _session.InitializeAsync(token).ConfigureAwait(false);
+                    else if (message.Type == "deinitialize")
+                        await _session.DeinitializeAsync(token).ConfigureAwait(false);
+                    else if (message.Type == "productInfo" && message.ProductInfo is not null)
                         await _session.SetProductInfoAsync(message.ProductInfo, token).ConfigureAwait(false);
                     else if (message.Type == "start")
                         _ = Task.Run(async () =>

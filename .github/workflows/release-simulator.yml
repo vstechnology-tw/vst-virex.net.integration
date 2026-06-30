@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Simulator version to build, for example 2.0.2"
+        description: "Simulator version to build, for example 2.0.3.1"
         required: true
         type: string
       upload_to_release:
@@ -63,8 +63,8 @@ jobs:
             throw "Simulator version could not be resolved."
           }
 
-          if ($version -notmatch '^\d+\.\d+\.\d+([\-+][0-9A-Za-z\-.]+)?$') {
-            throw "Simulator version '$version' is not a valid SemVer-style version."
+          if ($version -notmatch '^\d+\.\d+\.\d+(\.\d+)?([\-+][0-9A-Za-z\-.]+)?$') {
+            throw "Simulator version '$version' is not a valid simulator version."
           }
 
           if ([string]::IsNullOrWhiteSpace($tag)) {

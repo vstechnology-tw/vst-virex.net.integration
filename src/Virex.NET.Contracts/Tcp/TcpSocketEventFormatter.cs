@@ -67,6 +67,10 @@ public static class TcpSocketEventFormatter
 
     public static string FormatCommand(string type) => Format(new { type });
 
+    public static string FormatInitializeCommand() => FormatCommand("initialize");
+
+    public static string FormatDeinitializeCommand() => FormatCommand("deinitialize");
+
     public static string FormatStartCommand(string? condition = null, string? runMode = null) =>
         Format(new
         {

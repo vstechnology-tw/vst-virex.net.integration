@@ -19,9 +19,9 @@
   "condition": "golden-sample",
   "overallResult": "OK",
   "defectCount": 0,
-  "imageRelativePath": "20260620/LOT-001/20260620_153012_W01.tiff",
+  "imageRelativePath": "20260620/LOT-001/20260620_153012_W01.bmp",
   "resultRelativePath": "20260620/LOT-001/20260620_153012_W01.json",
-  "imagePath": "/data/virex-results/20260620/LOT-001/20260620_153012_W01.tiff",
+  "imagePath": "/data/virex-results/20260620/LOT-001/20260620_153012_W01.bmp",
   "previewImagePath": "/data/virex-results/20260620/LOT-001/20260620_153012_W01.jpg",
   "resultPath": "/data/virex-results/20260620/LOT-001/20260620_153012_W01.json"
 }

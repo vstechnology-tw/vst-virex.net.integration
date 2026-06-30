@@ -26,6 +26,8 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 
 | Frame Type | Payload | Valid State | Result |
 | --- | --- | --- | --- |
+| `initialize` | `{"type":"initialize"}` | `Uninitialized` | Enters `Initializing`; completion emits `statusChanged` with `Ready`. |
+| `deinitialize` | `{"type":"deinitialize"}` | `Ready` | Enters `Deinitializing`; completion emits `statusChanged` with `Uninitialized`. |
 | `productInfo` | [ProductInfo](payloads/product/product-info.md) with `type` | `Ready` | Updates ProductInfo and emits `productInfoChanged`. |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.md) with `type` | `Ready` | Enters `Running`; completion is reported by events and results. |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.md) with `type` | `Running` | Stops the run and returns to `Ready`. |
@@ -92,6 +94,70 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
         "\n";
     SendTcpFrame("127.0.0.1", 5089, frame);
     ```
+
+## initialize command
+
+### Purpose
+
+Initialize the system over TCP. The command completes when `InitializationCompleted` moves the public state to `Ready`.
+
+### Frame
+
+```json
+{"type":"initialize"}
+```
+
+### Payload
+
+No body fields are required beyond `type: "initialize"`.
+
+### State Restrictions
+
+Only valid in `Uninitialized`.
+
+### Success event
+
+The service sends:
+
+```json
+{"type":"statusChanged","state":"Ready"}
+```
+
+### Error handling
+
+If the current state is not `Uninitialized`, the service sends `commandRejected`.
+
+## deinitialize command
+
+### Purpose
+
+Deinitialize the system over TCP. The command completes when `DeinitializationCompleted` moves the public state to `Uninitialized`.
+
+### Frame
+
+```json
+{"type":"deinitialize"}
+```
+
+### Payload
+
+No body fields are required beyond `type: "deinitialize"`.
+
+### State Restrictions
+
+Only valid in `Ready`.
+
+### Success event
+
+The service sends:
+
+```json
+{"type":"statusChanged","state":"Uninitialized"}
+```
+
+### Error handling
+
+If the current state is not `Ready`, the service sends `commandRejected`.
 
 ## productInfo command
 
@@ -278,7 +344,7 @@ Notifies the client that a public result summary has been created.
 ### Frame
 
 ```json
-{"type":"resultCreated","resultId":"RID-1","timestamp":"2026-06-20T15:30:12+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1","condition":"golden-sample","overallResult":"OK","defectCount":0,"imageRelativePath":"20260620/LOT-001/20260620_153012_W01.tiff","resultRelativePath":"20260620/LOT-001/20260620_153012_W01.json","imagePath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.tiff","previewImagePath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.jpg","resultPath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.json"}
+{"type":"resultCreated","resultId":"RID-1","timestamp":"2026-06-20T15:30:12+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1","condition":"golden-sample","overallResult":"OK","defectCount":0,"imageRelativePath":"20260620/LOT-001/20260620_153012_W01.bmp","resultRelativePath":"20260620/LOT-001/20260620_153012_W01.json","imagePath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.bmp","previewImagePath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.jpg","resultPath":"/data/virex-results/20260620/LOT-001/20260620_153012_W01.json"}
 ```
 
 ### Payload

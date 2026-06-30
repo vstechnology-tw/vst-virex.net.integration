@@ -8,17 +8,17 @@ This page explains how to obtain the public Virex.NET integration tools:
 
 ## GitHub Releases: Pre-built simulator EXEs
 
-The current simulator release is `v2.0.3`:
+The current simulator release is `v2.0.3.1`:
 
-[Download Virex.NET Simulator v2.0.3](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3)
+[Download Virex.NET Simulator v2.0.3.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3.1)
 
 Each ZIP contains `Virex.NET.Simulator.WPF.exe`. Please select the package according to the target environment:
 
 | File | Runtime | When To Use |
 | --- | --- | --- |
-| `Virex.NET.Simulator-v2.0.3-net48-win-x64.zip` | .NET Framework 4.8 | Use when the target Windows machine already has .NET Framework 4.8 installed. |
-| `Virex.NET.Simulator-v2.0.3-net8.0-windows-win-x64-self-contained.zip` | .NET 8 Windows | Use when you need a current Windows build that includes the runtime. |
-| `Virex.NET.Simulator-v2.0.3-net10.0-windows-win-x64-self-contained.zip` | .NET 10 Windows | Use when you need to validate the latest supported Windows target. |
+| `Virex.NET.Simulator-v2.0.3.1-net48-win-x64.zip` | .NET Framework 4.8 | Use when the target Windows machine already has .NET Framework 4.8 installed. |
+| `Virex.NET.Simulator-v2.0.3.1-net8.0-windows-win-x64-self-contained.zip` | .NET 8 Windows | Use when you need a current Windows build that includes the runtime. |
+| `Virex.NET.Simulator-v2.0.3.1-net10.0-windows-win-x64-self-contained.zip` | .NET 10 Windows | Use when you need to validate the latest supported Windows target. |
 
 After downloading:
 

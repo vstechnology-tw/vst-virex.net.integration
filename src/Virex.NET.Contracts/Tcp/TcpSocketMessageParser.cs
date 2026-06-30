@@ -24,7 +24,9 @@ public static class TcpSocketMessageParser
                 ? typeElement.GetString() ?? string.Empty
                 : string.Empty;
 
-            if (string.Equals(type, "start", System.StringComparison.OrdinalIgnoreCase) ||
+            if (string.Equals(type, "initialize", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "deinitialize", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "start", System.StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(type, "stop", System.StringComparison.OrdinalIgnoreCase))
             {
                 message.Type = type.ToLowerInvariant();

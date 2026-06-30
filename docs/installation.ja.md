@@ -8,17 +8,17 @@
 
 ## GitHub Releases: 事前に構築されたシミュレーター EXE
 
-現在のシミュレーター リリースは `v2.0.3` です。
+現在のシミュレーター リリースは `v2.0.3.1` です。
 
-[Virex.NET Simulator v2.0.3 をダウンロードする](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3)
+[Virex.NET Simulator v2.0.3.1 をダウンロードする](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3.1)
 
 各 ZIP には `Virex.NET.Simulator.WPF.exe` が含まれています。ターゲット環境に応じてパッケージを選択してください。
 
 |ファイル |ランタイム |いつ使用するか |
 | --- | --- | --- |
-| `Virex.NET.Simulator-v2.0.3-net48-win-x64.zip` | .NET Framework 4.8 |ターゲット Windows マシンに既に .NET Framework 4.8 がインストールされている場合に使用します。 |
-| `Virex.NET.Simulator-v2.0.3-net8.0-windows-win-x64-self-contained.zip` | .NET 8 ウィンドウ |ランタイムを含む最新の Windows ビルドが必要な場合に使用します。 |
-| `Virex.NET.Simulator-v2.0.3-net10.0-windows-win-x64-self-contained.zip` | .NET 10 ウィンドウ |サポートされている最新の Windows ターゲットを検証する必要がある場合に使用します。 |
+| `Virex.NET.Simulator-v2.0.3.1-net48-win-x64.zip` | .NET Framework 4.8 |ターゲット Windows マシンに既に .NET Framework 4.8 がインストールされている場合に使用します。 |
+| `Virex.NET.Simulator-v2.0.3.1-net8.0-windows-win-x64-self-contained.zip` | .NET 8 ウィンドウ |ランタイムを含む最新の Windows ビルドが必要な場合に使用します。 |
+| `Virex.NET.Simulator-v2.0.3.1-net10.0-windows-win-x64-self-contained.zip` | .NET 10 ウィンドウ |サポートされている最新の Windows ターゲットを検証する必要がある場合に使用します。 |
 
 ダウンロード後:
 

@@ -311,7 +311,7 @@ public sealed class SimulatorSession
         var id = $"{info.LotIDOr}-{info.WaferIDOr}-{info.SlotOr}-{now:yyyyMMdd_HHmmss}_{Interlocked.Increment(ref _resultSequence):000}";
         var relativeRoot = $"{now:yyyyMMdd}/{info.LotIDOr}";
         var artifactName = $"{now:yyyyMMdd_HHmmss}_{info.WaferIDOr}";
-        var imageRelative = $"{relativeRoot}/{artifactName}.tiff";
+        var imageRelative = $"{relativeRoot}/{artifactName}.bmp";
         var previewImageRelative = $"{relativeRoot}/{artifactName}.jpg";
         var resultRelative = $"{relativeRoot}/{artifactName}.json";
         var result = new ResultSummary

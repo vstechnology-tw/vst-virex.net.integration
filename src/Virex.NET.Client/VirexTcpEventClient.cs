@@ -35,6 +35,12 @@ public sealed class VirexTcpEventClient
     public async Task SendProductInfoAsync(ProductInfo info, CancellationToken cancellationToken = default) =>
         await SendFrameAsync(TcpSocketEventFormatter.FormatProductInfo(info), cancellationToken).ConfigureAwait(false);
 
+    public async Task SendInitializeAsync(CancellationToken cancellationToken = default) =>
+        await SendFrameAsync(TcpSocketEventFormatter.FormatInitializeCommand(), cancellationToken).ConfigureAwait(false);
+
+    public async Task SendDeinitializeAsync(CancellationToken cancellationToken = default) =>
+        await SendFrameAsync(TcpSocketEventFormatter.FormatDeinitializeCommand(), cancellationToken).ConfigureAwait(false);
+
     public async Task SendStartAsync(CancellationToken cancellationToken = default) =>
         await SendFrameAsync(TcpSocketEventFormatter.FormatStartCommand(), cancellationToken).ConfigureAwait(false);
 

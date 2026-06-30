@@ -8,17 +8,17 @@
 
 ## GitHub Releases: 사전 구축된 시뮬레이터 EXE
 
-현재 시뮬레이터 릴리스는 `v2.0.3`입니다.
+현재 시뮬레이터 릴리스는 `v2.0.3.1`입니다.
 
-[Virex.NET Simulator v2.0.3 다운로드](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3)
+[Virex.NET Simulator v2.0.3.1 다운로드](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3.1)
 
 각 우편번호에는 `Virex.NET.Simulator.WPF.exe`가 포함되어 있습니다. 대상 환경에 따라 패키지를 선택하십시오:
 
 | 파일 | 런타임 | 사용 시기 |
 | --- | --- | --- |
-| `Virex.NET.Simulator-v2.0.3-net48-win-x64.zip` | .NET Framework 4.8 | 대상 Windows 시스템에 이미 .NET Framework 4.8이 설치된 경우에 사용합니다. |
-| `Virex.NET.Simulator-v2.0.3-net8.0-windows-win-x64-self-contained.zip` | .NET 8 윈도우 | 런타임을 포함하는 현재 Windows 빌드가 필요할 때 사용합니다. |
-| `Virex.NET.Simulator-v2.0.3-net10.0-windows-win-x64-self-contained.zip` | .NET 10 윈도우 | 지원되는 최신 Windows 대상의 유효성을 검사해야 할 때 사용합니다. |
+| `Virex.NET.Simulator-v2.0.3.1-net48-win-x64.zip` | .NET Framework 4.8 | 대상 Windows 시스템에 이미 .NET Framework 4.8이 설치된 경우에 사용합니다. |
+| `Virex.NET.Simulator-v2.0.3.1-net8.0-windows-win-x64-self-contained.zip` | .NET 8 윈도우 | 런타임을 포함하는 현재 Windows 빌드가 필요할 때 사용합니다. |
+| `Virex.NET.Simulator-v2.0.3.1-net10.0-windows-win-x64-self-contained.zip` | .NET 10 윈도우 | 지원되는 최신 Windows 대상의 유효성을 검사해야 할 때 사용합니다. |
 
 다운로드 후:
 

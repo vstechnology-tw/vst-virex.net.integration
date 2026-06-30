@@ -36,6 +36,8 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.Single(session.Results);
         Assert.Equal("W01", session.Results[0].WaferID);
         Assert.Equal("golden-sample", session.Results[0].Condition);
+        Assert.EndsWith(".bmp", session.Results[0].ImageRelativePath);
+        Assert.EndsWith(".bmp", session.Results[0].ImagePath);
     }
 
     [Fact]
