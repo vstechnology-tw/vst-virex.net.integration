@@ -26,8 +26,8 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 
 | Frame Type | Payload | Valid State | Result |
 | --- | --- | --- | --- |
-| `initialize` | `{"type":"initialize"}` | `Uninitialized` | Enters `Initializing`; completion emits `statusChanged` with `Ready`. |
-| `deinitialize` | `{"type":"deinitialize"}` | `Ready` | Enters `Deinitializing`; completion emits `statusChanged` with `Uninitialized`. |
+| `initialize` | Command frame with `type` | `Uninitialized` | Enters `Initializing`; completion emits `statusChanged` with `Ready`. |
+| `deinitialize` | Command frame with `type` | `Ready` | Enters `Deinitializing`; completion emits `statusChanged` with `Uninitialized`. |
 | `productInfo` | [ProductInfo](payloads/product/product-info.md) with `type` | `Ready` | Updates ProductInfo and emits `productInfoChanged`. |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.md) with `type` | `Ready` | Enters `Running`; completion is reported by events and results. |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.md) with `type` | `Running` | Stops the run and returns to `Ready`. |
