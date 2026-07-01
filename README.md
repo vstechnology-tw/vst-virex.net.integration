@@ -1,7 +1,7 @@
 # Virex.NET Integration Kit
 
-[![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts)
-[![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client)
+[![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0)
+[![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client/2.1.0)
 
 This repository contains the public Virex.NET integration contract, C# client SDK, local simulator, samples, and documentation. It does not include private Virex.NET production internals.
 
@@ -11,10 +11,10 @@ The simulator and production-compatible services are expected to expose the same
 
 | Project | Purpose |
 | --- | --- |
-| `Virex.NET.Contracts` | Public payload schemas as C# models, REST routes, MQTT topic names, and TCP/NDJSON helpers. |
-| `Virex.NET.Client` | C# SDK wrappers for REST, TCP, and MQTT integration. |
+| `Virex.NET.Contracts` | Public payload schemas as C# models, RESTful API routes, MQTT topic names, and TCP/NDJSON helpers. |
+| `Virex.NET.Client` | C# SDK wrappers for RESTful API, TCP, and MQTT integration. |
 | `Virex.NET.Simulator.Core` | Simulator-specific state/session behavior. |
-| `Virex.NET.Simulator.WPF` | Local Windows simulator exposing REST, TCP, and MQTT endpoints. |
+| `Virex.NET.Simulator.WPF` | Local Windows simulator exposing RESTful API, TCP, and MQTT endpoints. |
 | `samples` | C#, Python, and C++ integration examples. |
 | `docs` | Public protocol and simulator documentation. |
 
@@ -35,14 +35,15 @@ Default simulator endpoints:
 
 | Interface | Default |
 | --- | --- |
-| REST | `http://127.0.0.1:5088` |
+| RESTful API | `http://127.0.0.1:5088` |
 | TCP | `127.0.0.1:5089` |
 | MQTT | `127.0.0.1:1883`, base topic `virex` |
 
-## Current Public REST Surface
+## Current Public RESTful API Surface
 
 ```text
 GET  /api/status
+GET  /api/error
 GET  /api/product-info
 POST /api/product-info
 POST /api/system/initialize
@@ -69,11 +70,11 @@ commandRejected
 Start here:
 
 - [Documentation Index](docs/index.md)
-- [REST API](docs/rest-api.md)
+- [RESTful API](docs/rest-api.md)
 - [System State Machine](docs/state-machine.md)
 - [Payload Reference](docs/payloads.md)
 - [TCP Socket Protocol](docs/tcp-socket.md)
-- [MQTT Events](docs/mqtt-events.md)
+- [MQTT Protocol](docs/mqtt-events.md)
 - [Samples](docs/samples.md)
 
 ## Verification

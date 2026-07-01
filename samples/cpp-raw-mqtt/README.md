@@ -1,6 +1,6 @@
 # C++ Raw MQTT Sample
 
-Demonstrates MQTT event subscription for the current public protocol.
+Demonstrates MQTT event subscription plus RESTful API equivalent command/query topics for the current public protocol.
 
 Run the simulator first and press **Start Servers**.
 

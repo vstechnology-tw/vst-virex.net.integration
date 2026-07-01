@@ -20,5 +20,5 @@
 
 | 介面 | 用法 |
 | --- | --- |
-| REST | `POST /api/system/deinitialize` 不使用 request body。 |
+| RESTful API | `POST /api/system/deinitialize` 不使用 request body。 |
 | TCP | 傳入 `type: "deinitialize"` 命令資料框。 |

@@ -57,9 +57,9 @@ plugins:
             Simulator Guide: Simulator 指南
             State Machine: 狀態機
             Protocol Reference: 通訊協定參考
-            REST API: REST API
+            RESTful API: RESTful API
             TCP Socket: TCP Socket
-            MQTT Events: MQTT Events
+            MQTT Events: MQTT Protocol
             Payload Reference: Payload Reference
             Payload Overview: Payload 總覽
             System Payloads: System Payloads
@@ -84,9 +84,9 @@ plugins:
             Simulator Guide: Simulator ガイド
             State Machine: 状態機械
             Protocol Reference: プロトコルリファレンス
-            REST API: REST API
+            RESTful API: RESTful API
             TCP Socket: TCP Socket
-            MQTT Events: MQTT Events
+            MQTT Events: MQTT Protocol
             Payload Reference: Payload リファレンス
             Payload Overview: Payload 概要
             System Payloads: System Payloads
@@ -111,9 +111,9 @@ plugins:
             Simulator Guide: Simulator 가이드
             State Machine: 상태 머신
             Protocol Reference: 프로토콜 참조
-            REST API: REST API
+            RESTful API: RESTful API
             TCP Socket: TCP Socket
-            MQTT Events: MQTT Events
+            MQTT Events: MQTT Protocol
             Payload Reference: Payload 참조
             Payload Overview: Payload 개요
             System Payloads: System Payloads
@@ -144,14 +144,14 @@ nav:
   - Simulator Guide: simulator.md
   - State Machine: state-machine.md
   - Protocol Reference:
-      - REST API: rest-api.md
+      - RESTful API: rest-api.md
       - TCP Socket: tcp-socket.md
-      - MQTT Events: mqtt-events.md
-      - Payload Reference:
-          - Payload Overview: payloads.md
-          - System Payloads:
-              - SystemStatus: payloads/system/system-status.md
-              - ErrorInfo: payloads/system/error-info.md
+      - MQTT Protocol: mqtt-events.md
+  - Payload Reference:
+      - Payload Overview: payloads.md
+      - System Payloads:
+          - SystemStatus: payloads/system/system-status.md
+          - ErrorInfo: payloads/system/error-info.md
           - Product Payloads:
               - ProductInfo: payloads/product/product-info.md
           - Command Payloads:

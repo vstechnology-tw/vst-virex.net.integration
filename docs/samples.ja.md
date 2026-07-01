@@ -18,7 +18,7 @@
 |例 |コマンド |目的 |
 | --- | --- | --- |
 | `samples/csharp-sdk` | `dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj` |推奨される .NET エントリ ポイント。初期化、ProductInfo、開始、停止、結果クエリを示します。 |
-| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | REST 状態クエリ、ProductInfo、システム コマンド、および結果クエリを直接呼び出します。 |
+| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | RESTful API 状態クエリ、ProductInfo、システム コマンド、および結果クエリを直接呼び出します。 |
 | `samples/csharp-raw-tcp` | `dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj` | TCP/NDJSON 初期フレームと ProductInfo 更新イベントを示します。 |
 | `samples/csharp-raw-mqtt` | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | MQTT 状態、ProductInfo、実行、結果、および拒否イベントを監視します。 |
 
@@ -46,6 +46,6 @@ TCP および MQTT の例では、同じ CMake パターンを使用します。
 
 |フロー |期待される動作 |
 | --- | --- |
-| SDK および REST |初期化は `Uninitialized` から `Ready` に移行します。 ProductInfo の更新は `Ready` に戻ります。開始は `Running` を返します。実行の完了後に結果を照会できます。 |
+| SDK および RESTful API |初期化は `Uninitialized` から `Ready` に移行します。 ProductInfo の更新は `Ready` に戻ります。開始は `Running` を返します。実行の完了後に結果を照会できます。 |
 | TCP |このサンプルは、`5089` に接続し、初期状態/ProductInfo フレームを読み取り、ProductInfo NDJSON フレームを送信し、更新イベントを出力します。 |
 | MQTT |このサンプルは、`virex/#` をサブスクライブし、`statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、および `commandRejected` を出力します。 |

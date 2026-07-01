@@ -27,12 +27,19 @@ public static class TcpSocketMessageParser
             if (string.Equals(type, "initialize", System.StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(type, "deinitialize", System.StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(type, "start", System.StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(type, "stop", System.StringComparison.OrdinalIgnoreCase))
+                string.Equals(type, "stop", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "status", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "error", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "getProductInfo", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "results", System.StringComparison.OrdinalIgnoreCase))
             {
-                message.Type = type.ToLowerInvariant();
+                message.Type = NormalizeType(type);
                 message.Condition = ReadOptionalString(root, "condition");
                 message.RunMode = ReadRunMode(root);
                 message.Reason = ReadOptionalString(root, "reason");
+                message.LotID = ReadOptionalString(root, "lotID");
+                message.WaferID = ReadOptionalString(root, "waferID");
+                message.Recipe = ReadOptionalString(root, "recipe");
                 return true;
             }
 
@@ -65,4 +72,9 @@ public static class TcpSocketMessageParser
         ControlRunModes.TryNormalize(ReadOptionalString(root, "runMode"), out var runMode)
             ? runMode
             : string.Empty;
+
+    private static string NormalizeType(string type) =>
+        string.Equals(type, "getProductInfo", System.StringComparison.OrdinalIgnoreCase)
+            ? "getProductInfo"
+            : type.ToLowerInvariant();
 }

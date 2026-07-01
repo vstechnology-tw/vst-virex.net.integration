@@ -1,6 +1,6 @@
-# REST API
+# RESTful API
 
-REST API は、状態の読み取り、ProductInfo の管理、システム コマンドの送信、および結果の概要のクエリに使用されます。
+RESTful API は、状態の読み取り、ProductInfo の管理、システム コマンドの送信、および結果の概要のクエリに使用されます。
 
 ## 基本情報
 

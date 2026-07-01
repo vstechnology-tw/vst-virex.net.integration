@@ -1,13 +1,13 @@
 # 疑難排解
 
-## REST 要求失敗
+## RESTful API 要求失敗
 
 檢查：
 
 - 模擬器或正式端點已啟動。
-- REST 基底 URL 正確。
+- RESTful API 基底 URL 正確。
 - 防火牆允許設定的連接埠。
-- 路由列在 [REST API](rest-api.zh-Hant.md)。
+- 路由列在 [RESTful API](rest-api.zh-Hant.md)。
 
 ## 命令回傳 `invalid_state`
 

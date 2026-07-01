@@ -1,6 +1,6 @@
-# Python Raw REST Sample
+# Python Raw RESTful API Sample
 
-Demonstrates the current REST API using Python standard library HTTP support.
+Demonstrates the current RESTful API using Python standard library HTTP support.
 
 Run the simulator first and press **Start Servers**.
 

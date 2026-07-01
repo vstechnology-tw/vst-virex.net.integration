@@ -1,6 +1,6 @@
 # ResultList
 
-`ResultList` 是結果查詢的 REST 回應包裝。
+`ResultList` 是結果查詢的 RESTful API 回應包裝。
 
 ## JSON
 
@@ -22,7 +22,7 @@
 
 | 介面 | 用法 |
 | --- | --- |
-| REST | `GET /api/results` 回應。 |
+| RESTful API | `GET /api/results` 回應。 |
 
 ## 支援的查詢篩選條件
 

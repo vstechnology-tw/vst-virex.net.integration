@@ -15,5 +15,5 @@
 
 | 인터페이스 | 사용법 |
 | --- | --- |
-| REST | `POST /api/system/start` 요청 내용입니다. |
+| RESTful API | `POST /api/system/start` 요청 내용입니다. |
 | TCP | 수신 `type: "start"` 명령 프레임. |

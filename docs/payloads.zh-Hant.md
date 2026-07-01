@@ -20,7 +20,7 @@
 | System | [SystemStatus](payloads/system/system-status.zh-Hant.md), [ErrorInfo](payloads/system/error-info.zh-Hant.md) | 目前系統狀態與作用中錯誤資訊。 |
 | Product | [ProductInfo](payloads/product/product-info.zh-Hant.md) | 執行與結果關聯使用的產品資訊。 |
 | Commands | [CommandResponse](payloads/commands/command-response.zh-Hant.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.zh-Hant.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.zh-Hant.md), [SystemStartRequest](payloads/commands/system-start-request.zh-Hant.md), [SystemStopRequest](payloads/commands/system-stop-request.zh-Hant.md), [ControlRunModes](payloads/commands/control-run-modes.zh-Hant.md) | 命令要求與回應資料。 |
-| Results | [ResultSummary](payloads/results/result-summary.zh-Hant.md), [ResultList](payloads/results/result-list.zh-Hant.md) | 結果摘要資料與 REST 清單包裝。 |
+| Results | [ResultSummary](payloads/results/result-summary.zh-Hant.md), [ResultList](payloads/results/result-list.zh-Hant.md) | 結果摘要資料與 RESTful API 清單包裝。 |
 
 ## 關係摘要
 
@@ -47,13 +47,13 @@ flowchart TD
     ResultSummary --> ResultList
 ```
 
-`Start` 會保存目前的 `ProductInfo` 快照與開始 `condition`。產生結果時會把兩者複製到 `ResultSummary`。REST 結果查詢會回傳 `ResultList`。
+`Start` 會保存目前的 `ProductInfo` 快照與開始 `condition`。產生結果時會把兩者複製到 `ResultSummary`。RESTful API 結果查詢會回傳 `ResultList`。
 
 `SystemStatus` 回報生命週期狀態。`ErrorInfo` 是獨立的作用中錯誤資訊，不是另一種生命週期狀態。
 
 ## 傳輸對照
 
-| 資料模型 | REST | TCP | MQTT |
+| 資料模型 | RESTful API | TCP | MQTT |
 | --- | --- | --- | --- |
 | SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
 | ProductInfo | `GET/POST /api/product-info` | 傳入 `type: "productInfo"`；傳出 `type: "productInfoChanged"` | `virex/productInfoChanged` |

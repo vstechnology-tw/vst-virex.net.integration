@@ -1,6 +1,6 @@
 # C# SDK 指南
 
-`Virex.NET.Client` 為公開 REST、TCP、MQTT 整合 API 提供強型別封裝。
+`Virex.NET.Client` 為公開 RESTful API、TCP、MQTT 整合 API 提供強型別封裝。
 
 ## 安裝
 
@@ -32,7 +32,7 @@ using var client = new VirexClient(new VirexClientOptions
 });
 ```
 
-## REST 命令/查詢流程
+## RESTful API 命令/查詢流程
 
 ```csharp
 using Virex.NET.Contracts;
@@ -92,11 +92,11 @@ using var cts = new CancellationTokenSource();
 await client.MqttEvents.RunAsync(cts.Token);
 ```
 
-MQTT 只用於事件。命令請使用 REST 或 TCP。
+MQTT 只用於事件。命令請使用 RESTful API 或 TCP。
 
 ## 錯誤處理
 
-REST 傳輸失敗與非成功 HTTP 回應會丟出 `VirexClientException`。通訊協定層級的拒絕會以 `CommandResponse` 表示：
+RESTful API 傳輸失敗與非成功 HTTP 回應會丟出 `VirexClientException`。通訊協定層級的拒絕會以 `CommandResponse` 表示：
 
 ```csharp
 var response = await client.StartAsync();

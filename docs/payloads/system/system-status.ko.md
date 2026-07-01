@@ -31,7 +31,7 @@ Deinitializing
 
 | 인터페이스 | 사용법 |
 | --- | --- |
-| REST | `GET /api/status` 응답. |
+| RESTful API | `GET /api/status` 응답. |
 | TCP | `statusChanged`, `runStarted`, `runCompleted` 이벤트. |
 | MQTT | `virex/statusChanged`, `virex/runStarted`, `virex/runCompleted`. |
 

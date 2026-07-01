@@ -10,6 +10,12 @@ public sealed class TcpSocketMessage
 
     public string? Reason { get; set; }
 
+    public string? LotID { get; set; }
+
+    public string? WaferID { get; set; }
+
+    public string? Recipe { get; set; }
+
     public ProductInfo? ProductInfo { get; set; }
 
     public string RawJson { get; set; } = string.Empty;

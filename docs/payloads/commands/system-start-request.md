@@ -22,7 +22,7 @@
 
 | Interface | Usage |
 | --- | --- |
-| REST | `POST /api/system/start` request content. |
+| RESTful API | `POST /api/system/start` request content. |
 | TCP | Incoming `type: "start"` command frame. |
 
 See [ControlRunModes](control-run-modes.md) for allowed `runMode` values.

@@ -125,6 +125,14 @@ namespace
         return Packet(0x82, payload);
     }
 
+    std::vector<uint8_t> PublishPacket(const std::string& topic, const std::string& message)
+    {
+        std::vector<uint8_t> payload;
+        AppendUtf8Field(payload, topic);
+        payload.insert(payload.end(), message.begin(), message.end());
+        return Packet(0x30, payload);
+    }
+
     SocketHandle Connect(const char* host, const char* port)
     {
         addrinfo hints{};
@@ -246,17 +254,17 @@ namespace
         return true;
     }
 
-    void PrintPublish(uint8_t first, const std::vector<uint8_t>& payload)
+    bool TryParsePublish(uint8_t first, const std::vector<uint8_t>& payload, std::string& topic, std::string& message)
     {
         if (payload.size() < 2)
         {
-            return;
+            return false;
         }
 
         const size_t topicLength = (static_cast<size_t>(payload[0]) << 8) | payload[1];
         if (payload.size() < 2 + topicLength)
         {
-            return;
+            return false;
         }
 
         const int qos = (first >> 1) & 0x03;
@@ -266,9 +274,10 @@ namespace
             offset += 2;
         }
 
-        const std::string topic(payload.begin() + 2, payload.begin() + 2 + static_cast<std::ptrdiff_t>(topicLength));
-        const std::string message(payload.begin() + static_cast<std::ptrdiff_t>(offset), payload.end());
+        topic.assign(payload.begin() + 2, payload.begin() + 2 + static_cast<std::ptrdiff_t>(topicLength));
+        message.assign(payload.begin() + static_cast<std::ptrdiff_t>(offset), payload.end());
         std::cout << topic << ": " << message << std::endl;
+        return true;
     }
 
     void PrintStep(const std::string& title)
@@ -294,11 +303,9 @@ int main(int argc, char* argv[])
         const char* host = argc > 1 ? argv[1] : "127.0.0.1";
         const char* port = argc > 2 ? argv[2] : "1883";
         const std::string baseTopic = argc > 3 ? argv[3] : "virex";
-        const int durationSeconds = argc > 4 ? std::stoi(argv[4]) : 30;
         const std::string topicFilter = baseTopic + "/#";
 
-        PrintStep("Virex.NET C++ Raw MQTT Guided Demo");
-        std::cout << "This sample subscribes to simulator MQTT events and lets you trigger each event from the UI." << std::endl;
+        PrintStep("Virex.NET C++ Raw MQTT 13-Step Demo");
         std::cout << "MQTT endpoint: " << host << ":" << port << std::endl;
         std::cout << "Topic filter: " << topicFilter << std::endl;
         Prompt("Press Start Servers, then press Enter here.");
@@ -323,21 +330,72 @@ int main(int argc, char* argv[])
             throw std::runtime_error("MQTT SUBACK was not received.");
         }
 
-        PrintStep("Step 1 - Trigger events from Simulator");
-        std::cout << "Subscribed to " << topicFilter << " for " << durationSeconds << " seconds." << std::endl;
-        std::cout << "Expected UI actions and topics:" << std::endl;
-        std::cout << "- Press Apply ProductInfo: expect virex/productInfoChanged." << std::endl;
-        std::cout << "- Press Initialize: expect virex/statusChanged with state=Ready." << std::endl;
-        std::cout << "- Press Start Cycle: expect virex/statusChanged and virex/resultCreated." << std::endl;
-
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(durationSeconds);
-        while (std::chrono::steady_clock::now() < deadline)
+        auto waitForTopic = [&](const std::string& expectedTopic)
         {
-            if (TryRecvPacket(client.value, first, payload) && (first >> 4) == 3)
+            const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+            while (std::chrono::steady_clock::now() < deadline)
             {
-                PrintPublish(first, payload);
+                if (TryRecvPacket(client.value, first, payload) && (first >> 4) == 3)
+                {
+                    std::string topic;
+                    std::string message;
+                    if (TryParsePublish(first, payload, topic, message) && (expectedTopic.empty() || topic == expectedTopic))
+                    {
+                        return;
+                    }
+                }
             }
-        }
+
+            throw std::runtime_error("Timed out waiting for MQTT topic: " + expectedTopic);
+        };
+
+        auto publishCommand = [&](const std::string& command, const std::string& correlationId, const std::string& body)
+        {
+            const std::string commandTopic = baseTopic + "/" + command;
+            const std::string responseTopic = baseTopic + "/responses/" + correlationId;
+            SendAll(client.value, PublishPacket(commandTopic, body));
+            std::cout << "Published " << commandTopic << ": " << body << std::endl;
+            waitForTopic(responseTopic);
+        };
+
+        PrintStep("Step 1 - Query status");
+        publishCommand("commands/status/get", "cpp-raw-mqtt-status-1", R"({"correlationId":"cpp-raw-mqtt-status-1"})");
+
+        PrintStep("Step 2 - Query error");
+        publishCommand("commands/error/get", "cpp-raw-mqtt-error-2", R"({"correlationId":"cpp-raw-mqtt-error-2"})");
+
+        PrintStep("Step 3 - Query ProductInfo");
+        publishCommand("commands/product-info/get", "cpp-raw-mqtt-product-get-3", R"({"correlationId":"cpp-raw-mqtt-product-get-3"})");
+
+        PrintStep("Step 4 - Initialize");
+        publishCommand("commands/system/initialize", "cpp-raw-mqtt-initialize-4", R"({"correlationId":"cpp-raw-mqtt-initialize-4"})");
+
+        PrintStep("Step 5 - Confirm Ready");
+        publishCommand("commands/status/get", "cpp-raw-mqtt-ready-5", R"({"correlationId":"cpp-raw-mqtt-ready-5"})");
+
+        PrintStep("Step 6 - Set ProductInfo");
+        publishCommand("commands/product-info/set", "cpp-raw-mqtt-product-set-6", R"({"correlationId":"cpp-raw-mqtt-product-set-6","productInfo":{"waferID":"WCPP-MQTT-210-001","lotID":"LOT-CPP-MQTT-210","recipe":"RCP-DEMO","slot":"1","foupID":"FOUP-DEMO","chamberID":"CH-1"}})");
+
+        PrintStep("Step 7 - Confirm ProductInfo");
+        publishCommand("commands/product-info/get", "cpp-raw-mqtt-product-confirm-7", R"({"correlationId":"cpp-raw-mqtt-product-confirm-7"})");
+
+        PrintStep("Step 8 - Start run");
+        publishCommand("commands/system/start", "cpp-raw-mqtt-start-8", R"({"correlationId":"cpp-raw-mqtt-start-8","condition":"golden-sample","runMode":"continue"})");
+
+        PrintStep("Step 9 - Observe run events");
+        waitForTopic("");
+
+        PrintStep("Step 10 - Stop run");
+        publishCommand("commands/system/stop", "cpp-raw-mqtt-stop-10", R"({"correlationId":"cpp-raw-mqtt-stop-10","reason":"operator-request"})");
+
+        PrintStep("Step 11 - Query results");
+        publishCommand("commands/results/query", "cpp-raw-mqtt-results-11", R"({"correlationId":"cpp-raw-mqtt-results-11","lotID":"LOT-CPP-MQTT-210","waferID":"WCPP-MQTT-210-001"})");
+
+        PrintStep("Step 12 - Deinitialize");
+        publishCommand("commands/system/deinitialize", "cpp-raw-mqtt-deinitialize-12", R"({"correlationId":"cpp-raw-mqtt-deinitialize-12"})");
+
+        PrintStep("Step 13 - Confirm Uninitialized");
+        publishCommand("commands/status/get", "cpp-raw-mqtt-uninitialized-13", R"({"correlationId":"cpp-raw-mqtt-uninitialized-13"})");
     }
     catch (const std::exception& ex)
     {

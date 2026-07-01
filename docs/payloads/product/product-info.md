@@ -30,7 +30,7 @@
 
 | Interface | Usage |
 | --- | --- |
-| REST | `GET /api/product-info` response and `POST /api/product-info` request. |
+| RESTful API | `GET /api/product-info` response and `POST /api/product-info` request. |
 | TCP | Incoming `productInfo` commands and outgoing `productInfoChanged` events. |
 | MQTT | `virex/productInfoChanged`. |
 | Results | `Start` saves a ProductInfo snapshot; snapshot fields are copied when creating results. |

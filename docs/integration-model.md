@@ -9,7 +9,7 @@ flowchart LR
     Vendor["Vendor Application"]
 
     subgraph ClientSide["Client Integration Options"]
-        Raw["Raw REST / MQTT / TCP"]
+        Raw["Raw RESTful API / MQTT / TCP"]
         Sdk["C# SDK wrapper"]
     end
 
@@ -28,7 +28,7 @@ flowchart LR
     Contract <--> Production
 ```
 
-The SDK is optional. Vendors can use raw REST/MQTT/TCP integration or `Virex.NET.Client`, but both methods must comply with the same public contract.
+The SDK is optional. Vendors can use raw RESTful API/MQTT/TCP integration or `Virex.NET.Client`, but both methods must comply with the same public contract.
 
 During development, vendors usually connect to the simulator. When deploying, the vendor connects to the production product endpoint. The endpoint changes, but the contract and transport behavior should not.
 
@@ -36,7 +36,7 @@ During development, vendors usually connect to the simulator. When deploying, th
 
 | Package or application | Role |
 | --- | --- |
-| `Virex.NET.Contracts` | Provides public C# data models, REST route constants, MQTT topic names, TCP/NDJSON parsers, and event formatting helpers. |
+| `Virex.NET.Contracts` | Provides public C# data models, RESTful API route constants, MQTT topic names, TCP/NDJSON parsers, and event formatting helpers. |
 | `Virex.NET.Client` | Optional C# SDK wrapper for vendors who want strongly typed helper APIs. It is not the integration boundary. |
 | `Virex.NET.Simulator.Core` | Simulator-specific state machine and session implementation. Production services should share the public contract, not depend on this simulator core. |
 | `Virex.NET.Simulator.WPF` | Local endpoint used to simulate externally observable state transitions and event behavior. |
@@ -48,7 +48,7 @@ During development, vendors usually connect to the simulator. When deploying, th
 
 | Transport | Direction | Responsibility |
 | --- | --- | --- |
-| REST | Client to service | Commands and queries for state, ProductInfo, system lifecycle, runs, and result lists. |
+| RESTful API | Client to service | Commands and queries for state, ProductInfo, system lifecycle, runs, and result lists. |
 | TCP / NDJSON | Bidirectional | Direct socket integration for command frames and event frames. |
 | MQTT | Service to Client | Outgoing event notifications only. MQTT is not used for commands. |
 
@@ -68,7 +68,7 @@ Vendor integrations are portable from the simulator to the production endpoint o
 This integration kit can include:
 
 - Communication data models and protocol constants.
-- REST, MQTT, TCP/NDJSON data formatting and parsing tools.
+- RESTful API, MQTT, TCP/NDJSON data formatting and parsing tools.
 - C# SDK wrapper layer.
 - Simulator behavior that reproduces externally visible Virex.NET state transitions.
 - Examples and documentation.

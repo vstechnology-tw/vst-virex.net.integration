@@ -1,6 +1,6 @@
 # C# SDK Guide
 
-`Virex.NET.Client` provides typed wrappers for the public REST, TCP, and MQTT integration APIs.
+`Virex.NET.Client` provides typed wrappers for the public RESTful API, TCP, and MQTT integration APIs.
 
 ## Install
 
@@ -32,7 +32,7 @@ using var client = new VirexClient(new VirexClientOptions
 });
 ```
 
-## REST Command/Query Flow
+## RESTful API Command/Query Flow
 
 ```csharp
 using Virex.NET.Contracts;
@@ -80,7 +80,25 @@ await client.TcpEvents.SendProductInfoAsync(new ProductInfo
 await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 ```
 
-## MQTT events
+TCP also supports RESTful API equivalent query frames:
+
+```csharp
+var tcpStatus = await client.TcpEvents.GetStatusAsync();
+var tcpError = await client.TcpEvents.GetErrorAsync();
+var tcpProductInfo = await client.TcpEvents.GetProductInfoAsync();
+var tcpResults = await client.TcpEvents.QueryResultsAsync(lotID: "LOT-001");
+```
+
+## MQTT commands and events
+
+MQTT command calls publish to `virex/commands/...` and wait for a correlated response on `virex/responses/{correlationId}`:
+
+```csharp
+var mqttStatus = await client.MqttCommands.GetStatusAsync();
+var mqttInitialize = await client.MqttCommands.InitializeAsync();
+var mqttStart = await client.MqttCommands.StartAsync("mqtt-check", ControlRunModes.Continue);
+var mqttResults = await client.MqttCommands.QueryResultsAsync(lotID: "LOT-001");
+```
 
 ```csharp
 client.MqttEvents.EventReceived += (_, value) =>
@@ -92,11 +110,9 @@ using var cts = new CancellationTokenSource();
 await client.MqttEvents.RunAsync(cts.Token);
 ```
 
-MQTT is only used for events. Please use REST or TCP for commands.
-
 ## Error handling
 
-REST transport failures and non-success HTTP responses throw `VirexClientException`. Protocol-level command rejections are represented by `CommandResponse`:
+RESTful API transport failures and non-success HTTP responses throw `VirexClientException`. Protocol-level command rejections are represented by `CommandResponse`:
 
 ```csharp
 var response = await client.StartAsync();

@@ -2,7 +2,7 @@
 
 Use this checklist to determine whether a vendor integration is ready to move from the simulator to a production-compatible endpoint.
 
-## REST
+## RESTful API
 
 | Check | Expected Result |
 | --- | --- |
@@ -22,7 +22,7 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 | Connection | Client can connect to the configured TCP port. |
 | Framing | Each frame is one UTF-8 JSON object ending with `\n`. |
 | ProductInfo command | `type: "productInfo"` updates ProductInfo in `Ready`. |
-| Start/stop commands | `type: "start"` and `type: "stop"` follow the same state rules as REST. |
+| Start/stop commands | `type: "start"` and `type: "stop"` follow the same state rules as RESTful API. |
 | Event parsing | Client can handle `statusChanged`, `productInfoChanged`, `runStarted`, `runCompleted`, `resultCreated`, `errorChanged`, and `commandRejected`. |
 
 ## MQTT

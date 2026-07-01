@@ -1,6 +1,6 @@
 # C# SDK 안내
 
-`Virex.NET.Client`는 공개 REST, TCP 및 MQTT 통합 API에 대한 타입이 지정된 래퍼를 제공합니다.
+`Virex.NET.Client`는 공개 RESTful API, TCP 및 MQTT 통합 API에 대한 타입이 지정된 래퍼를 제공합니다.
 
 ## 설치
 
@@ -32,7 +32,7 @@ using var client = new VirexClient(new VirexClientOptions
 });
 ```
 
-## REST 명령/쿼리 흐름
+## RESTful API 명령/쿼리 흐름
 
 ```csharp
 using Virex.NET.Contracts;
@@ -92,11 +92,11 @@ using var cts = new CancellationTokenSource();
 await client.MqttEvents.RunAsync(cts.Token);
 ```
 
-MQTT는 이벤트에만 사용됩니다. 명령에는 REST 또는 TCP를 사용하십시오.
+MQTT는 이벤트에만 사용됩니다. 명령에는 RESTful API 또는 TCP를 사용하십시오.
 
 ## 오류 처리
 
-REST 전송 방식 오류 및 성공하지 않은 HTTP 응답으로 인해 `VirexClientException`가 발생합니다. 프로토콜 수준 명령 거부는 `CommandResponse`로 표시됩니다.
+RESTful API 전송 방식 오류 및 성공하지 않은 HTTP 응답으로 인해 `VirexClientException`가 발생합니다. 프로토콜 수준 명령 거부는 `CommandResponse`로 표시됩니다.
 
 ```csharp
 var response = await client.StartAsync();

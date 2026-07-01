@@ -20,5 +20,5 @@
 
 | 인터페이스 | 사용법 |
 | --- | --- |
-| REST | `POST /api/system/initialize`는 요청 본문을 사용하지 않습니다. |
+| RESTful API | `POST /api/system/initialize`는 요청 본문을 사용하지 않습니다. |
 | TCP | 수신 `type: "initialize"` 명령 프레임. |

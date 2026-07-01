@@ -20,7 +20,7 @@ Each model has its own page. Vendors can use the C# types in `Virex.NET.Contract
 | System | [SystemStatus](payloads/system/system-status.md), [ErrorInfo](payloads/system/error-info.md) | Current system state and active error information. |
 | Product | [ProductInfo](payloads/product/product-info.md) | Product information associated with runs and results. |
 | Commands | [CommandResponse](payloads/commands/command-response.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.md), [SystemStartRequest](payloads/commands/system-start-request.md), [SystemStopRequest](payloads/commands/system-stop-request.md), [ControlRunModes](payloads/commands/control-run-modes.md) | Command requests and command responses. |
-| Results | [ResultSummary](payloads/results/result-summary.md), [ResultList](payloads/results/result-list.md) | Result summaries and the REST result-list wrapper. |
+| Results | [ResultSummary](payloads/results/result-summary.md), [ResultList](payloads/results/result-list.md) | Result summaries and the RESTful API result-list wrapper. |
 
 ## Relationship summary
 
@@ -47,13 +47,13 @@ flowchart TD
     ResultSummary --> ResultList
 ```
 
-`Start` captures the current `ProductInfo` snapshot and start `condition`. Both values are copied to `ResultSummary` when the result is produced. REST result queries return `ResultList`.
+`Start` captures the current `ProductInfo` snapshot and start `condition`. Both values are copied to `ResultSummary` when the result is produced. RESTful API result queries return `ResultList`.
 
 `SystemStatus` reports the lifecycle state. `ErrorInfo` is independent active error information, not another lifecycle state.
 
 ## Transport Mapping
 
-| Data Model | REST | TCP | MQTT |
+| Data Model | RESTful API | TCP | MQTT |
 | --- | --- | --- | --- |
 | SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
 | ProductInfo | `GET/POST /api/product-info` | Incoming `type: "productInfo"`; outgoing `type: "productInfoChanged"` | `virex/productInfoChanged` |

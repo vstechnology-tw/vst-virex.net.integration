@@ -5,6 +5,18 @@ public static class TcpSocketEventFormatter
     public static string FormatStatus(SystemStatus status) =>
         Format(new { type = "statusChanged", status.State });
 
+    public static string FormatStatusResponse(SystemStatus status) =>
+        Format(new { type = "status", status.State });
+
+    public static string FormatErrorResponse(ErrorInfo error) =>
+        Format(new
+        {
+            type = "error",
+            error.HasError,
+            error.Message,
+            error.State,
+        });
+
     public static string FormatProductInfo(ProductInfo info) =>
         Format(new
         {
@@ -15,6 +27,26 @@ public static class TcpSocketEventFormatter
             info.Slot,
             info.FoupID,
             info.ChamberID,
+        });
+
+    public static string FormatProductInfoResponse(ProductInfo info) =>
+        Format(new
+        {
+            type = "productInfo",
+            info.LotID,
+            info.WaferID,
+            info.Recipe,
+            info.Slot,
+            info.FoupID,
+            info.ChamberID,
+        });
+
+    public static string FormatResults(ResultList results) =>
+        Format(new
+        {
+            type = "results",
+            results.Items,
+            results.Count,
         });
 
     public static string FormatRunStarted(SystemStatus status) =>

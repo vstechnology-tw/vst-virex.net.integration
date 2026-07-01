@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
+    <VersionPrefix>2.1.0</VersionPrefix>
     <RollForward>LatestMajor</RollForward>
   </PropertyGroup>
 

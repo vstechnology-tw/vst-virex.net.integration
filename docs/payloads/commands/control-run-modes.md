@@ -15,5 +15,5 @@ Omitted or blank `runMode` will be normalized to `continue`.
 
 | Interface | Usage |
 | --- | --- |
-| REST | `POST /api/system/start` request content. |
+| RESTful API | `POST /api/system/start` request content. |
 | TCP | Incoming `type: "start"` command frame. |

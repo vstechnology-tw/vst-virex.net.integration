@@ -102,7 +102,22 @@ public sealed class TcpSimulatorServer
                     }
 
                     _session.WriteLog("TCP inbound: " + message.Type);
-                    if (message.Type == "initialize")
+                    if (message.Type == "status")
+                        SafeWrite(writer, TcpSocketEventFormatter.FormatStatusResponse(_session.Status));
+                    else if (message.Type == "error")
+                        SafeWrite(writer, TcpSocketEventFormatter.FormatErrorResponse(_session.Error));
+                    else if (message.Type == "getProductInfo")
+                        SafeWrite(writer, TcpSocketEventFormatter.FormatProductInfoResponse(_session.ProductInfo));
+                    else if (message.Type == "results")
+                    {
+                        var items = _session.QueryResults(message.LotID, message.WaferID, message.Recipe);
+                        SafeWrite(writer, TcpSocketEventFormatter.FormatResults(new ResultList
+                        {
+                            Items = items,
+                            Count = items.Length,
+                        }));
+                    }
+                    else if (message.Type == "initialize")
                         await _session.InitializeAsync(token).ConfigureAwait(false);
                     else if (message.Type == "deinitialize")
                         await _session.DeinitializeAsync(token).ConfigureAwait(false);

@@ -76,6 +76,43 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public void TcpMessageParserRoutesRestEquivalentQueryFrames()
+    {
+        Assert.True(TcpSocketMessageParser.TryParse("""{"type":"status"}""", out var status, out _));
+        Assert.Equal("status", status.Type);
+
+        Assert.True(TcpSocketMessageParser.TryParse("""{"type":"error"}""", out var error, out _));
+        Assert.Equal("error", error.Type);
+
+        Assert.True(TcpSocketMessageParser.TryParse("""{"type":"getProductInfo"}""", out var productInfo, out _));
+        Assert.Equal("getProductInfo", productInfo.Type);
+
+        Assert.True(TcpSocketMessageParser.TryParse(
+            """{"type":"results","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}""",
+            out var results,
+            out _));
+        Assert.Equal("results", results.Type);
+        Assert.Equal("LOT-001", results.LotID);
+        Assert.Equal("W01", results.WaferID);
+        Assert.Equal("RCP-A", results.Recipe);
+    }
+
+    [Fact]
+    public void MqttTopicsExposeRestEquivalentCommandTopics()
+    {
+        Assert.Equal("commands/status/get", MqttTopics.CommandStatusGet);
+        Assert.Equal("commands/error/get", MqttTopics.CommandErrorGet);
+        Assert.Equal("commands/product-info/get", MqttTopics.CommandProductInfoGet);
+        Assert.Equal("commands/product-info/set", MqttTopics.CommandProductInfoSet);
+        Assert.Equal("commands/system/initialize", MqttTopics.CommandSystemInitialize);
+        Assert.Equal("commands/system/deinitialize", MqttTopics.CommandSystemDeinitialize);
+        Assert.Equal("commands/system/start", MqttTopics.CommandSystemStart);
+        Assert.Equal("commands/system/stop", MqttTopics.CommandSystemStop);
+        Assert.Equal("commands/results/query", MqttTopics.CommandResultsQuery);
+        Assert.Equal("virex/responses/abc-123", MqttTopics.ResponseTopic("virex", "abc-123"));
+    }
+
+    [Fact]
     public void EventParserReadsNewEventNames()
     {
         var json = TcpSocketEventFormatter.FormatStatus(new SystemStatus { State = SystemStates.Running });

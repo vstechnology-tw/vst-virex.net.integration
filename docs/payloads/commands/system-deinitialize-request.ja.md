@@ -20,5 +20,5 @@
 
 |インターフェイス |使用方法 |
 | --- | --- |
-| REST | `POST /api/system/deinitialize` はリクエストボディを使用しません。 |
+| RESTful API | `POST /api/system/deinitialize` はリクエストボディを使用しません。 |
 | TCP | 受信 `type: "deinitialize"` コマンドフレーム。 |

@@ -10,11 +10,11 @@ Execute from the repository root:
 dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 ```
 
-Keep the default endpoint settings and click **Start Servers** to start the REST/TCP/MQTT service.
+Keep the default endpoint settings and click **Start Servers** to start the RESTful API/TCP/MQTT service.
 
 | Interface | Default |
 | --- | --- |
-| REST | `http://127.0.0.1:5088` |
+| RESTful API | `http://127.0.0.1:5088` |
 | TCP | `127.0.0.1:5089` |
 | MQTT | `127.0.0.1:1883`, root topic `virex` |
 
@@ -59,15 +59,15 @@ The result should contain the ProductInfo at which `Start` was accepted:
 
 ## 5. Select a Protocol Check
 
-- REST browser: `http://127.0.0.1:5088/scalar`
+- RESTful API browser: `http://127.0.0.1:5088/scalar`
 - MQTT: Subscribe to `virex/#`
-- If you are not using the C# SDK, run the raw TCP or raw REST samples.
+- If you are not using the C# SDK, run the raw TCP or raw RESTful API samples.
 
 ## Completion Conditions
 
 A successful quick start confirms that:
 
-- REST state query returns a valid `state`.
+- RESTful API state query returns a valid `state`.
 - ProductInfo can be updated at `Ready`.
 - Start returns `Running`.
 - After the run completes, the state returns to `Ready`.

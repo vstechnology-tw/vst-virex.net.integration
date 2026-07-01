@@ -2,7 +2,7 @@
 
 使用這份清單判斷廠商整合是否可以從模擬器切到正式相容端點。
 
-## REST
+## RESTful API
 
 | 檢查項目 | 預期結果 |
 | --- | --- |
@@ -22,7 +22,7 @@
 | 連線 | 用戶端可以連上設定的 TCP 連接埠。 |
 | 分幀 | 每個資料框是一個 UTF-8 JSON 物件，並以 `\n` 結尾。 |
 | ProductInfo 命令 | `type: "productInfo"` 在 `Ready` 更新 ProductInfo。 |
-| 啟動/停止命令 | `type: "start"` 與 `type: "stop"` 遵守 REST 相同狀態規則。 |
+| 啟動/停止命令 | `type: "start"` 與 `type: "stop"` 遵守 RESTful API 相同狀態規則。 |
 | 事件解析 | 用戶端可處理 `statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、`commandRejected`。 |
 
 ## MQTT

@@ -20,5 +20,5 @@
 
 | 介面 | 用法 |
 | --- | --- |
-| REST | `POST /api/system/stop` 要求內容。 |
+| RESTful API | `POST /api/system/stop` 要求內容。 |
 | TCP | 傳入 `type: "stop"` 命令資料框。 |

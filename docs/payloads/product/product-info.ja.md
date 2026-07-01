@@ -30,7 +30,7 @@
 
 |インターフェース |使い方 |
 | --- | --- |
-| REST | `GET /api/product-info` 応答と `POST /api/product-info` 要求。 |
+| RESTful API | `GET /api/product-info` 応答と `POST /api/product-info` 要求。 |
 | TCP |受信 `productInfo` コマンドと送信 `productInfoChanged` イベント。 |
 | MQTT | `virex/productInfoChanged`。 |
 |結果 | `Start` は ProductInfo スナップショットを保存します。スナップショット フィールドは結果の作成時にコピーされます。 |

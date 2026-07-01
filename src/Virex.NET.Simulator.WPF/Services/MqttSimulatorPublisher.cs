@@ -42,6 +42,11 @@ public sealed class MqttSimulatorPublisher :
             .Build();
 
         await _client.ConnectAsync(options, CancellationToken.None).ConfigureAwait(false);
+        _client.ApplicationMessageReceivedAsync += HandleCommandAsync;
+        var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
+            .WithTopicFilter(f => f.WithTopic(MqttTopics.Combine(_topic, MqttTopics.Commands + "/#")))
+            .Build();
+        await _client.SubscribeAsync(subscribeOptions, CancellationToken.None).ConfigureAwait(false);
         _session.StatusChanged += OnStatusChanged;
         _session.ProductInfoChanged += OnProductInfoChanged;
         _session.ResultCreated += OnResultCreated;
@@ -61,7 +66,10 @@ public sealed class MqttSimulatorPublisher :
         _session.ErrorChanged -= OnErrorChanged;
         _session.CommandRejected -= OnCommandRejected;
         if (_client is not null && _client.IsConnected)
+        {
+            _client.ApplicationMessageReceivedAsync -= HandleCommandAsync;
             await _client.DisconnectAsync(new MqttClientDisconnectOptions(), CancellationToken.None).ConfigureAwait(false);
+        }
     }
 
     public ValueTask Handle(StatusChangedEvent notification, CancellationToken cancellationToken) =>
@@ -117,6 +125,89 @@ public sealed class MqttSimulatorPublisher :
     private void OnCommandRejected(object? sender, CommandResponse response) =>
         _ = PublishAsync(MqttTopics.CommandRejected, ProtocolJson.Serialize(response));
 
+    private async Task HandleCommandAsync(MqttApplicationMessageReceivedEventArgs e)
+    {
+        var topic = e.ApplicationMessage.Topic;
+        var childTopic = ChildTopic(topic);
+        if (!childTopic.StartsWith(MqttTopics.Commands + "/", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment.ToArray());
+        var request = string.IsNullOrWhiteSpace(payload)
+            ? new MqttCommandRequest()
+            : ProtocolJson.Deserialize<MqttCommandRequest>(payload) ?? new MqttCommandRequest();
+        if (string.IsNullOrWhiteSpace(request.CorrelationId))
+            request.CorrelationId = Guid.NewGuid().ToString("N");
+
+        var response = await ExecuteCommandAsync(childTopic, payload, request).ConfigureAwait(false);
+        await PublishResponseAsync(request.CorrelationId, response).ConfigureAwait(false);
+    }
+
+    private async Task<MqttCommandResponse> ExecuteCommandAsync(string childTopic, string payload, MqttCommandRequest request)
+    {
+        var response = new MqttCommandResponse
+        {
+            CorrelationId = request.CorrelationId,
+            Topic = childTopic,
+        };
+
+        if (childTopic == MqttTopics.CommandStatusGet)
+            response.Status = _session.Status;
+        else if (childTopic == MqttTopics.CommandErrorGet)
+            response.Error = _session.Error;
+        else if (childTopic == MqttTopics.CommandProductInfoGet)
+            response.ProductInfo = _session.ProductInfo;
+        else if (childTopic == MqttTopics.CommandProductInfoSet)
+            response.CommandResponse = await _session.SetProductInfoAsync(ReadProductInfo(payload, request)).ConfigureAwait(false);
+        else if (childTopic == MqttTopics.CommandSystemInitialize)
+            response.CommandResponse = await _session.InitializeAsync().ConfigureAwait(false);
+        else if (childTopic == MqttTopics.CommandSystemDeinitialize)
+            response.CommandResponse = await _session.DeinitializeAsync().ConfigureAwait(false);
+        else if (childTopic == MqttTopics.CommandSystemStart)
+            response.CommandResponse = await _session.StartAsync(new SystemStartRequest
+            {
+                Condition = request.Condition,
+                RunMode = request.RunMode,
+            }).ConfigureAwait(false);
+        else if (childTopic == MqttTopics.CommandSystemStop)
+            response.CommandResponse = await _session.StopAsync(new SystemStopRequest { Reason = request.Reason }).ConfigureAwait(false);
+        else if (childTopic == MqttTopics.CommandResultsQuery)
+        {
+            var items = _session.QueryResults(request.LotID, request.WaferID, request.Recipe);
+            response.Results = new ResultList { Items = items, Count = items.Length };
+        }
+        else
+        {
+            response.Accepted = false;
+            response.ErrorCode = "unknown_topic";
+            response.Message = "Unknown MQTT command topic.";
+        }
+
+        if (response.CommandResponse is not null)
+            response.Accepted = response.CommandResponse.Accepted;
+
+        return response;
+    }
+
+    private static ProductInfo ReadProductInfo(string payload, MqttCommandRequest request)
+    {
+        if (request.ProductInfo is not null)
+            return request.ProductInfo;
+
+        return ProductInfoJsonParser.TryParse(payload, out var info, out _)
+            ? info
+            : new ProductInfo();
+    }
+
+    private string ChildTopic(string topic)
+    {
+        var root = string.IsNullOrWhiteSpace(_topic) ? MqttTopics.DefaultBaseTopic : _topic.Trim();
+        var prefix = root.TrimEnd('/') + "/";
+        return topic.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? topic.Substring(prefix.Length)
+            : topic;
+    }
+
     private async Task PublishAsync(string childTopic, string payload)
     {
         if (_client is null || !_client.IsConnected)
@@ -124,6 +215,22 @@ public sealed class MqttSimulatorPublisher :
 
         var message = new MqttApplicationMessageBuilder()
             .WithTopic(MqttTopics.Combine(_topic, childTopic))
+            .WithPayload(Encoding.UTF8.GetBytes(payload))
+            .Build();
+
+        await _client.PublishAsync(message, CancellationToken.None).ConfigureAwait(false);
+    }
+
+    private Task PublishResponseAsync(string correlationId, MqttCommandResponse response) =>
+        PublishRawAsync(MqttTopics.ResponseTopic(_topic, correlationId), ProtocolJson.Serialize(response));
+
+    private async Task PublishRawAsync(string topic, string payload)
+    {
+        if (_client is null || !_client.IsConnected)
+            return;
+
+        var message = new MqttApplicationMessageBuilder()
+            .WithTopic(topic)
             .WithPayload(Encoding.UTF8.GetBytes(payload))
             .Build();
 

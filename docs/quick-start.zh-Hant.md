@@ -10,11 +10,11 @@
 dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 ```
 
-保留預設端點設定，按 **Start Servers** 啟動 REST/TCP/MQTT 服務。
+保留預設端點設定，按 **Start Servers** 啟動 RESTful API/TCP/MQTT 服務。
 
 | 介面 | 預設值 |
 | --- | --- |
-| REST | `http://127.0.0.1:5088` |
+| RESTful API | `http://127.0.0.1:5088` |
 | TCP | `127.0.0.1:5089` |
 | MQTT | `127.0.0.1:1883`，topic 前綴 `virex` |
 
@@ -59,15 +59,15 @@ dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj
 
 ## 5. 選用通訊協定檢查
 
-- REST 瀏覽器：`http://127.0.0.1:5088/scalar`
+- RESTful API 瀏覽器：`http://127.0.0.1:5088/scalar`
 - MQTT：訂閱 `virex/#`
-- 如果不用 C# SDK，可以執行原始 TCP 或原始 REST 範例。
+- 如果不用 C# SDK，可以執行原始 TCP 或原始 RESTful API 範例。
 
 ## 完成條件
 
 快速開始完成時應該符合：
 
-- REST 狀態查詢回傳有效 `state`。
+- RESTful API 狀態查詢回傳有效 `state`。
 - ProductInfo 可以在 `Ready` 更新。
 - Start 回傳 `Running`。
 - 執行完成後狀態回到 `Ready`。

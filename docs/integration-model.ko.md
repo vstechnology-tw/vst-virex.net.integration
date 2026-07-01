@@ -9,7 +9,7 @@ flowchart LR
     Vendor["벤더 애플리케이션"]
 
     subgraph ClientSide["클라이언트 측 통합 방식"]
-        Raw["Raw REST / MQTT / TCP"]
+        Raw["Raw RESTful API / MQTT / TCP"]
         Sdk["C# SDK wrapper"]
     end
 
@@ -28,7 +28,7 @@ flowchart LR
     Contract <--> Production
 ```
 
-SDK는 선택 사항입니다. 벤더는 원시 REST/MQTT/TCP 통합 또는 `Virex.NET.Client`를 사용할 수 있지만 두 방식 모두 동일한 공개 계약을 준수해야 합니다.
+SDK는 선택 사항입니다. 벤더는 원시 RESTful API/MQTT/TCP 통합 또는 `Virex.NET.Client`를 사용할 수 있지만 두 방식 모두 동일한 공개 계약을 준수해야 합니다.
 
 개발 중에 벤더는 일반적으로 시뮬레이터에 연결합니다. 배포 시 벤더는 운영 제품 엔드포인트에 연결됩니다. 엔드포인트는 변경되지만 계약 및 통신 동작은 변경되어서는 안 됩니다.
 
@@ -36,7 +36,7 @@ SDK는 선택 사항입니다. 벤더는 원시 REST/MQTT/TCP 통합 또는 `Vir
 
 | 패키지 또는 애플리케이션 | 역할 |
 | --- | --- |
-| `Virex.NET.Contracts` | 공개 C# 데이터 모델, REST 경로 상수, MQTT 토픽 이름, TCP/NDJSON 파서 및 이벤트 형식 지정 도우미를 제공합니다. |
+| `Virex.NET.Contracts` | 공개 C# 데이터 모델, RESTful API 경로 상수, MQTT 토픽 이름, TCP/NDJSON 파서 및 이벤트 형식 지정 도우미를 제공합니다. |
 | `Virex.NET.Client` | 엄격한 타입의 도우미 API를 원하는 벤더를 위한 선택적 C# SDK 래퍼입니다. 통합 경계가 아닙니다. |
 | `Virex.NET.Simulator.Core` | 시뮬레이터별 상태 머신 및 세션 구현. 운영 서비스는 이 시뮬레이터 코어에 의존하지 않고 공개 계약을 공유해야 합니다. |
 | `Virex.NET.Simulator.WPF` | 외부에서 관찰 가능한 상태 전환 및 이벤트 동작을 시뮬레이션하는 데 사용되는 로컬 엔드포인트입니다. |
@@ -48,7 +48,7 @@ SDK는 선택 사항입니다. 벤더는 원시 REST/MQTT/TCP 통합 또는 `Vir
 
 | 통신 방식 | 방향 | 책임 |
 | --- | --- | --- |
-| REST | 클라이언트에서 서비스로 | 상태, ProductInfo, 시스템 수명 주기, 실행 및 결과 목록에 대한 명령 및 쿼리입니다. |
+| RESTful API | 클라이언트에서 서비스로 | 상태, ProductInfo, 시스템 수명 주기, 실행 및 결과 목록에 대한 명령 및 쿼리입니다. |
 | TCP / NDJSON | 양방향 | 명령 프레임 및 이벤트 프레임에 대한 직접 소켓 통합. |
 | MQTT | 서비스에서 클라이언트로 | 발신 이벤트 알림만 가능합니다. MQTT는 명령에 사용되지 않습니다. |
 
@@ -68,7 +68,7 @@ SDK는 선택 사항입니다. 벤더는 원시 REST/MQTT/TCP 통합 또는 `Vir
 이 통합 키트에는 다음이 포함될 수 있습니다.
 
 - 통신 데이터 모델 및 프로토콜 상수.
-- REST, MQTT, TCP/NDJSON 데이터 형식 지정 및 구문 분석 도구.
+- RESTful API, MQTT, TCP/NDJSON 데이터 형식 지정 및 구문 분석 도구.
 - C# SDK 래퍼 레이어.
 - 외부에서 볼 수 있는 Virex.NET 상태 전환을 재현하는 시뮬레이터 동작.
 - 예제 및 문서.

@@ -20,5 +20,5 @@
 
 |インターフェイス |使用方法 |
 | --- | --- |
-| REST | `POST /api/system/initialize` はリクエストボディを使用しません。 |
+| RESTful API | `POST /api/system/initialize` はリクエストボディを使用しません。 |
 | TCP | 受信 `type: "initialize"` コマンドフレーム。 |

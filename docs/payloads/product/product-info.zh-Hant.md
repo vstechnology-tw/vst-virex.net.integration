@@ -30,7 +30,7 @@
 
 | 介面 | 用法 |
 | --- | --- |
-| REST | `GET /api/product-info` 回應與 `POST /api/product-info` 要求。 |
+| RESTful API | `GET /api/product-info` 回應與 `POST /api/product-info` 要求。 |
 | TCP | 傳入 `productInfo` 命令與傳出 `productInfoChanged` 事件。 |
 | MQTT | `virex/productInfoChanged`。 |
 | Results | `Start` 會保存 ProductInfo 快照；建立結果時會複製快照欄位。 |

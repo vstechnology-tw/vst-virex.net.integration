@@ -1,6 +1,6 @@
-# REST API
+# RESTful API
 
-REST API 用於讀取狀態、管理 ProductInfo、送出系統命令，以及查詢結果摘要。
+RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以及查詢結果摘要。
 
 ## 基本資訊
 

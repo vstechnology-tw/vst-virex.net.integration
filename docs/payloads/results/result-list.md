@@ -1,6 +1,6 @@
 # ResultList
 
-`ResultList` is the REST response wrapper for the result query.
+`ResultList` is the RESTful API response wrapper for the result query.
 
 ## JSON
 
@@ -22,7 +22,7 @@
 
 | Interface | Usage |
 | --- | --- |
-| REST | `GET /api/results` response. |
+| RESTful API | `GET /api/results` response. |
 
 ## Supported Query Filters
 

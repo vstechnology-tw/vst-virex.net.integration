@@ -2,7 +2,7 @@
 
 このチェックリストを使用して、ベンダー統合をシミュレーターから運用互換エンドポイントに移行する準備ができているかどうかを判断します。
 
-## REST
+## RESTful API
 
 |チェック |期待される結果 |
 | --- | --- |
@@ -22,7 +22,7 @@
 |接続 |クライアントは、構成された TCP ポートに接続できます。 |
 |フレーミング |各フレームは、`\n` で終わる 1 つの UTF-8 JSON オブジェクトです。 |
 | ProductInfo コマンド | `type: "productInfo"` は、`Ready` の ProductInfo を更新します。 |
-|開始/stop コマンド | `type: "start"` および `type: "stop"` は、REST と同じ状態ルールに従います。 |
+|開始/stop コマンド | `type: "start"` および `type: "stop"` は、RESTful API と同じ状態ルールに従います。 |
 |イベント解析 |クライアントは、`statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、および `commandRejected` を処理できます。 |
 
 ## MQTT
