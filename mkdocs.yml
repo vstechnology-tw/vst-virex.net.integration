@@ -156,6 +156,8 @@ nav:
               - ProductInfo: payloads/product/product-info.md
           - Command Payloads:
               - CommandResponse: payloads/commands/command-response.md
+              - SystemInitializeRequest: payloads/commands/system-initialize-request.md
+              - SystemDeinitializeRequest: payloads/commands/system-deinitialize-request.md
               - SystemStartRequest: payloads/commands/system-start-request.md
               - SystemStopRequest: payloads/commands/system-stop-request.md
               - ControlRunModes: payloads/commands/control-run-modes.md

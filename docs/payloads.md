@@ -19,7 +19,7 @@ Each model has its own page. Vendors can use the C# types in `Virex.NET.Contract
 | --- | --- | --- |
 | System | [SystemStatus](payloads/system/system-status.md), [ErrorInfo](payloads/system/error-info.md) | Current system state and active error information. |
 | Product | [ProductInfo](payloads/product/product-info.md) | Product information associated with runs and results. |
-| Commands | [CommandResponse](payloads/commands/command-response.md), [SystemStartRequest](payloads/commands/system-start-request.md), [SystemStopRequest](payloads/commands/system-stop-request.md), [ControlRunModes](payloads/commands/control-run-modes.md) | Command requests and command responses. |
+| Commands | [CommandResponse](payloads/commands/command-response.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.md), [SystemStartRequest](payloads/commands/system-start-request.md), [SystemStopRequest](payloads/commands/system-stop-request.md), [ControlRunModes](payloads/commands/control-run-modes.md) | Command requests and command responses. |
 | Results | [ResultSummary](payloads/results/result-summary.md), [ResultList](payloads/results/result-list.md) | Result summaries and the REST result-list wrapper. |
 
 ## Relationship summary
@@ -27,6 +27,8 @@ Each model has its own page. Vendors can use the C# types in `Virex.NET.Contract
 ```mermaid
 flowchart TD
     ProductInfo["ProductInfo"]
+    Initialize["SystemInitializeRequest"]
+    Deinitialize["SystemDeinitializeRequest"]
     Start["SystemStartRequest"]
     Stop["SystemStopRequest"]
     CommandResponse["CommandResponse"]
@@ -36,6 +38,8 @@ flowchart TD
     ResultList["ResultList"]
 
     ProductInfo --> ResultSummary
+    Initialize --> CommandResponse
+    Deinitialize --> CommandResponse
     Start --> CommandResponse
     Stop --> CommandResponse
     CommandResponse --> SystemStatus
@@ -54,6 +58,8 @@ flowchart TD
 | SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
 | ProductInfo | `GET/POST /api/product-info` | Incoming `type: "productInfo"`; outgoing `type: "productInfoChanged"` | `virex/productInfoChanged` |
 | CommandResponse | System command route response | `type: "commandRejected"` when a command is rejected | `virex/commandRejected` |
+| SystemInitializeRequest | `POST /api/system/initialize` uses no request body | Incoming `type: "initialize"` | Not used |
+| SystemDeinitializeRequest | `POST /api/system/deinitialize` uses no request body | Incoming `type: "deinitialize"` | Not used |
 | SystemStartRequest | `POST /api/system/start` request | Incoming `type: "start"` | Not used |
 | SystemStopRequest | `POST /api/system/stop` request | Incoming `type: "stop"` | Not used |
 | ResultSummary | `GET /api/results` item; result-created event | `type: "resultCreated"` | `virex/resultCreated` |

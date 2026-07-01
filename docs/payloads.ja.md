@@ -19,7 +19,7 @@
 | --- | --- | --- |
 |システム | [SystemStatus](payloads/system/system-status.ja.md)、[ErrorInfo](payloads/system/error-info.ja.md) |現在のシステム状態とアクティブなエラー情報。 |
 |製品 | [ProductInfo](payloads/product/product-info.ja.md) |実行と結果に関連する製品情報。 |
-|コマンド | [CommandResponse](payloads/commands/command-response.ja.md)、[SystemStartRequest](payloads/commands/system-start-request.ja.md)、[SystemStopRequest](payloads/commands/system-stop-request.ja.md)、[ControlRunModes](payloads/commands/control-run-modes.ja.md) |コマンド要求とコマンド応答。 |
+|コマンド | [CommandResponse](payloads/commands/command-response.ja.md)、[SystemInitializeRequest](payloads/commands/system-initialize-request.ja.md)、[SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md)、[SystemStartRequest](payloads/commands/system-start-request.ja.md)、[SystemStopRequest](payloads/commands/system-stop-request.ja.md)、[ControlRunModes](payloads/commands/control-run-modes.ja.md) |コマンド要求とコマンド応答。 |
 |結果 | [ResultSummary](payloads/results/result-summary.ja.md)、[ResultList](payloads/results/result-list.ja.md) |結果の概要と REST 結果リスト ラッパー。 |
 
 ## 関係の概要
@@ -27,6 +27,8 @@
 ```mermaid
 flowchart TD
     ProductInfo["ProductInfo"]
+    Initialize["SystemInitializeRequest"]
+    Deinitialize["SystemDeinitializeRequest"]
     Start["SystemStartRequest"]
     Stop["SystemStopRequest"]
     CommandResponse["CommandResponse"]
@@ -36,6 +38,8 @@ flowchart TD
     ResultList["ResultList"]
 
     ProductInfo --> ResultSummary
+    Initialize --> CommandResponse
+    Deinitialize --> CommandResponse
     Start --> CommandResponse
     Stop --> CommandResponse
     CommandResponse --> SystemStatus
@@ -54,6 +58,8 @@ flowchart TD
 | SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
 | ProductInfo | `GET/POST /api/product-info` |受信 `type: "productInfo"`;送信 `type: "productInfoChanged"` | `virex/productInfoChanged` |
 | CommandResponse |システムコマンドルート応答 |コマンドが拒否された場合の `type: "commandRejected"` | `virex/commandRejected` |
+| SystemInitializeRequest | `POST /api/system/initialize` はリクエストボディを使用しません |受信 `type: "initialize"` |未使用 |
+| SystemDeinitializeRequest | `POST /api/system/deinitialize` はリクエストボディを使用しません |受信 `type: "deinitialize"` |未使用 |
 | SystemStartRequest | `POST /api/system/start` 要求 |受信 `type: "start"` |未使用 |
 | SystemStopRequest | `POST /api/system/stop` 要求 |受信 `type: "stop"` |未使用 |
 | ResultSummary | `GET /api/results` 項目;結果作成イベント | `type: "resultCreated"` | `virex/resultCreated` |

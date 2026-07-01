@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | 시스템 | [SystemStatus](payloads/system/system-status.ko.md), [ErrorInfo](payloads/system/error-info.ko.md) | 현재 시스템 상태 및 활성 오류 정보. |
 | 제품 | [ProductInfo](payloads/product/product-info.ko.md) | 실행 및 결과와 관련된 제품 정보입니다. |
-| 명령 | [CommandResponse](payloads/commands/command-response.ko.md), [SystemStartRequest](payloads/commands/system-start-request.ko.md), [SystemStopRequest](payloads/commands/system-stop-request.ko.md), [ControlRunModes](payloads/commands/control-run-modes.ko.md) | 명령 요청 및 명령 응답. |
+| 명령 | [CommandResponse](payloads/commands/command-response.ko.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.ko.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ko.md), [SystemStartRequest](payloads/commands/system-start-request.ko.md), [SystemStopRequest](payloads/commands/system-stop-request.ko.md), [ControlRunModes](payloads/commands/control-run-modes.ko.md) | 명령 요청 및 명령 응답. |
 | 결과 | [ResultSummary](payloads/results/result-summary.ko.md), [ResultList](payloads/results/result-list.ko.md) | 결과 요약 및 REST 결과 목록 래퍼. |
 
 ## 관계 요약
@@ -27,6 +27,8 @@
 ```mermaid
 flowchart TD
     ProductInfo["ProductInfo"]
+    Initialize["SystemInitializeRequest"]
+    Deinitialize["SystemDeinitializeRequest"]
     Start["SystemStartRequest"]
     Stop["SystemStopRequest"]
     CommandResponse["CommandResponse"]
@@ -36,6 +38,8 @@ flowchart TD
     ResultList["ResultList"]
 
     ProductInfo --> ResultSummary
+    Initialize --> CommandResponse
+    Deinitialize --> CommandResponse
     Start --> CommandResponse
     Stop --> CommandResponse
     CommandResponse --> SystemStatus
@@ -54,6 +58,8 @@ flowchart TD
 | SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
 | ProductInfo | `GET/POST /api/product-info` | 수신 `type: "productInfo"`; 송신 `type: "productInfoChanged"` | `virex/productInfoChanged` |
 | CommandResponse | 시스템 명령 경로 응답 | 명령이 거부된 경우 `type: "commandRejected"` | `virex/commandRejected` |
+| SystemInitializeRequest | `POST /api/system/initialize`는 요청 본문을 사용하지 않습니다 | 수신 `type: "initialize"` | 사용되지 않음 |
+| SystemDeinitializeRequest | `POST /api/system/deinitialize`는 요청 본문을 사용하지 않습니다 | 수신 `type: "deinitialize"` | 사용되지 않음 |
 | SystemStartRequest | `POST /api/system/start` 요청 | 수신 `type: "start"` | 사용되지 않음 |
 | SystemStopRequest | `POST /api/system/stop` 요청 | 수신 `type: "stop"` | 사용되지 않음 |
 | ResultSummary | `GET /api/results` 항목; 결과 생성 이벤트 | `type: "resultCreated"` | `virex/resultCreated` |
