@@ -38,7 +38,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
-          <TextBlock Text="REST prefix" VerticalAlignment="Center" />
+          <TextBlock Text="RESTful API prefix" VerticalAlignment="Center" />
           <TextBox x:Name="RestPrefixBox" Grid.Column="1" Text="http://127.0.0.1:5088/" Margin="0,2" />
 
           <TextBlock Grid.Row="1" Text="TCP port" VerticalAlignment="Center" />

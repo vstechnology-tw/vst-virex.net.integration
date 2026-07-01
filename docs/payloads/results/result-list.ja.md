@@ -1,6 +1,6 @@
 # ResultList
 
-`ResultList` は、結果クエリの REST 応答ラッパーです。
+`ResultList` は、結果クエリの RESTful API 応答ラッパーです。
 
 ## JSON
 
@@ -22,7 +22,7 @@
 
 |インターフェース |使い方 |
 | --- | --- |
-| REST | `GET /api/results` 応答。 |
+| RESTful API | `GET /api/results` 応答。 |
 
 ## サポートされているクエリ フィルタ
 

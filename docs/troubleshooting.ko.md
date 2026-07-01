@@ -1,13 +1,13 @@
 # 문제 해결
 
-## REST 요청 실패
+## RESTful API 요청 실패
 
 확인하다:
 
 - 시뮬레이터 또는 운영 엔드포인트가 실행 중입니다.
-- REST 기본 URL이 정확합니다.
+- RESTful API 기본 URL이 정확합니다.
 - 방화벽은 구성된 포트를 허용합니다.
-- 경로는 [REST API](rest-api.ko.md)에 나열되어 있습니다.
+- 경로는 [RESTful API](rest-api.ko.md)에 나열되어 있습니다.
 
 ## 명령은 `invalid_state`를 반환합니다.
 

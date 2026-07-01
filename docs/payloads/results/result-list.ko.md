@@ -1,6 +1,6 @@
 # ResultList
 
-`ResultList`는 결과 쿼리에 대한 REST 응답 래퍼입니다.
+`ResultList`는 결과 쿼리에 대한 RESTful API 응답 래퍼입니다.
 
 ## JSON
 
@@ -22,7 +22,7 @@
 
 | 인터페이스 | 사용법 |
 | --- | --- |
-| REST | `GET /api/results` 응답. |
+| RESTful API | `GET /api/results` 응답. |
 
 ## 지원되는 쿼리 필터
 

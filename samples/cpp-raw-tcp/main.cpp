@@ -162,53 +162,71 @@ int main(int argc, char* argv[])
         const char* host = argc > 1 ? argv[1] : "127.0.0.1";
         const char* port = argc > 2 ? argv[2] : "5089";
 
-        PrintStep("Virex.NET C++ Raw TCP Guided Demo");
-        std::cout << "This sample connects to the simulator TCP socket, reads initial frames, sends ProductInfo, and sends start/stop commands." << std::endl;
+        PrintStep("Virex.NET C++ Raw TCP 13-Step Demo");
         std::cout << "TCP endpoint: " << host << ":" << port << std::endl;
-        Prompt("Press Start Servers and Initialize, then press Enter here.");
+        Prompt("Press Start Servers, then press Enter here.");
 
         WsaSession wsa;
         SocketHandle client = Connect(host, port);
 
-        PrintStep("Step 1 - Read initial TCP frames");
-        std::cout << "Initial status frame:" << std::endl;
+        std::cout << "Initial simulator frames:" << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
-        std::cout << "Initial ProductInfo frame:" << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
 
-        PrintStep("Step 2 - Send productInfo frame");
+        PrintStep("Step 1 - Query status");
+        SendAll(client.value, std::string(R"({"type":"status"})") + "\n");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 2 - Query error");
+        SendAll(client.value, std::string(R"({"type":"error"})") + "\n");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 3 - Query ProductInfo");
+        SendAll(client.value, std::string(R"({"type":"getProductInfo"})") + "\n");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 4 - Initialize");
+        SendAll(client.value, std::string(R"({"type":"initialize"})") + "\n");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 5 - Confirm Ready");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 6 - Set ProductInfo");
         const std::string frame =
-            R"({"type":"productInfo","waferID":"W01","lotID":"LOT-CPP-TCP-001","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"})"
+            R"({"type":"productInfo","waferID":"WCPP-TCP-210-001","lotID":"LOT-CPP-TCP-210","recipe":"RCP-DEMO","slot":"1","foupID":"FOUP-DEMO","chamberID":"CH-1"})"
             "\n";
         SendAll(client.value, frame);
-
-        std::cout << "Sent productInfo frame." << std::endl;
-        std::cout << "Expected Simulator Event Log:" << std::endl;
-        std::cout << "ProductInfo updated from TCP." << std::endl;
-        std::cout << "Waiting for echoed productInfo update event..." << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
 
-        PrintStep("Step 3 - Send start command with condition and runMode payload");
+        PrintStep("Step 7 - Confirm ProductInfo");
+        SendAll(client.value, std::string(R"({"type":"getProductInfo"})") + "\n");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 8 - Start run");
         const std::string startFrame = R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
             "\n";
         SendAll(client.value, startFrame);
-        std::cout << "Sent start frame:" << std::endl;
-        std::cout << R"({"type":"start","condition":"golden-sample","runMode":"continue"})" << std::endl;
-        std::cout << "Expected Simulator Event Log:" << std::endl;
-        std::cout << "Start condition: golden-sample" << std::endl;
-        std::cout << "Start run mode: continue" << std::endl;
-        std::cout << "Waiting for status transition..." << std::endl;
         std::cout << ReadLine(client.value) << std::endl;
 
-        PrintStep("Step 4 - Send stop command with reason payload");
+        PrintStep("Step 9 - Observe run events");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 10 - Stop run");
         const std::string stopFrame = R"({"type":"stop","reason":"operator-request"})"
             "\n";
         SendAll(client.value, stopFrame);
-        std::cout << "Sent stop frame:" << std::endl;
-        std::cout << R"({"type":"stop","reason":"operator-request"})" << std::endl;
-        std::cout << "Expected Simulator Event Log:" << std::endl;
-        std::cout << "Stopped. reason=operator-request" << std::endl;
-        std::cout << "Waiting for ready status..." << std::endl;
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 11 - Query results");
+        SendAll(client.value, std::string(R"({"type":"results","lotID":"LOT-CPP-TCP-210","waferID":"WCPP-TCP-210-001"})") + "\n");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 12 - Deinitialize");
+        SendAll(client.value, std::string(R"({"type":"deinitialize"})") + "\n");
+        std::cout << ReadLine(client.value) << std::endl;
+
+        PrintStep("Step 13 - Confirm Uninitialized");
         std::cout << ReadLine(client.value) << std::endl;
     }
     catch (const std::exception& ex)

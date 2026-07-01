@@ -272,7 +272,7 @@ virex/commandRejected
 
 ### 說明
 
-可用這個事件關聯 REST、TCP 或 UI 命令被拒絕的情境。所有傳輸方式都使用相同狀態規則。
+可用這個事件關聯 RESTful API、TCP 或 UI 命令被拒絕的情境。所有傳輸方式都使用相同狀態規則。
 
 ## 錯誤處理
 

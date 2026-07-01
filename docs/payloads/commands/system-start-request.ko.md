@@ -22,7 +22,7 @@
 
 | 인터페이스 | 사용법 |
 | --- | --- |
-| REST | `POST /api/system/start` 요청 내용입니다. |
+| RESTful API | `POST /api/system/start` 요청 내용입니다. |
 | TCP | 수신 `type: "start"` 명령 프레임. |
 
 허용되는 `runMode` 값은 [ControlRunModes](control-run-modes.ko.md)를 참조하세요.

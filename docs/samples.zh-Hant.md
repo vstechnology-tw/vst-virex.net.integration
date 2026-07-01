@@ -18,7 +18,7 @@
 | 範例 | 命令 | 用途 |
 | --- | --- | --- |
 | `samples/csharp-sdk` | `dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj` | 建議的 .NET 入口。示範初始化、ProductInfo、啟動、停止、結果查詢。 |
-| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | 直接呼叫 REST 狀態查詢、ProductInfo、系統命令、結果查詢。 |
+| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | 直接呼叫 RESTful API 狀態查詢、ProductInfo、系統命令、結果查詢。 |
 | `samples/csharp-raw-tcp` | `dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj` | TCP/NDJSON 初始資料框與 ProductInfo 更新事件。 |
 | `samples/csharp-raw-mqtt` | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | 觀察 MQTT 狀態、ProductInfo、執行、結果、拒絕事件。 |
 
@@ -46,6 +46,6 @@ TCP 與 MQTT 範例使用相同 CMake 模式。
 
 | 流程 | 預期行為 |
 | --- | --- |
-| SDK 與 REST | 初始化從 `Uninitialized` 進入 `Ready`，ProductInfo 更新後回到 `Ready`，啟動後回傳 `Running`，執行完成後可以查詢結果。 |
+| SDK 與 RESTful API | 初始化從 `Uninitialized` 進入 `Ready`，ProductInfo 更新後回到 `Ready`，啟動後回傳 `Running`，執行完成後可以查詢結果。 |
 | TCP | 範例連到 `5089`，讀取初始狀態/ProductInfo 資料框，送出 ProductInfo NDJSON 資料框，印出更新事件。 |
 | MQTT | 範例訂閱 `virex/#`，印出 `statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`commandRejected`。 |

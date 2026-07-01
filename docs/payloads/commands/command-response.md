@@ -39,6 +39,6 @@
 
 | Interface | Usage |
 | --- | --- |
-| REST | System command routes and `POST /api/product-info` response body. |
+| RESTful API | System command routes and `POST /api/product-info` response body. |
 | TCP | `commandRejected` event when a command is rejected. |
 | MQTT | `virex/commandRejected`. |

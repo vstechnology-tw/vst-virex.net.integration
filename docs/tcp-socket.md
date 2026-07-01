@@ -31,6 +31,10 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 | `productInfo` | [ProductInfo](payloads/product/product-info.md) with `type` | `Ready` | Updates ProductInfo and emits `productInfoChanged`. |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.md) with `type` | `Ready` | Enters `Running`; completion is reported by events and results. |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.md) with `type` | `Running` | Stops the run and returns to `Ready`. |
+| `status` | `type` only | Any | Returns current [SystemStatus](payloads/system/system-status.md). |
+| `error` | `type` only | Any | Returns current [ErrorInfo](payloads/system/error-info.md). |
+| `getProductInfo` | `type` only | Any | Returns current [ProductInfo](payloads/product/product-info.md). |
+| `results` | optional `lotID`, `waferID`, `recipe` filters | Any | Returns [ResultList](payloads/results/result-list.md). |
 
 ### Outgoing events
 

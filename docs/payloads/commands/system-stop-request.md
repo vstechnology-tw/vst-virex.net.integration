@@ -20,5 +20,5 @@
 
 | Interface | Usage |
 | --- | --- |
-| REST | `POST /api/system/stop` request content. |
+| RESTful API | `POST /api/system/stop` request content. |
 | TCP | Incoming `type: "stop"` command frame. |

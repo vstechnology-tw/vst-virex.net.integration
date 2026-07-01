@@ -39,6 +39,6 @@
 
 |インターフェース |使い方 |
 | --- | --- |
-| REST |システム コマンド ルートと `POST /api/product-info` 応答本文。 |
+| RESTful API |システム コマンド ルートと `POST /api/product-info` 応答本文。 |
 | TCP |コマンドが拒否された場合の `commandRejected` イベント。 |
 | MQTT | `virex/commandRejected`。 |

@@ -1,6 +1,6 @@
-# REST API
+# RESTful API
 
-The REST API is used to read state, manage ProductInfo, send system commands, and query result summaries.
+The RESTful API is used to read state, manage ProductInfo, send system commands, and query result summaries.
 
 ## Basic information
 

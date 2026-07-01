@@ -10,11 +10,11 @@
 dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 ```
 
-既定のエンドポイント設定を保持し、**Start Servers** をクリックして、REST/TCP/MQTT サービスを開始します。
+既定のエンドポイント設定を保持し、**Start Servers** をクリックして、RESTful API/TCP/MQTT サービスを開始します。
 
 |インターフェース |既定 |
 | --- | --- |
-| REST | `http://127.0.0.1:5088` |
+| RESTful API | `http://127.0.0.1:5088` |
 | TCP | `127.0.0.1:5089` |
 | MQTT | `127.0.0.1:1883`、トピックプレフィックス `virex` |
 
@@ -59,15 +59,15 @@ dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj
 
 ## 5. プロトコルチェックを選択します
 
-- REST ブラウザ: `http://127.0.0.1:5088/scalar`
+- RESTful API ブラウザ: `http://127.0.0.1:5088/scalar`
 - MQTT: `virex/#` を購読する
-- C# SDK を使用していない場合は、Raw TCP またはRaw REST サンプルを実行します。
+- C# SDK を使用していない場合は、Raw TCP またはRaw RESTful API サンプルを実行します。
 
 ## 完了条件
 
 クイック スタートが成功すると、次のことが確認されます。
 
-- REST 状態クエリは有効な `state` を返します。
+- RESTful API 状態クエリは有効な `state` を返します。
 - ProductInfo は `Ready` で更新できます。
 - Start は `Running` を返します。
 - 実行が完了すると、状態は `Ready` に戻ります。

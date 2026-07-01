@@ -1,6 +1,6 @@
 # シミュレーターガイド
 
-`Virex.NET.Simulator.WPF` は、統合開発のローカル エンドポイントです。 REST、TCP、MQTT、データモデル、状態、イベントの観点から見ると、本番環境と互換性のある Virex.NET サービスのように動作する必要があります。
+`Virex.NET.Simulator.WPF` は、統合開発のローカル エンドポイントです。 RESTful API、TCP、MQTT、データモデル、状態、イベントの観点から見ると、本番環境と互換性のある Virex.NET サービスのように動作する必要があります。
 
 リポジトリのルートから起動します。
 
@@ -16,9 +16,9 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 | 領域 | 画面領域 | 用途 |
 | --- | --- | --- |
-| 1 | **Connection Settings** | シミュレーターが公開するエンドポイントを設定します。**REST prefix** は HTTP のベース アドレス、**TCP port** は NDJSON socket の待ち受けポート、**MQTT host** と **MQTT port/topic** は組み込み MQTT broker とトピック プレフィックス、**Result prefix** は結果 ID または結果パスにテスト用プレフィックスが必要な場合だけ使用します。 |
+| 1 | **Connection Settings** | シミュレーターが公開するエンドポイントを設定します。**RESTful API prefix** は HTTP のベース アドレス、**TCP port** は NDJSON socket の待ち受けポート、**MQTT host** と **MQTT port/topic** は組み込み MQTT broker とトピック プレフィックス、**Result prefix** は結果 ID または結果パスにテスト用プレフィックスが必要な場合だけ使用します。 |
 | 2 | **ProductInfo** | 模擬システムへ送る製品コンテキストを設定します。Lot ID、Wafer ID、Recipe、Slot、Foup ID、Chamber ID を入力し、システムが `Ready` になってから **Apply ProductInfo** を押します。 |
-| 3 | **State** | 現在のシミュレーター状態を表示し、主要な操作ボタンを提供します。**Start Servers** は REST、TCP、MQTT エンドポイントを開きます。**Initialize**、**Deinitialize**、**Start Single**、**Start Continue**、**Stop** は、外部 REST クライアントから呼び出せるものと同じ公開状態遷移を実行します。 |
+| 3 | **State** | 現在のシミュレーター状態を表示し、主要な操作ボタンを提供します。**Start Servers** は RESTful API、TCP、MQTT エンドポイントを開きます。**Initialize**、**Deinitialize**、**Start Single**、**Start Continue**、**Stop** は、外部 RESTful API クライアントから呼び出せるものと同じ公開状態遷移を実行します。 |
 | 4 | **Event Log** | ローカル シミュレーターの動作、サーバーの起動/停止メッセージ、コマンド拒否、生成された結果、その他の診断出力を表示します。ボタン操作やクライアント コマンドがシミュレーターに届いたことを確認するために使用します。 |
 | 5 | **State Machine** | ライブ状態図を表示します。強調表示されたブロックは現在のシミュレーター状態に追従します。`ƒ` ラベルは command、`⚡` ラベルは event です。`Initializing`、`UpdatingProductInfo`、`Deinitializing` などの中間状態は短時間表示されるため、遷移経路を確認しやすくなります。 |
 
@@ -26,7 +26,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 |目的 |何を確認するか |
 | --- | --- |
-|契約の確認 |ベンダーアプリケーションが本番環境と同じ REST ルート、データモデル、TCP フレーム、および MQTT トピックを使用していることを確認します。 |
+|契約の確認 |ベンダーアプリケーションが本番環境と同じ RESTful API ルート、データモデル、TCP フレーム、および MQTT トピックを使用していることを確認します。 |
 |ステートマシンの検証 |コマンドの順序、有効な状態、拒否された状態、およびrunCompletedの動作を確認します。 |
 |イベント検証 | TCP/MQTT コンシューマーが状態、ProductInfo、実行、結果、エラー、および拒否イベントを処理できることを確認します。 |
 
@@ -49,8 +49,8 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 |インターフェース |既定 |
 | --- | --- |
-| REST | `http://127.0.0.1:5088` |
-| REST ブラウザ | `http://127.0.0.1:5088/scalar` |
+| RESTful API | `http://127.0.0.1:5088` |
+| RESTful API ブラウザ | `http://127.0.0.1:5088/scalar` |
 | OpenAPI JSON | `http://127.0.0.1:5088/openapi/v1.json` |
 | TCP | `127.0.0.1:5089` |
 | MQTT | `127.0.0.1:1883`、トピックプレフィックス `virex` |
@@ -59,7 +59,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 |ボタン |動作 |
 | --- | --- |
-| **Start Servers** | REST、TCP、および MQTT エンドポイントを開始します。システム状態を変更しません。 |
+| **Start Servers** | RESTful API、TCP、および MQTT エンドポイントを開始します。システム状態を変更しません。 |
 | **Initialize** |初期化コマンドを送信します。 `Uninitialized` でのみ有効です。 |
 | **Deinitialize** |初期化解除コマンドを送信します。 `Ready` でのみ有効です。 |
 | **Apply ProductInfo** |現在の ProductInfo を更新します。 `Ready` でのみ有効です。 |
@@ -71,10 +71,10 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 
 |アクション |予想される外部観測 |
 | --- | --- |
-| Initialize | REST コマンドは `Ready` を返します。状態イベントが公開されます。 |
-| ProductInfo アップデート | REST コマンドは `Ready` を返します。 ProductInfo イベントが公開されます。 |
-| Start single | REST コマンドは `Running` を返します。状態は `Running` に変わります。結果作成イベントが公開され、run-completed によって状態は `Ready` に戻ります。 |
-| Start continue | REST コマンドは `Running` を返します。状態は `Running` のままです。stop コマンドが受け入れられるまで結果作成イベントが継続します。 |
+| Initialize | RESTful API コマンドは `Ready` を返します。状態イベントが公開されます。 |
+| ProductInfo アップデート | RESTful API コマンドは `Ready` を返します。 ProductInfo イベントが公開されます。 |
+| Start single | RESTful API コマンドは `Running` を返します。状態は `Running` に変わります。結果作成イベントが公開され、run-completed によって状態は `Ready` に戻ります。 |
+| Start continue | RESTful API コマンドは `Running` を返します。状態は `Running` のままです。stop コマンドが受け入れられるまで結果作成イベントが継続します。 |
 | Stop | 状態は `Ready` に戻ります。continue mode では追加の自動 run-completed event は不要です。 |
 |無効なコマンド |コマンド応答には `accepted=false` および `errorCode=invalid_state` が含まれます。拒否イベントが公開される場合があります。 |
 

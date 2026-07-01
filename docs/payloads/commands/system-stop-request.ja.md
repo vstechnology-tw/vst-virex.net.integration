@@ -20,5 +20,5 @@
 
 |インターフェース |使い方 |
 | --- | --- |
-| REST | `POST /api/system/stop`要求本文。 |
+| RESTful API | `POST /api/system/stop`要求本文。 |
 | TCP |受信 `type: "stop"` コマンド フレーム。 |

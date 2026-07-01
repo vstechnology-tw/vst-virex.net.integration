@@ -31,7 +31,7 @@ Deinitializing
 
 | 介面 | 用法 |
 | --- | --- |
-| REST | `GET /api/status` 回應。 |
+| RESTful API | `GET /api/status` 回應。 |
 | TCP | `statusChanged`、`runStarted`、`runCompleted` 事件。 |
 | MQTT | `virex/statusChanged`、`virex/runStarted`、`virex/runCompleted`。 |
 

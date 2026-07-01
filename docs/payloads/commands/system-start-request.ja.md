@@ -22,7 +22,7 @@
 
 |インターフェース |使い方 |
 | --- | --- |
-| REST | `POST /api/system/start`要求本文。 |
+| RESTful API | `POST /api/system/start`要求本文。 |
 | TCP |受信 `type: "start"` コマンド フレーム。 |
 
 許可される `runMode` 値については、[ControlRunModes](control-run-modes.ja.md) を参照してください。

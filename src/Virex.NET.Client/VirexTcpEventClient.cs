@@ -1,5 +1,6 @@
-﻿using System.Net.Sockets;
+using System.Net.Sockets;
 using System.Text;
+using System.Text.Json;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Client;
@@ -56,6 +57,41 @@ public sealed class VirexTcpEventClient
     public async Task SendStopAsync(string? reason, CancellationToken cancellationToken = default) =>
         await SendFrameAsync(TcpSocketEventFormatter.FormatStopCommand(reason), cancellationToken).ConfigureAwait(false);
 
+    public async Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default)
+    {
+        var json = await SendAndReadFrameAsync(TcpSocketEventFormatter.FormatCommand("status"), "status", cancellationToken).ConfigureAwait(false);
+        return ProtocolJson.Deserialize<SystemStatus>(json) ?? new SystemStatus();
+    }
+
+    public async Task<ErrorInfo> GetErrorAsync(CancellationToken cancellationToken = default)
+    {
+        var json = await SendAndReadFrameAsync(TcpSocketEventFormatter.FormatCommand("error"), "error", cancellationToken).ConfigureAwait(false);
+        return ProtocolJson.Deserialize<ErrorInfo>(json) ?? new ErrorInfo();
+    }
+
+    public async Task<ProductInfo> GetProductInfoAsync(CancellationToken cancellationToken = default)
+    {
+        var json = await SendAndReadFrameAsync(TcpSocketEventFormatter.FormatCommand("getProductInfo"), "productInfo", cancellationToken).ConfigureAwait(false);
+        return ProtocolJson.Deserialize<ProductInfo>(json) ?? new ProductInfo();
+    }
+
+    public async Task<ResultList> QueryResultsAsync(
+        string? lotID = null,
+        string? waferID = null,
+        string? recipe = null,
+        CancellationToken cancellationToken = default)
+    {
+        var frame = ProtocolJson.Serialize(new
+        {
+            type = "results",
+            lotID = string.IsNullOrWhiteSpace(lotID) ? null : lotID,
+            waferID = string.IsNullOrWhiteSpace(waferID) ? null : waferID,
+            recipe = string.IsNullOrWhiteSpace(recipe) ? null : recipe,
+        }) + "\n";
+        var json = await SendAndReadFrameAsync(frame, "results", cancellationToken).ConfigureAwait(false);
+        return ProtocolJson.Deserialize<ResultList>(json) ?? new ResultList();
+    }
+
     private async Task SendFrameAsync(string frame, CancellationToken cancellationToken)
     {
         using var client = new TcpClient();
@@ -64,6 +100,29 @@ public sealed class VirexTcpEventClient
         var bytes = Encoding.UTF8.GetBytes(frame);
         await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
         await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<string> SendAndReadFrameAsync(string frame, string expectedType, CancellationToken cancellationToken)
+    {
+        using var client = new TcpClient();
+        await client.ConnectAsync(_options.TcpHost, _options.TcpPort).ConfigureAwait(false);
+        using var stream = client.GetStream();
+        var bytes = Encoding.UTF8.GetBytes(frame);
+        await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
+        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var line = await ReadFrameAsync(stream, cancellationToken).ConfigureAwait(false);
+            if (line is null)
+                throw new EndOfStreamException("TCP stream closed before the expected response frame was received.");
+
+            using var doc = JsonDocument.Parse(line);
+            if (doc.RootElement.TryGetProperty("type", out var type) && type.GetString() == expectedType)
+                return line;
+        }
+
+        throw new OperationCanceledException(cancellationToken);
     }
 
     private async Task<string?> ReadFrameAsync(Stream stream, CancellationToken cancellationToken)

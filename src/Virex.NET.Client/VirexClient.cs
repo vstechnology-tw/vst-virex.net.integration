@@ -27,6 +27,7 @@ public sealed class VirexClient : IDisposable
         Rest = new VirexRestClient(_httpClient);
         TcpEvents = new VirexTcpEventClient(options);
         MqttEvents = new VirexMqttEventSubscriber(options);
+        MqttCommands = new VirexMqttCommandClient(options);
     }
 
     public VirexClientOptions Options { get; }
@@ -37,8 +38,13 @@ public sealed class VirexClient : IDisposable
 
     public VirexMqttEventSubscriber MqttEvents { get; }
 
+    public VirexMqttCommandClient MqttCommands { get; }
+
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         Rest.GetStatusAsync(cancellationToken);
+
+    public Task<ErrorInfo> GetErrorAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetErrorAsync(cancellationToken);
 
     public Task<ProductInfo> GetProductInfoAsync(CancellationToken cancellationToken = default) =>
         Rest.GetProductInfoAsync(cancellationToken);

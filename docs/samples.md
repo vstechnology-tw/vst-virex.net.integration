@@ -18,17 +18,17 @@ Before executing any examples:
 | Example | Command | Purpose |
 | --- | --- | --- |
 | `samples/csharp-sdk` | `dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj` | Recommended .NET entry point. Demonstrates initialization, ProductInfo, start, stop, and result query. |
-| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | Calls REST state query, ProductInfo, system commands, and result query directly. |
+| `samples/csharp-raw-rest` | `dotnet run --project samples\csharp-raw-rest\CSharpRawRestSample.csproj` | Calls RESTful API state query, ProductInfo, system commands, and result query directly. |
 | `samples/csharp-raw-tcp` | `dotnet run --project samples\csharp-raw-tcp\CSharpRawTcpSample.csproj` | Demonstrates TCP/NDJSON initial frames and ProductInfo update events. |
-| `samples/csharp-raw-mqtt` | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | Observes MQTT state, ProductInfo, run, result, and rejection events. |
+| `samples/csharp-raw-mqtt` | `dotnet run --project samples\csharp-raw-mqtt\CSharpRawMqttSample.csproj` | Observes MQTT events and publishes RESTful API equivalent command/query requests. |
 
 ## Python Examples
 
 | Example | Command | Purpose |
 | --- | --- | --- |
 | `samples/python-raw-rest` | `python samples\python-raw-rest\main.py` | Uses HTTP support from the Python standard library. |
-| `samples/python-raw-tcp` | `python samples\python-raw-tcp\main.py` | TCP/NDJSON socket demonstration. |
-| `samples/python-raw-mqtt` | `python samples\python-raw-mqtt\main.py` | Demonstrates MQTT event observation. |
+| `samples/python-raw-tcp` | `python samples\python-raw-tcp\main.py` | TCP/NDJSON socket command and query demonstration. |
+| `samples/python-raw-mqtt` | `python samples\python-raw-mqtt\main.py` | Demonstrates MQTT event observation plus command/query request topics. |
 
 ## C++ Example
 
@@ -46,6 +46,6 @@ The TCP and MQTT examples use the same CMake pattern.
 
 | Flow | Expected Behavior |
 | --- | --- |
-| SDK and REST | Initialization moves from `Uninitialized` to `Ready`; ProductInfo update returns to `Ready`; start returns `Running`; results can be queried after the run completes. |
-| TCP | The sample connects to `5089`, reads the initial state/ProductInfo frames, sends the ProductInfo NDJSON frame, and prints the update event. |
-| MQTT | The sample subscribes to `virex/#` and prints `statusChanged`, `productInfoChanged`, `runStarted`, `runCompleted`, `resultCreated`, and `commandRejected`. |
+| SDK and RESTful API | Initialization moves from `Uninitialized` to `Ready`; ProductInfo update returns to `Ready`; start returns `Running`; results can be queried after the run completes. |
+| TCP | The sample connects to `5089`, reads initial state/ProductInfo frames, sends query frames, sends ProductInfo/start/stop frames, and queries result summaries. |
+| MQTT | The sample subscribes to `virex/#`, prints events, publishes `commands/status/get`, and prints the correlated `responses/{correlationId}` payload. |

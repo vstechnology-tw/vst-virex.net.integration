@@ -39,6 +39,6 @@
 
 | 介面 | 用法 |
 | --- | --- |
-| REST | 系統命令路由與 `POST /api/product-info` 回應內容。 |
+| RESTful API | 系統命令路由與 `POST /api/product-info` 回應內容。 |
 | TCP | 拒絕命令的 `commandRejected` 事件。 |
 | MQTT | `virex/commandRejected`。 |

@@ -20,5 +20,5 @@
 
 | Interface | Usage |
 | --- | --- |
-| REST | `POST /api/system/deinitialize` uses no request body. |
+| RESTful API | `POST /api/system/deinitialize` uses no request body. |
 | TCP | Incoming `type: "deinitialize"` command frame. |

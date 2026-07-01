@@ -1,13 +1,13 @@
 # トラブルシューティング
 
-## REST 要求が失敗しました
+## RESTful API 要求が失敗しました
 
 チェック：
 
 - シミュレーターまたは本番エンドポイントが実行中である。
-- REST ベース URL は正しいです。
+- RESTful API ベース URL は正しいです。
 - ファイアウォールは設定されたポートを許可します。
-- ルートは [REST API](rest-api.ja.md) にリストされています。
+- ルートは [RESTful API](rest-api.ja.md) にリストされています。
 
 ## コマンドは `invalid_state` を返します
 

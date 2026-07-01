@@ -20,7 +20,7 @@
 |システム | [SystemStatus](payloads/system/system-status.ja.md)、[ErrorInfo](payloads/system/error-info.ja.md) |現在のシステム状態とアクティブなエラー情報。 |
 |製品 | [ProductInfo](payloads/product/product-info.ja.md) |実行と結果に関連する製品情報。 |
 |コマンド | [CommandResponse](payloads/commands/command-response.ja.md)、[SystemInitializeRequest](payloads/commands/system-initialize-request.ja.md)、[SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md)、[SystemStartRequest](payloads/commands/system-start-request.ja.md)、[SystemStopRequest](payloads/commands/system-stop-request.ja.md)、[ControlRunModes](payloads/commands/control-run-modes.ja.md) |コマンド要求とコマンド応答。 |
-|結果 | [ResultSummary](payloads/results/result-summary.ja.md)、[ResultList](payloads/results/result-list.ja.md) |結果の概要と REST 結果リスト ラッパー。 |
+|結果 | [ResultSummary](payloads/results/result-summary.ja.md)、[ResultList](payloads/results/result-list.ja.md) |結果の概要と RESTful API 結果リスト ラッパー。 |
 
 ## 関係の概要
 
@@ -47,13 +47,13 @@ flowchart TD
     ResultSummary --> ResultList
 ```
 
-`Start` は、現在の `ProductInfo` スナップショットをキャプチャし、`condition` を保持します。結果が生成されると、両方の値が `ResultSummary` にコピーされます。 REST 結果クエリは `ResultList` を返します。
+`Start` は、現在の `ProductInfo` スナップショットをキャプチャし、`condition` を保持します。結果が生成されると、両方の値が `ResultSummary` にコピーされます。 RESTful API 結果クエリは `ResultList` を返します。
 
 `SystemStatus` はライフサイクル状態を報告します。 `ErrorInfo` は、別のライフサイクル状態ではなく、独立したアクティブなエラー情報です。
 
 ## 通信方式の対応
 
-|データモデル | REST | TCP | MQTT |
+|データモデル | RESTful API | TCP | MQTT |
 | --- | --- | --- | --- |
 | SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
 | ProductInfo | `GET/POST /api/product-info` |受信 `type: "productInfo"`;送信 `type: "productInfoChanged"` | `virex/productInfoChanged` |

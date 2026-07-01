@@ -1,13 +1,13 @@
 # Troubleshooting
 
-## REST Request Failed
+## RESTful API Request Failed
 
 Check:
 
 - The simulator or production endpoint is running.
-- REST base URL is correct.
+- RESTful API base URL is correct.
 - Firewall allows configured ports.
-- The route is listed at [REST API](rest-api.md).
+- The route is listed at [RESTful API](rest-api.md).
 
 ## Command Returns `invalid_state`
 

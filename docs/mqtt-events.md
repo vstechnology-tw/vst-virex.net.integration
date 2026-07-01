@@ -1,6 +1,6 @@
-# MQTT Events
+# MQTT Protocol
 
-MQTT is the outgoing event channel from Virex.NET compatible services to integration clients. It is not used for commands or queries.
+MQTT is a bidirectional integration channel. The service publishes events to `virex/{eventName}`. Clients can publish RESTful API equivalent commands and queries to `virex/commands/...` and receive correlated responses on `virex/responses/{correlationId}`.
 
 ## Basic Information
 
@@ -10,7 +10,7 @@ MQTT is the outgoing event channel from Virex.NET compatible services to integra
 | Default root topic | `virex` |
 | Topic format | `virex/{eventName}` |
 | Data format | JSON |
-| Direction | Service publishes; client subscribes |
+| Direction | Service publishes events; clients publish command/query requests |
 
 The simulator starts the embedded MQTT broker after **Start Servers** is pressed. A local client does not need an external broker.
 
@@ -25,6 +25,48 @@ The simulator starts the embedded MQTT broker after **Start Servers** is pressed
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.md) | A result summary is created. |
 | `virex/errorChanged` | [ErrorInfo](payloads/system/error-info.md) | Public error information changes. |
 | `virex/commandRejected` | [CommandResponse](payloads/commands/command-response.md) | A command is rejected by state rules or validation. |
+
+## Command Topic Overview
+
+Each command payload should include `correlationId`. The response is published to `virex/responses/{correlationId}`.
+
+| RESTful API equivalent | MQTT command topic | Response payload field |
+| --- | --- | --- |
+| `GET /api/status` | `virex/commands/status/get` | `status` |
+| `GET /api/error` | `virex/commands/error/get` | `error` |
+| `GET /api/product-info` | `virex/commands/product-info/get` | `productInfo` |
+| `POST /api/product-info` | `virex/commands/product-info/set` | `commandResponse` |
+| `POST /api/system/initialize` | `virex/commands/system/initialize` | `commandResponse` |
+| `POST /api/system/deinitialize` | `virex/commands/system/deinitialize` | `commandResponse` |
+| `POST /api/system/start` | `virex/commands/system/start` | `commandResponse` |
+| `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
+| `GET /api/results` | `virex/commands/results/query` | `results` |
+
+### Status query example
+
+Publish:
+
+```json
+{"correlationId":"status-1"}
+```
+
+To:
+
+```text
+virex/commands/status/get
+```
+
+Response topic:
+
+```text
+virex/responses/status-1
+```
+
+Response payload:
+
+```json
+{"correlationId":"status-1","topic":"commands/status/get","accepted":true,"status":{"state":"Ready"}}
+```
 
 ## Subscription example
 
@@ -272,7 +314,7 @@ virex/commandRejected
 
 ### Notes
 
-Use this event to correlate REST, TCP, or UI commands that were rejected. All transports use the same state rules.
+Use this event to correlate RESTful API, TCP, or UI commands that were rejected. All transports use the same state rules.
 
 ## Error handling
 

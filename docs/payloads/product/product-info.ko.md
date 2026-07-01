@@ -30,7 +30,7 @@
 
 | 인터페이스 | 사용법 |
 | --- | --- |
-| REST | `GET /api/product-info` 응답 및 `POST /api/product-info` 요청. |
+| RESTful API | `GET /api/product-info` 응답 및 `POST /api/product-info` 요청. |
 | TCP | 수신 `productInfo` 명령 및 송신 `productInfoChanged` 이벤트. |
 | MQTT | `virex/productInfoChanged`. |
 | 결과 | `Start`는 ProductInfo 스냅샷을 저장합니다. 결과를 생성할 때 스냅샷 필드가 복사됩니다. |

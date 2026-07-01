@@ -20,7 +20,7 @@
 | 시스템 | [SystemStatus](payloads/system/system-status.ko.md), [ErrorInfo](payloads/system/error-info.ko.md) | 현재 시스템 상태 및 활성 오류 정보. |
 | 제품 | [ProductInfo](payloads/product/product-info.ko.md) | 실행 및 결과와 관련된 제품 정보입니다. |
 | 명령 | [CommandResponse](payloads/commands/command-response.ko.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.ko.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ko.md), [SystemStartRequest](payloads/commands/system-start-request.ko.md), [SystemStopRequest](payloads/commands/system-stop-request.ko.md), [ControlRunModes](payloads/commands/control-run-modes.ko.md) | 명령 요청 및 명령 응답. |
-| 결과 | [ResultSummary](payloads/results/result-summary.ko.md), [ResultList](payloads/results/result-list.ko.md) | 결과 요약 및 REST 결과 목록 래퍼. |
+| 결과 | [ResultSummary](payloads/results/result-summary.ko.md), [ResultList](payloads/results/result-list.ko.md) | 결과 요약 및 RESTful API 결과 목록 래퍼. |
 
 ## 관계 요약
 
@@ -47,13 +47,13 @@ flowchart TD
     ResultSummary --> ResultList
 ```
 
-`Start`는 현재 `ProductInfo` 스냅샷을 캡처하고 `condition`를 보관합니다. 결과가 생성되면 두 값 모두 `ResultSummary`에 복사됩니다. REST 결과 쿼리는 `ResultList`를 반환합니다.
+`Start`는 현재 `ProductInfo` 스냅샷을 캡처하고 `condition`를 보관합니다. 결과가 생성되면 두 값 모두 `ResultSummary`에 복사됩니다. RESTful API 결과 쿼리는 `ResultList`를 반환합니다.
 
 `SystemStatus`는 수명 주기 상태를 보고합니다. `ErrorInfo`는 다른 수명주기 상태가 아닌 독립적인 활성 오류 정보입니다.
 
 ## 통신 방식 매핑
 
-| 데이터 모델 | REST | TCP | MQTT |
+| 데이터 모델 | RESTful API | TCP | MQTT |
 | --- | --- | --- | --- |
 | SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
 | ProductInfo | `GET/POST /api/product-info` | 수신 `type: "productInfo"`; 송신 `type: "productInfoChanged"` | `virex/productInfoChanged` |

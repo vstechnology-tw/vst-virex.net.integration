@@ -31,7 +31,7 @@ Deinitializing
 
 |インターフェース |使い方 |
 | --- | --- |
-| REST | `GET /api/status` 応答。 |
+| RESTful API | `GET /api/status` 応答。 |
 | TCP | `statusChanged`、`runStarted`、`runCompleted` イベント。 |
 | MQTT | `virex/statusChanged`、`virex/runStarted`、`virex/runCompleted`。 |
 

@@ -39,6 +39,6 @@
 
 | 인터페이스 | 사용법 |
 | --- | --- |
-| REST | 시스템 명령 경로 및 `POST /api/product-info` 응답 본문. |
+| RESTful API | 시스템 명령 경로 및 `POST /api/product-info` 응답 본문. |
 | TCP | 명령이 거부되면 `commandRejected` 이벤트입니다. |
 | MQTT | `virex/commandRejected`. |

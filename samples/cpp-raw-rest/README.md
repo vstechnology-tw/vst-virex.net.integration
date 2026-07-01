@@ -1,6 +1,6 @@
-# C++ Raw REST Sample
+# C++ Raw RESTful API Sample
 
-Demonstrates the current REST API using a C++ sample.
+Demonstrates the current RESTful API using a C++ sample.
 
 Run the simulator first and press **Start Servers**.
 

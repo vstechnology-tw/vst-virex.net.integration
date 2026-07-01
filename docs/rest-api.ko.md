@@ -1,6 +1,6 @@
-# REST API
+# RESTful API
 
-REST API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령을 보내고, 결과 요약을 쿼리하는 데 사용됩니다.
+RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령을 보내고, 결과 요약을 쿼리하는 데 사용됩니다.
 
 ## 기본 정보
 

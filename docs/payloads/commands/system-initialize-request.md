@@ -20,5 +20,5 @@
 
 | Interface | Usage |
 | --- | --- |
-| REST | `POST /api/system/initialize` uses no request body. |
+| RESTful API | `POST /api/system/initialize` uses no request body. |
 | TCP | Incoming `type: "initialize"` command frame. |
