@@ -20,7 +20,7 @@
 |システム | [SystemStatus](payloads/system/system-status.ja.md)、[ErrorInfo](payloads/system/error-info.ja.md) |現在のシステム状態とアクティブなエラー情報。 |
 |製品 | [ProductInfo](payloads/product/product-info.ja.md) |実行と結果に関連する製品情報。 |
 |コマンド | [CommandResponse](payloads/commands/command-response.ja.md)、[SystemInitializeRequest](payloads/commands/system-initialize-request.ja.md)、[SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md)、[SystemStartRequest](payloads/commands/system-start-request.ja.md)、[SystemStopRequest](payloads/commands/system-stop-request.ja.md)、[ControlRunModes](payloads/commands/control-run-modes.ja.md) |コマンド要求とコマンド応答。 |
-|結果 | [ResultSummary](payloads/results/result-summary.ja.md)、[ResultList](payloads/results/result-list.ja.md) |結果の概要と RESTful API 結果リスト ラッパー。 |
+|結果 | [ResultSummary](payloads/results/result-summary.ja.md)、[ResultList](payloads/results/result-list.ja.md) |結果の概要と、RESTful API、TCP、MQTT のクエリ応答で使用される結果リスト ラッパー。 |
 
 ## 関係の概要
 
@@ -55,13 +55,13 @@ flowchart TD
 
 |データモデル | RESTful API | TCP | MQTT |
 | --- | --- | --- | --- |
-| SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
-| ProductInfo | `GET/POST /api/product-info` |受信 `type: "productInfo"`;送信 `type: "productInfoChanged"` | `virex/productInfoChanged` |
-| CommandResponse |システムコマンドルート応答 |コマンドが拒否された場合の `type: "commandRejected"` | `virex/commandRejected` |
-| SystemInitializeRequest | `POST /api/system/initialize` はリクエストボディを使用しません |受信 `type: "initialize"` |未使用 |
-| SystemDeinitializeRequest | `POST /api/system/deinitialize` はリクエストボディを使用しません |受信 `type: "deinitialize"` |未使用 |
-| SystemStartRequest | `POST /api/system/start` 要求 |受信 `type: "start"` |未使用 |
-| SystemStopRequest | `POST /api/system/stop` 要求 |受信 `type: "stop"` |未使用 |
+| SystemStatus | `GET /api/status` |クエリ `type: "status"` 応答;イベント `type: "statusChanged"` |クエリ `virex/commands/status/get` 応答;イベント `virex/statusChanged` |
+| ProductInfo | `GET/POST /api/product-info` |クエリ `type: "getProductInfo"` 応答;受信 `type: "productInfo"`;イベント `type: "productInfoChanged"` |クエリ `virex/commands/product-info/get`;コマンド `virex/commands/product-info/set`;イベント `virex/productInfoChanged` |
+| CommandResponse |システムコマンドルート応答 |コマンドが拒否された場合の `type: "commandRejected"` |`virex/responses/{correlationId}` 内の `commandResponse`;イベント `virex/commandRejected` |
+| SystemInitializeRequest | `POST /api/system/initialize` はリクエストボディを使用しません |受信 `type: "initialize"` | `virex/commands/system/initialize` |
+| SystemDeinitializeRequest | `POST /api/system/deinitialize` はリクエストボディを使用しません |受信 `type: "deinitialize"` | `virex/commands/system/deinitialize` |
+| SystemStartRequest | `POST /api/system/start` 要求 |受信 `type: "start"` | `virex/commands/system/start` |
+| SystemStopRequest | `POST /api/system/stop` 要求 |受信 `type: "stop"` | `virex/commands/system/stop` |
 | ResultSummary | `GET /api/results` 項目;結果作成イベント | `type: "resultCreated"` | `virex/resultCreated` |
-| ResultList | `GET /api/results` 応答 |未使用 |未使用 |
-| ErrorInfo |サービス固有のエラー イベント | `type: "errorChanged"` | `virex/errorChanged` |
+| ResultList | `GET /api/results` 応答 |クエリ `type: "results"` 応答 |クエリ `virex/commands/results/query` 応答 |
+| ErrorInfo | `GET /api/error`;サービス固有のエラー イベント |クエリ `type: "error"` 応答;イベント `type: "errorChanged"` |クエリ `virex/commands/error/get` 応答;イベント `virex/errorChanged` |

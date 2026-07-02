@@ -16,9 +16,9 @@ Each ZIP contains `Virex.NET.Simulator.WPF.exe`. Please select the package accor
 
 | File | Runtime | When To Use |
 | --- | --- | --- |
-| `Virex.NET.Simulator-v2.1.0-net48-win-x64.zip` | .NET Framework 4.8 | Use when the target Windows machine already has .NET Framework 4.8 installed. |
-| `Virex.NET.Simulator-v2.1.0-net8.0-windows-win-x64-self-contained.zip` | .NET 8 Windows | Use when you need a current Windows build that includes the runtime. |
-| `Virex.NET.Simulator-v2.1.0-net10.0-windows-win-x64-self-contained.zip` | .NET 10 Windows | Use when you need to validate the latest supported Windows target. |
+| [`Virex.NET.Simulator-v2.1.0-net48-win-x64.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.0/Virex.NET.Simulator-v2.1.0-net48-win-x64.zip) | .NET Framework 4.8 | Use when the target Windows machine already has .NET Framework 4.8 installed. |
+| [`Virex.NET.Simulator-v2.1.0-net8.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.0/Virex.NET.Simulator-v2.1.0-net8.0-windows-win-x64-self-contained.zip) | .NET 8 Windows | Use when you need a current Windows build that includes the runtime. |
+| [`Virex.NET.Simulator-v2.1.0-net10.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.0/Virex.NET.Simulator-v2.1.0-net10.0-windows-win-x64-self-contained.zip) | .NET 10 Windows | Use when you need to validate the latest supported Windows target. |
 
 After downloading:
 
@@ -33,8 +33,8 @@ For simulator buttons, default endpoints, and operating procedures, see [Simulat
 
 | Package | Purpose |
 | --- | --- |
-| [Virex.NET.Contracts](https://www.nuget.org/packages/Virex.NET.Contracts/) | Provides public C# data models, RESTful API routes, MQTT topic names, and TCP/NDJSON formatting and parsing tools. |
-| [Virex.NET.Client](https://www.nuget.org/packages/Virex.NET.Client/) | C# SDK wrapper for RESTful API, TCP, and MQTT. |
+| [Virex.NET.Contracts 2.1.0](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0) | Provides public C# data models, RESTful API routes, MQTT topic names, and TCP/NDJSON formatting and parsing tools. |
+| [Virex.NET.Client 2.1.0](https://www.nuget.org/packages/Virex.NET.Client/2.1.0) | C# SDK wrapper for RESTful API, TCP, and MQTT. |
 
 Install SDK:
 

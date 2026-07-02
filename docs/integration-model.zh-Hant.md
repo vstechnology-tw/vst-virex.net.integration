@@ -49,8 +49,8 @@ SDK 是選用工具。廠商可以直接使用 RESTful API/MQTT/TCP 整合，也
 | 傳輸方式 | 方向 | 職責 |
 | --- | --- | --- |
 | RESTful API | 用戶端到服務 | 命令與查詢：狀態、ProductInfo、系統生命週期、執行、結果清單。 |
-| TCP / NDJSON | 雙向 | 直接 socket 整合，用於命令資料框與事件資料框。 |
-| MQTT | 服務到用戶端 | 只做傳出事件通知。MQTT 不用於命令。 |
+| TCP / NDJSON | 雙向 | 直接 socket 整合，用於命令資料框、查詢資料框、直接回應與事件資料框。 |
+| MQTT | 雙向 | 服務發布事件通知；用戶端透過 `commands/...` topic 發布命令與查詢，並透過 `responses/{correlationId}` topic 接收關聯回應。 |
 
 ## 可攜目標
 

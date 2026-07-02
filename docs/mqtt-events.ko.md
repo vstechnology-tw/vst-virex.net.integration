@@ -1,6 +1,6 @@
-# MQTT 이벤트
+# MQTT 프로토콜
 
-MQTT는 Virex.NET 호환 서비스에서 통합 클라이언트로 송신 이벤트 채널입니다. 명령이나 쿼리에는 사용되지 않습니다.
+MQTT는 양방향 통합 채널입니다. 서비스는 이벤트를 `virex/{eventName}`에 게시합니다. 클라이언트는 RESTful API와 동일한 명령 및 쿼리를 `virex/commands/...`에 게시하고, 대응 응답을 `virex/responses/{correlationId}`에서 받을 수 있습니다.
 
 ## 기본 정보
 
@@ -8,13 +8,13 @@ MQTT는 Virex.NET 호환 서비스에서 통합 클라이언트로 송신 이벤
 | --- | --- |
 | 기본 브로커 | `127.0.0.1:1883` |
 | 기본 토픽 접두사 | `virex` |
-| 토픽 형식 | `virex/{eventName}` |
+| 토픽 형식 | 이벤트: `virex/{eventName}`, 명령: `virex/commands/...`, 응답: `virex/responses/{correlationId}` |
 | 데이터 형식 | JSON |
-| 방향 | 서비스가 게시하고 클라이언트가 구독합니다 |
+| 방향 | 서비스가 이벤트를 게시하고, 클라이언트가 명령/쿼리 요청을 게시합니다 |
 
 시뮬레이터는 **Start Servers**를 누른 후 내장된 MQTT 브로커를 시작합니다. 로컬 클라이언트에는 외부 브로커가 필요하지 않습니다.
 
-## 토픽 개요
+## 이벤트 토픽 개요
 
 | 토픽 | 페이로드 | 게시 시점 |
 | --- | --- | --- |
@@ -25,6 +25,282 @@ MQTT는 Virex.NET 호환 서비스에서 통합 클라이언트로 송신 이벤
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.ko.md) | 결과 요약이 생성됩니다. |
 | `virex/errorChanged` | [ErrorInfo](payloads/system/error-info.ko.md) | 공개 오류 정보가 변경됩니다. |
 | `virex/commandRejected` | [CommandResponse](payloads/commands/command-response.ko.md) | 상태 규칙이나 유효성 검사에 의해 명령이 거부됩니다. |
+
+## 명령 토픽 개요
+
+각 명령 또는 쿼리 payload에는 `correlationId`를 포함하는 것을 권장합니다. 응답은 `virex/responses/{correlationId}`에 게시됩니다. `correlationId`를 생략하면 서비스가 생성하지만, 클라이언트는 일반적으로 직접 지정해 응답을 안정적으로 구독하고 연결해야 합니다.
+
+| RESTful API 동등 작업 | MQTT 명령 topic | 응답 payload 필드 |
+| --- | --- | --- |
+| `GET /api/status` | `virex/commands/status/get` | `status` |
+| `GET /api/error` | `virex/commands/error/get` | `error` |
+| `GET /api/product-info` | `virex/commands/product-info/get` | `productInfo` |
+| `POST /api/product-info` | `virex/commands/product-info/set` | `commandResponse` |
+| `POST /api/system/initialize` | `virex/commands/system/initialize` | `commandResponse` |
+| `POST /api/system/deinitialize` | `virex/commands/system/deinitialize` | `commandResponse` |
+| `POST /api/system/start` | `virex/commands/system/start` | `commandResponse` |
+| `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
+| `GET /api/results` | `virex/commands/results/query` | `results` |
+
+## 명령 요청 envelope
+
+모든 MQTT 명령 topic은 UTF-8 JSON 개체를 받습니다. 공통 필드는 다음과 같습니다.
+
+| 필드 | 사용 topic | 설명 |
+| --- | --- | --- |
+| `correlationId` | 모든 명령 topic | 클라이언트가 제공하는 request id입니다. 응답은 `virex/responses/{correlationId}`에 게시됩니다. |
+| `productInfo` | `commands/product-info/set` | 선택 사항인 중첩 [ProductInfo](payloads/product/product-info.ko.md)입니다. 호환성을 위해 평면 ProductInfo payload도 허용합니다. |
+| `condition` | `commands/system/start` | 선택 사항인 실행 조건이며 결과 요약에 복사됩니다. |
+| `runMode` | `commands/system/start` | 선택 사항인 실행 모드입니다. 지원 값은 [ControlRunModes](payloads/commands/control-run-modes.ko.md)를 참조하세요. |
+| `reason` | `commands/system/stop` | 선택 사항인 중지 이유입니다. |
+| `lotID` | `commands/results/query` | 선택 사항인 결과 쿼리 필터입니다. |
+| `waferID` | `commands/results/query` | 선택 사항인 결과 쿼리 필터입니다. |
+| `recipe` | `commands/results/query` | 선택 사항인 결과 쿼리 필터입니다. |
+
+요청 예:
+
+```json
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
+```
+
+## 명령 응답 envelope
+
+모든 명령 응답 payload는 동일한 envelope를 사용합니다.
+
+| 필드 | 설명 |
+| --- | --- |
+| `correlationId` | 응답 topic을 만드는 데 사용한 request id입니다. |
+| `topic` | base topic 아래의 명령 topic입니다. 예: `commands/status/get`. |
+| `accepted` | 명령/쿼리가 수락되면 `true`입니다. 수명 주기 명령의 경우 `commandResponse.accepted`와 대응됩니다. |
+| `errorCode` | `unknown_topic` 같은 MQTT 수준 실패 시 나타납니다. |
+| `message` | 선택 사항인 MQTT 수준 메시지입니다. |
+| `status` | `commands/status/get`의 응답 필드입니다. |
+| `error` | `commands/error/get`의 응답 필드입니다. |
+| `productInfo` | `commands/product-info/get`의 응답 필드입니다. |
+| `commandResponse` | initialize, set ProductInfo, start, stop, deinitialize 같은 상태 변경 명령의 응답 필드입니다. |
+| `results` | `commands/results/query`의 응답 필드입니다. |
+
+응답 topic 예:
+
+```text
+virex/responses/start-1
+```
+
+응답 payload 예:
+
+```json
+{"correlationId":"start-1","topic":"commands/system/start","accepted":true,"commandResponse":{"accepted":true,"state":"Running","command":"Start","message":"Started."}}
+```
+
+## 명령 topic 상세
+
+### status 쿼리
+
+게시 대상:
+
+```text
+virex/commands/status/get
+```
+
+요청 payload:
+
+```json
+{"correlationId":"status-1"}
+```
+
+응답:
+
+```text
+virex/responses/status-1
+```
+
+```json
+{"correlationId":"status-1","topic":"commands/status/get","accepted":true,"status":{"state":"Ready"}}
+```
+
+### error 쿼리
+
+게시 대상:
+
+```text
+virex/commands/error/get
+```
+
+요청 payload:
+
+```json
+{"correlationId":"error-1"}
+```
+
+응답 payload 필드: `error`.
+
+```json
+{"correlationId":"error-1","topic":"commands/error/get","accepted":true,"error":{"hasError":false,"state":"Ready"}}
+```
+
+### ProductInfo 쿼리
+
+게시 대상:
+
+```text
+virex/commands/product-info/get
+```
+
+요청 payload:
+
+```json
+{"correlationId":"product-get-1"}
+```
+
+응답 payload 필드: `productInfo`.
+
+```json
+{"correlationId":"product-get-1","topic":"commands/product-info/get","accepted":true,"productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+### ProductInfo 설정
+
+게시 대상:
+
+```text
+virex/commands/product-info/set
+```
+
+요청 payload:
+
+```json
+{"correlationId":"product-set-1","productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+응답 payload 필드: `commandResponse`.
+
+```json
+{"correlationId":"product-set-1","topic":"commands/product-info/set","accepted":true,"commandResponse":{"accepted":true,"state":"Ready","command":"SetProductInfo","message":"ProductInfo updated."}}
+```
+
+### Initialize
+
+게시 대상:
+
+```text
+virex/commands/system/initialize
+```
+
+요청 payload:
+
+```json
+{"correlationId":"initialize-1"}
+```
+
+응답 payload 필드: `commandResponse`.
+
+### Start run
+
+게시 대상:
+
+```text
+virex/commands/system/start
+```
+
+요청 payload:
+
+```json
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
+```
+
+응답 payload 필드: `commandResponse`. 명령이 수락되면 서비스는 `statusChanged`, `runStarted`, 이후 `resultCreated` / `runCompleted` 이벤트도 게시합니다.
+
+### Stop run
+
+게시 대상:
+
+```text
+virex/commands/system/stop
+```
+
+요청 payload:
+
+```json
+{"correlationId":"stop-1","reason":"operator-request"}
+```
+
+응답 payload 필드: `commandResponse`.
+
+### results 쿼리
+
+게시 대상:
+
+```text
+virex/commands/results/query
+```
+
+요청 payload:
+
+```json
+{"correlationId":"results-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+응답 payload 필드: `results`.
+
+```json
+{"correlationId":"results-1","topic":"commands/results/query","accepted":true,"results":{"items":[],"count":0}}
+```
+
+### Deinitialize
+
+게시 대상:
+
+```text
+virex/commands/system/deinitialize
+```
+
+요청 payload:
+
+```json
+{"correlationId":"deinitialize-1"}
+```
+
+응답 payload 필드: `commandResponse`.
+
+## 명령 예시
+
+=== "C# SDK"
+
+    ```csharp
+    var commands = new VirexMqttCommandClient(new VirexClientOptions
+    {
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+
+    var status = await commands.GetStatusAsync();
+    var error = await commands.GetErrorAsync();
+    var productInfo = await commands.GetProductInfoAsync();
+    var results = await commands.QueryResultsAsync(lotID: "LOT-001");
+    ```
+
+=== "C# Raw"
+
+    ```csharp
+    var correlationId = "status-1";
+    await client.SubscribeAsync($"virex/responses/{correlationId}");
+    var message = new MqttApplicationMessageBuilder()
+        .WithTopic("virex/commands/status/get")
+        .WithPayload(JsonSerializer.Serialize(new { correlationId }))
+        .Build();
+    await client.PublishAsync(message);
+    ```
+
+=== "Python"
+
+    ```python
+    correlation_id = "status-1"
+    client.subscribe(f"virex/responses/{correlation_id}")
+    client.publish(
+        "virex/commands/status/get",
+        json.dumps({"correlationId": correlation_id}))
+    ```
 
 ## 구독 예시
 

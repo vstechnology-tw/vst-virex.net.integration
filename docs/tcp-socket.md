@@ -10,7 +10,7 @@ TCP Socket is a bidirectional integration channel for clients that need to send 
 | Default port | `5089` |
 | Framing method | NDJSON |
 | Encoding | UTF-8 |
-| Direction | Client sends command frames; service sends event frames |
+| Direction | Client sends command and query frames; service sends direct response and event frames |
 
 Each frame is a JSON object and ends with `\n`.
 
@@ -22,19 +22,19 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 
 ## Frame Overview
 
-### Incoming Commands
+### Incoming commands and queries
 
 | Frame Type | Payload | Valid State | Result |
 | --- | --- | --- | --- |
+| `status` | `type` only | Any | Returns direct response `type: "status"`. |
+| `error` | `type` only | Any | Returns direct response `type: "error"`. |
+| `getProductInfo` | `type` only | Any | Returns direct response `type: "productInfo"`. |
 | `initialize` | [SystemInitializeRequest](payloads/commands/system-initialize-request.md) with `type` | `Uninitialized` | Enters `Initializing`; completion emits `statusChanged` with `Ready`. |
 | `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.md) with `type` | `Ready` | Enters `Deinitializing`; completion emits `statusChanged` with `Uninitialized`. |
 | `productInfo` | [ProductInfo](payloads/product/product-info.md) with `type` | `Ready` | Updates ProductInfo and emits `productInfoChanged`. |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.md) with `type` | `Ready` | Enters `Running`; completion is reported by events and results. |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.md) with `type` | `Running` | Stops the run and returns to `Ready`. |
-| `status` | `type` only | Any | Returns current [SystemStatus](payloads/system/system-status.md). |
-| `error` | `type` only | Any | Returns current [ErrorInfo](payloads/system/error-info.md). |
-| `getProductInfo` | `type` only | Any | Returns current [ProductInfo](payloads/product/product-info.md). |
-| `results` | optional `lotID`, `waferID`, `recipe` filters | Any | Returns [ResultList](payloads/results/result-list.md). |
+| `results` | optional `lotID`, `waferID`, `recipe` filters | Any | Returns direct response `type: "results"`. |
 
 ### Outgoing events
 
@@ -258,6 +258,137 @@ The service sends:
 ### Error handling
 
 If the current state is not `Running`, the service sends `commandRejected`.
+
+## status query
+
+### Purpose
+
+Read the current public system state over TCP. This is a query frame, not a lifecycle command, and can be sent in any state.
+
+### Frame
+
+```json
+{"type":"status"}
+```
+
+### Payload
+
+No body fields are required beyond `type: "status"`.
+
+### State Restrictions
+
+Can be called in any state.
+
+### Response frame
+
+The service sends a direct response frame:
+
+```json
+{"type":"status","state":"Ready"}
+```
+
+### Notes
+
+The response type is `status`. State-change events still use `statusChanged`.
+
+## error query
+
+### Purpose
+
+Read the current public error information over TCP. This query returns the same [ErrorInfo](payloads/system/error-info.md) shape used by RESTful API `GET /api/error` and MQTT `commands/error/get`.
+
+### Frame
+
+```json
+{"type":"error"}
+```
+
+### Payload
+
+No body fields are required beyond `type: "error"`.
+
+### State Restrictions
+
+Can be called in any state.
+
+### Response frame
+
+The service sends a direct response frame:
+
+```json
+{"type":"error","hasError":false,"message":"","state":"Ready"}
+```
+
+### Notes
+
+The response type is `error`. Error-change events still use `errorChanged`.
+
+## getProductInfo query
+
+### Purpose
+
+Read the current ProductInfo over TCP without changing state.
+
+### Frame
+
+```json
+{"type":"getProductInfo"}
+```
+
+### Payload
+
+No body fields are required beyond `type: "getProductInfo"`.
+
+### State Restrictions
+
+Can be called in any state.
+
+### Response frame
+
+The service sends a direct response frame:
+
+```json
+{"type":"productInfo","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### Notes
+
+The response type is `productInfo`. ProductInfo update events still use `productInfoChanged`.
+
+## results query
+
+### Purpose
+
+Query public result summaries over TCP. Results include summaries only; they do not include private inspection internals, defect lists, crop lists, or image binaries.
+
+### Frame
+
+```json
+{"type":"results","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+### Payload
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `type` | Yes | Must be `results`. |
+| `lotID` | No | Optional Lot ID filter. |
+| `waferID` | No | Optional Wafer ID filter. |
+| `recipe` | No | Optional Recipe filter. |
+
+Multiple filters are combined with AND.
+
+### State Restrictions
+
+Can be called in any state.
+
+### Response frame
+
+The service sends a direct response frame:
+
+```json
+{"type":"results","items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
+```
 
 ## statusChanged event
 
