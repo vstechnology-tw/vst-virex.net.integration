@@ -8,13 +8,13 @@ MQTT is a bidirectional integration channel. The service publishes events to `vi
 | --- | --- |
 | Default broker | `127.0.0.1:1883` |
 | Default root topic | `virex` |
-| Topic format | `virex/{eventName}` |
+| Topic format | Events: `virex/{eventName}`; commands: `virex/commands/...`; responses: `virex/responses/{correlationId}` |
 | Data format | JSON |
 | Direction | Service publishes events; clients publish command/query requests |
 
 The simulator starts the embedded MQTT broker after **Start Servers** is pressed. A local client does not need an external broker.
 
-## Topic Overview
+## Event Topic Overview
 
 | Topic | Payload | When Published |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ The simulator starts the embedded MQTT broker after **Start Servers** is pressed
 
 ## Command Topic Overview
 
-Each command payload should include `correlationId`. The response is published to `virex/responses/{correlationId}`.
+Each command or query payload should include `correlationId`. The response is published to `virex/responses/{correlationId}`. If `correlationId` is omitted, the service generates one, but clients should normally provide it so they can subscribe to and correlate the response deterministically.
 
 | RESTful API equivalent | MQTT command topic | Response payload field |
 | --- | --- | --- |
@@ -42,31 +42,265 @@ Each command payload should include `correlationId`. The response is published t
 | `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
 | `GET /api/results` | `virex/commands/results/query` | `results` |
 
-### Status query example
+## Command request envelope
 
-Publish:
+All MQTT command topics accept a UTF-8 JSON object. The common fields are:
+
+| Field | Used by | Description |
+| --- | --- | --- |
+| `correlationId` | All command topics | Client-provided request id. The response is published to `virex/responses/{correlationId}`. |
+| `productInfo` | `commands/product-info/set` | Optional nested [ProductInfo](payloads/product/product-info.md). The service also accepts a flat ProductInfo payload for compatibility. |
+| `condition` | `commands/system/start` | Optional run condition copied into result summaries. |
+| `runMode` | `commands/system/start` | Optional run mode. Supported values are documented in [ControlRunModes](payloads/commands/control-run-modes.md). |
+| `reason` | `commands/system/stop` | Optional stop reason. |
+| `lotID` | `commands/results/query` | Optional result query filter. |
+| `waferID` | `commands/results/query` | Optional result query filter. |
+| `recipe` | `commands/results/query` | Optional result query filter. |
+
+Example request:
 
 ```json
-{"correlationId":"status-1"}
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
 ```
 
-To:
+## Command response envelope
+
+All command response payloads use the same envelope:
+
+| Field | Description |
+| --- | --- |
+| `correlationId` | The request id used to build the response topic. |
+| `topic` | The command topic below the base topic, for example `commands/status/get`. |
+| `accepted` | `true` when the command/query was accepted. For lifecycle commands, this mirrors `commandResponse.accepted`. |
+| `errorCode` | Present for MQTT-level failures such as `unknown_topic`. |
+| `message` | Optional MQTT-level message. |
+| `status` | Present for `commands/status/get`. |
+| `error` | Present for `commands/error/get`. |
+| `productInfo` | Present for `commands/product-info/get`. |
+| `commandResponse` | Present for state-changing commands such as initialize, set ProductInfo, start, stop, and deinitialize. |
+| `results` | Present for `commands/results/query`. |
+
+Example response topic:
+
+```text
+virex/responses/start-1
+```
+
+Example response payload:
+
+```json
+{"correlationId":"start-1","topic":"commands/system/start","accepted":true,"commandResponse":{"accepted":true,"state":"Running","command":"Start","message":"Started."}}
+```
+
+## Command topic details
+
+### Query status
+
+Publish to:
 
 ```text
 virex/commands/status/get
 ```
 
-Response topic:
+Request payload:
+
+```json
+{"correlationId":"status-1"}
+```
+
+Response:
 
 ```text
 virex/responses/status-1
 ```
 
-Response payload:
-
 ```json
 {"correlationId":"status-1","topic":"commands/status/get","accepted":true,"status":{"state":"Ready"}}
 ```
+
+### Query error
+
+Publish to:
+
+```text
+virex/commands/error/get
+```
+
+Request payload:
+
+```json
+{"correlationId":"error-1"}
+```
+
+Response payload field: `error`.
+
+```json
+{"correlationId":"error-1","topic":"commands/error/get","accepted":true,"error":{"hasError":false,"state":"Ready"}}
+```
+
+### Query ProductInfo
+
+Publish to:
+
+```text
+virex/commands/product-info/get
+```
+
+Request payload:
+
+```json
+{"correlationId":"product-get-1"}
+```
+
+Response payload field: `productInfo`.
+
+```json
+{"correlationId":"product-get-1","topic":"commands/product-info/get","accepted":true,"productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+### Set ProductInfo
+
+Publish to:
+
+```text
+virex/commands/product-info/set
+```
+
+Request payload:
+
+```json
+{"correlationId":"product-set-1","productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+Response payload field: `commandResponse`.
+
+```json
+{"correlationId":"product-set-1","topic":"commands/product-info/set","accepted":true,"commandResponse":{"accepted":true,"state":"Ready","command":"SetProductInfo","message":"ProductInfo updated."}}
+```
+
+### Initialize
+
+Publish to:
+
+```text
+virex/commands/system/initialize
+```
+
+Request payload:
+
+```json
+{"correlationId":"initialize-1"}
+```
+
+Response payload field: `commandResponse`.
+
+### Start run
+
+Publish to:
+
+```text
+virex/commands/system/start
+```
+
+Request payload:
+
+```json
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
+```
+
+Response payload field: `commandResponse`. After the command is accepted, the service also publishes `statusChanged`, `runStarted`, and later `resultCreated` / `runCompleted` events.
+
+### Stop run
+
+Publish to:
+
+```text
+virex/commands/system/stop
+```
+
+Request payload:
+
+```json
+{"correlationId":"stop-1","reason":"operator-request"}
+```
+
+Response payload field: `commandResponse`.
+
+### Query results
+
+Publish to:
+
+```text
+virex/commands/results/query
+```
+
+Request payload:
+
+```json
+{"correlationId":"results-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+Response payload field: `results`.
+
+```json
+{"correlationId":"results-1","topic":"commands/results/query","accepted":true,"results":{"items":[],"count":0}}
+```
+
+### Deinitialize
+
+Publish to:
+
+```text
+virex/commands/system/deinitialize
+```
+
+Request payload:
+
+```json
+{"correlationId":"deinitialize-1"}
+```
+
+Response payload field: `commandResponse`.
+
+## Command example
+
+=== "C# SDK"
+
+    ```csharp
+    var commands = new VirexMqttCommandClient(new VirexClientOptions
+    {
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+
+    var status = await commands.GetStatusAsync();
+    var error = await commands.GetErrorAsync();
+    var productInfo = await commands.GetProductInfoAsync();
+    var results = await commands.QueryResultsAsync(lotID: "LOT-001");
+    ```
+
+=== "C# Raw"
+
+    ```csharp
+    var correlationId = "status-1";
+    await client.SubscribeAsync($"virex/responses/{correlationId}");
+    var message = new MqttApplicationMessageBuilder()
+        .WithTopic("virex/commands/status/get")
+        .WithPayload(JsonSerializer.Serialize(new { correlationId }))
+        .Build();
+    await client.PublishAsync(message);
+    ```
+
+=== "Python"
+
+    ```python
+    correlation_id = "status-1"
+    client.subscribe(f"virex/responses/{correlation_id}")
+    client.publish(
+        "virex/commands/status/get",
+        json.dumps({"correlationId": correlation_id}))
+    ```
 
 ## Subscription example
 

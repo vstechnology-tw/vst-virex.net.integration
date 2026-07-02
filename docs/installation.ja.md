@@ -16,9 +16,9 @@
 
 |ファイル |ランタイム |いつ使用するか |
 | --- | --- | --- |
-| `Virex.NET.Simulator-v2.1.0-net48-win-x64.zip` | .NET Framework 4.8 |ターゲット Windows マシンに既に .NET Framework 4.8 がインストールされている場合に使用します。 |
-| `Virex.NET.Simulator-v2.1.0-net8.0-windows-win-x64-self-contained.zip` | .NET 8 ウィンドウ |ランタイムを含む最新の Windows ビルドが必要な場合に使用します。 |
-| `Virex.NET.Simulator-v2.1.0-net10.0-windows-win-x64-self-contained.zip` | .NET 10 ウィンドウ |サポートされている最新の Windows ターゲットを検証する必要がある場合に使用します。 |
+| [`Virex.NET.Simulator-v2.1.0-net48-win-x64.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.0/Virex.NET.Simulator-v2.1.0-net48-win-x64.zip) | .NET Framework 4.8 |ターゲット Windows マシンに既に .NET Framework 4.8 がインストールされている場合に使用します。 |
+| [`Virex.NET.Simulator-v2.1.0-net8.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.0/Virex.NET.Simulator-v2.1.0-net8.0-windows-win-x64-self-contained.zip) | .NET 8 ウィンドウ |ランタイムを含む最新の Windows ビルドが必要な場合に使用します。 |
+| [`Virex.NET.Simulator-v2.1.0-net10.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.0/Virex.NET.Simulator-v2.1.0-net10.0-windows-win-x64-self-contained.zip) | .NET 10 ウィンドウ |サポートされている最新の Windows ターゲットを検証する必要がある場合に使用します。 |
 
 ダウンロード後:
 
@@ -33,8 +33,8 @@
 
 |パッケージ |目的 |
 | --- | --- |
-| [Virex.NET.Contracts](https://www.nuget.org/packages/Virex.NET.Contracts/) |公開 C# データモデル、RESTful API ルート、MQTT トピック名、TCP/NDJSON フォーマットおよび解析ツールを提供します。 |
-| [Virex.NET.Client](https://www.nuget.org/packages/Virex.NET.Client/) | C# RESTful API、TCP、および MQTT の SDK ラッパー。 |
+| [Virex.NET.Contracts 2.1.0](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0) |公開 C# データモデル、RESTful API ルート、MQTT トピック名、TCP/NDJSON フォーマットおよび解析ツールを提供します。 |
+| [Virex.NET.Client 2.1.0](https://www.nuget.org/packages/Virex.NET.Client/2.1.0) | C# RESTful API、TCP、および MQTT の SDK ラッパー。 |
 
 SDK をインストールします。
 

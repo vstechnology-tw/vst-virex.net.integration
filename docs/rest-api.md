@@ -18,6 +18,7 @@ All request and response bodies use JSON. `POST` without body can send empty bod
 | Category | Method | Route | Purpose | Valid State | Successful Response |
 | --- | --- | --- | --- | --- | --- |
 | Status | GET | `/api/status` | Read the current system state. | Any | [SystemStatus](payloads/system/system-status.md) |
+| Error | GET | `/api/error` | Read the current public error state. | Any | [ErrorInfo](payloads/system/error-info.md) |
 | ProductInfo | GET | `/api/product-info` | Read the current ProductInfo. | Any | [ProductInfo](payloads/product/product-info.md) |
 | ProductInfo | POST | `/api/product-info` | Updates the current ProductInfo. | `Ready` | [CommandResponse](payloads/commands/command-response.md) |
 | System | POST | `/api/system/initialize` | Initialize the system. | `Uninitialized` | [CommandResponse](payloads/commands/command-response.md) |
@@ -79,6 +80,71 @@ Read the current public system state. The client can use this state to decide wh
     ```cpp
     const auto response = SendRequest(url, L"GET", L"/api/status");
     // HTTP 200 body: {"state":"Ready"}
+    std::cout << response.body << std::endl;
+    ```
+
+
+### State Restrictions
+
+Can be called in any state.
+
+### Error handling
+
+Generally, [CommandResponse](payloads/commands/command-response.md) will not be returned. Connection failures, service not started, or non-JSON responses should be considered transport / HTTP failures.
+
+## GET /api/error
+
+### Purpose
+
+Read the current public error information. This is a query, not a lifecycle command; it can be used at any time to show whether the compatible service is currently reporting an application-level error.
+
+### Request
+
+| item | value |
+| --- | --- |
+| Method | `GET` |
+| Route | `/api/error` |
+| Query | none |
+| Body | none |
+
+### Response
+
+| HTTP status | Body | Description |
+| --- | --- | --- |
+| `200 OK` | [ErrorInfo](payloads/system/error-info.md) | Returns the current public error information. |
+
+### Example
+
+=== "C# SDK"
+
+    ```csharp
+    var error = await client.GetErrorAsync();
+    // 200 OK body: {"hasError":false,"state":"Ready"}
+    Console.WriteLine(error.HasError);
+    ```
+
+=== "C# Raw"
+
+    ```csharp
+    var error = await http.GetFromJsonAsync<ErrorInfo>("/api/error");
+    // 200 OK body: {"hasError":false,"state":"Ready"}
+    Console.WriteLine(error?.HasError);
+    ```
+
+=== "Python"
+
+    ```python
+    with urllib.request.urlopen("http://127.0.0.1:5088/api/error") as response:
+        error = json.loads(response.read().decode("utf-8"))
+        # 200 OK body: {"hasError":false,"state":"Ready"}
+        print(error["hasError"])
+    ```
+
+=== "C++"
+
+    ```cpp
+    const auto response = SendRequest(url, L"GET", L"/api/error");
+    // HTTP 200 body: {"hasError":false,"state":"Ready"}
     std::cout << response.body << std::endl;
     ```
 

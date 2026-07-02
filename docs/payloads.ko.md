@@ -20,7 +20,7 @@
 | 시스템 | [SystemStatus](payloads/system/system-status.ko.md), [ErrorInfo](payloads/system/error-info.ko.md) | 현재 시스템 상태 및 활성 오류 정보. |
 | 제품 | [ProductInfo](payloads/product/product-info.ko.md) | 실행 및 결과와 관련된 제품 정보입니다. |
 | 명령 | [CommandResponse](payloads/commands/command-response.ko.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.ko.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ko.md), [SystemStartRequest](payloads/commands/system-start-request.ko.md), [SystemStopRequest](payloads/commands/system-stop-request.ko.md), [ControlRunModes](payloads/commands/control-run-modes.ko.md) | 명령 요청 및 명령 응답. |
-| 결과 | [ResultSummary](payloads/results/result-summary.ko.md), [ResultList](payloads/results/result-list.ko.md) | 결과 요약 및 RESTful API 결과 목록 래퍼. |
+| 결과 | [ResultSummary](payloads/results/result-summary.ko.md), [ResultList](payloads/results/result-list.ko.md) | 결과 요약 및 RESTful API, TCP, MQTT 쿼리 응답에서 사용하는 결과 목록 래퍼. |
 
 ## 관계 요약
 
@@ -55,13 +55,13 @@ flowchart TD
 
 | 데이터 모델 | RESTful API | TCP | MQTT |
 | --- | --- | --- | --- |
-| SystemStatus | `GET /api/status` | `type: "statusChanged"` | `virex/statusChanged` |
-| ProductInfo | `GET/POST /api/product-info` | 수신 `type: "productInfo"`; 송신 `type: "productInfoChanged"` | `virex/productInfoChanged` |
-| CommandResponse | 시스템 명령 경로 응답 | 명령이 거부된 경우 `type: "commandRejected"` | `virex/commandRejected` |
-| SystemInitializeRequest | `POST /api/system/initialize`는 요청 본문을 사용하지 않습니다 | 수신 `type: "initialize"` | 사용되지 않음 |
-| SystemDeinitializeRequest | `POST /api/system/deinitialize`는 요청 본문을 사용하지 않습니다 | 수신 `type: "deinitialize"` | 사용되지 않음 |
-| SystemStartRequest | `POST /api/system/start` 요청 | 수신 `type: "start"` | 사용되지 않음 |
-| SystemStopRequest | `POST /api/system/stop` 요청 | 수신 `type: "stop"` | 사용되지 않음 |
+| SystemStatus | `GET /api/status` | 쿼리 `type: "status"` 응답; 이벤트 `type: "statusChanged"` | 쿼리 `virex/commands/status/get` 응답; 이벤트 `virex/statusChanged` |
+| ProductInfo | `GET/POST /api/product-info` | 쿼리 `type: "getProductInfo"` 응답; 수신 `type: "productInfo"`; 이벤트 `type: "productInfoChanged"` | 쿼리 `virex/commands/product-info/get`; 명령 `virex/commands/product-info/set`; 이벤트 `virex/productInfoChanged` |
+| CommandResponse | 시스템 명령 경로 응답 | 명령이 거부된 경우 `type: "commandRejected"` | `virex/responses/{correlationId}`의 `commandResponse`; 이벤트 `virex/commandRejected` |
+| SystemInitializeRequest | `POST /api/system/initialize`는 요청 본문을 사용하지 않습니다 | 수신 `type: "initialize"` | `virex/commands/system/initialize` |
+| SystemDeinitializeRequest | `POST /api/system/deinitialize`는 요청 본문을 사용하지 않습니다 | 수신 `type: "deinitialize"` | `virex/commands/system/deinitialize` |
+| SystemStartRequest | `POST /api/system/start` 요청 | 수신 `type: "start"` | `virex/commands/system/start` |
+| SystemStopRequest | `POST /api/system/stop` 요청 | 수신 `type: "stop"` | `virex/commands/system/stop` |
 | ResultSummary | `GET /api/results` 항목; 결과 생성 이벤트 | `type: "resultCreated"` | `virex/resultCreated` |
-| ResultList | `GET /api/results` 응답 | 사용되지 않음 | 사용되지 않음 |
-| ErrorInfo | 서비스별 오류 이벤트 | `type: "errorChanged"` | `virex/errorChanged` |
+| ResultList | `GET /api/results` 응답 | 쿼리 `type: "results"` 응답 | 쿼리 `virex/commands/results/query` 응답 |
+| ErrorInfo | `GET /api/error`; 서비스별 오류 이벤트 | 쿼리 `type: "error"` 응답; 이벤트 `type: "errorChanged"` | 쿼리 `virex/commands/error/get` 응답; 이벤트 `virex/errorChanged` |
