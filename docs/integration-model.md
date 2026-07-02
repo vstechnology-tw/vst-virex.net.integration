@@ -49,8 +49,8 @@ During development, vendors usually connect to the simulator. When deploying, th
 | Transport | Direction | Responsibility |
 | --- | --- | --- |
 | RESTful API | Client to service | Commands and queries for state, ProductInfo, system lifecycle, runs, and result lists. |
-| TCP / NDJSON | Bidirectional | Direct socket integration for command frames and event frames. |
-| MQTT | Service to Client | Outgoing event notifications only. MQTT is not used for commands. |
+| TCP / NDJSON | Bidirectional | Direct socket integration for command frames, query frames, direct responses, and event frames. |
+| MQTT | Bidirectional | Event notifications from service to clients, plus correlated command/query requests and responses through `commands/...` and `responses/{correlationId}` topics. |
 
 ## Portability Target
 
