@@ -27,7 +27,7 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 | Frame Type | Payload | Valid State | Result |
 | --- | --- | --- | --- |
 | `initialize` | [SystemInitializeRequest](payloads/commands/system-initialize-request.md) with `type` | `Uninitialized` | Enters `Initializing`; completion emits `statusChanged` with `Ready`. |
-| `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.md) with `type` | `Ready` | Enters `Deinitializing`; completion emits `statusChanged` with `Uninitialized`. |
+| `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.md) with `type` | `Ready` or public recovery state `Deinitializing` | Enters or remains in `Deinitializing`; successful cleanup emits `statusChanged` with `Uninitialized`. |
 | `productInfo` | [ProductInfo](payloads/product/product-info.md) with `type` | `Ready` | Updates ProductInfo and emits `productInfoChanged`. |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.md) with `type` | `Ready` | Enters `Running`; completion is reported by events and results. |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.md) with `type` | `Running` | Stops the run and returns to `Ready`. |
@@ -149,7 +149,7 @@ No body fields are required beyond `type: "deinitialize"`.
 
 ### State Restrictions
 
-Only valid in `Ready`.
+Valid in `Ready` and public recovery state `Deinitializing`.
 
 ### Success event
 
@@ -161,7 +161,10 @@ The service sends:
 
 ### Error handling
 
-If the current state is not `Ready`, the service sends `commandRejected`.
+If cleanup is still unsuccessful, the service sends `commandRejected` with
+`errorCode: "requires_deinitialize"` and `recoveryAction: "Deinitialize"`;
+the client must keep Deinitialize enabled for another retry. Other public
+states reject the command as invalid.
 
 ## productInfo command
 

@@ -19,7 +19,7 @@
 - `Stop`は`Running`でのみ有効です。
 - `SetProductInfo`は`Ready`でのみ有効です。
 - `Initialize`は`Uninitialized`でのみ有効です。
-・`Deinitialize`は`Ready`内でのみ有効です。
+・`Deinitialize`は`Ready`で有効で、公開復旧状態`Deinitializing`ではクリーンアップ再試行のために使用可能です。
 
 最初に `GET /api/status` を読み取り、状態が許可したときにコマンドを送信します。
 

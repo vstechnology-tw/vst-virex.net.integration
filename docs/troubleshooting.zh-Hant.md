@@ -19,7 +19,7 @@
 - `Stop` 只在 `Running` 合法。
 - `SetProductInfo` 只在 `Ready` 合法。
 - `Initialize` 只在 `Uninitialized` 合法。
-- `Deinitialize` 只在 `Ready` 合法。
+- `Deinitialize` 在 `Ready` 合法；公開復原狀態 `Deinitializing` 也必須保持可操作以重試清理。
 
 先讀 `GET /api/status`，等狀態允許後再送命令。
 

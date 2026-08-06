@@ -21,7 +21,7 @@ RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령�
 | ProductInfo | GET | `/api/product-info` | 현재 ProductInfo를 읽습니다. | 모두 | [ProductInfo](payloads/product/product-info.ko.md) |
 | ProductInfo | POST | `/api/product-info` | 현재 ProductInfo를 업데이트합니다. | `Ready` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 시스템 | POST | `/api/system/initialize` | 시스템을 초기화합니다. | `Uninitialized` | [CommandResponse](payloads/commands/command-response.ko.md) |
-| 시스템 | POST | `/api/system/deinitialize` | 시스템 초기화를 해제합니다. | `Ready` | [CommandResponse](payloads/commands/command-response.ko.md) |
+| 시스템 | POST | `/api/system/deinitialize` | 시스템 초기화를 해제하거나 복구 정리를 재시도합니다. | `Ready` 또는 공개 복구 상태 `Deinitializing` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 시스템 | POST | `/api/system/start` | 실행을 시작합니다. | `Ready` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 시스템 | POST | `/api/system/stop` | 현재 실행을 중지합니다. | `Running` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 결과 | GET | `/api/results` | 결과 요약을 조회합니다. | 모두 | [ResultList](payloads/results/result-list.ko.md) |
@@ -365,7 +365,7 @@ RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령�
 | HTTP 상태 | 본문 | 설명 |
 | --- | --- | --- |
 | `200 OK` | [CommandResponse](payloads/commands/command-response.ko.md) | 초기화 해제가 완료되었습니다. |
-| `409 Conflict` | [CommandResponse](payloads/commands/command-response.ko.md) | 현재 상태에서는 초기화 해제가 허용되지 않습니다. |
+| `409 Conflict` | [CommandResponse](payloads/commands/command-response.ko.md) | 현재 상태에서는 초기화 해제 또는 복구 재시도가 허용되지 않습니다. |
 
 ### 예
 
@@ -407,11 +407,11 @@ RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령�
 
 ### 상태 제한
 
-`Ready`에서만 호출할 수 있습니다.
+`Ready`에서 호출할 수 있습니다. 공개 복구 상태 `Deinitializing`에서도 자동 복구가 실패한 정리를 재시도하기 위해 허용됩니다.
 
 ### 오류 처리
 
-현재 상태가 `Ready`가 아닌 경우 `accepted=false` 및 `errorCode=invalid_state`를 반환합니다.
+현재 상태가 `Ready`도 공개 복구 상태 `Deinitializing`도 아닌 경우 `accepted=false` 및 `errorCode=invalid_state`를 반환합니다.
 
 ## POST /api/system/start
 

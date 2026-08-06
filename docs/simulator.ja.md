@@ -61,7 +61,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- |
 | **Start Servers** | RESTful API、TCP、および MQTT エンドポイントを開始します。システム状態を変更しません。 |
 | **Initialize** |初期化コマンドを送信します。 `Uninitialized` でのみ有効です。 |
-| **Deinitialize** |初期化解除コマンドを送信します。 `Ready` でのみ有効です。 |
+| **Deinitialize** |初期化解除コマンドを送信します。`Ready` で有効で、公開復旧状態 `Deinitializing` ではクリーンアップを再試行できます。 |
 | **Apply ProductInfo** |現在の ProductInfo を更新します。 `Ready` でのみ有効です。 |
 | **Start Single** | `runMode=single` で 1 回の実行を開始します。`Ready` でのみ有効です。応答状態は `Running` です。シミュレーターは結果を生成し、run-completed event の後で `Ready` に戻ります。 |
 | **Start Continue** | `runMode=continue` で継続実行を開始します。`Ready` でのみ有効です。応答状態は `Running` です。**Stop** を押すまで結果を継続生成します。 |

@@ -11,7 +11,7 @@ The state machine defines which commands are valid in each system lifecycle stat
 | `Ready` | Idle. ProductInfo update, start, and deinitialize commands are valid. |
 | `UpdatingProductInfo` | ProductInfo update has been accepted and the system is waiting for the completion event. |
 | `Running` | A run is active. Internal run phases are not public states. |
-| `Deinitializing` | Deinitialize has been accepted and the system is waiting for the completion event. |
+| `Deinitializing` | Deinitialize is running or is a retryable recovery action; the client must keep Deinitialize available until cleanup completes. |
 
 ## Commands and events
 
@@ -33,7 +33,7 @@ Solid transitions represent commands. Dashed transitions represent events.
 | `SetProductInfo` | `Ready` | Enters `UpdatingProductInfo`; `ProductInfoUpdateCompleted` returns the state to `Ready`. |
 | `Start` | `Ready` | Captures the current ProductInfo snapshot and enters `Running`. |
 | `Stop` | `Running` | Stops the active run and returns the state to `Ready`. |
-| `Deinitialize` | `Ready` | Enters `Deinitializing`; `DeinitializationCompleted` changes the state to `Uninitialized`. |
+| `Deinitialize` | `Ready` or `Deinitializing` (recovery retry) | Enters or remains in `Deinitializing`; successful completion changes the state to `Uninitialized`. |
 
 ## Rejected Commands
 

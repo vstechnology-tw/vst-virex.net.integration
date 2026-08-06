@@ -19,7 +19,7 @@
 - `Stop`는 `Running`에서만 유효합니다.
 - `SetProductInfo`는 `Ready`에서만 유효합니다.
 - `Initialize`는 `Uninitialized`에서만 유효합니다.
-- `Deinitialize`는 `Ready`에서만 유효합니다.
+- `Deinitialize`는 `Ready`에서 유효하며 공개 복구 상태 `Deinitializing`에서도 정리 재시도를 위해 사용할 수 있어야 합니다.
 
 먼저 `GET /api/status`를 읽은 후 상태가 허용할 때 명령을 보냅니다.
 

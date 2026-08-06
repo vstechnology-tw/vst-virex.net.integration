@@ -11,7 +11,7 @@
 | 更新 ProductInfo | `POST /api/product-info` 在 `Ready` 被接受，回 `Ready`。 |
 | 啟動 | `POST /api/system/start` 在 `Ready` 被接受，回 `Running`。 |
 | 停止 | `POST /api/system/stop` 在 `Running` 被接受，回 `Ready`。 |
-| 反初始化 | `POST /api/system/deinitialize` 在 `Ready` 被接受，回 `Uninitialized`。 |
+| 反初始化 | `POST /api/system/deinitialize` 在 `Ready` 被接受；注入清理失敗後仍可在 `Deinitializing` 重試，成功後回 `Uninitialized`。 |
 | 非法命令 | 非法命令回 `accepted=false`、`errorCode=invalid_state` 與目前 `state`。 |
 | 結果 | `GET /api/results` 回傳符合 ProductInfo 快照欄位的摘要。 |
 

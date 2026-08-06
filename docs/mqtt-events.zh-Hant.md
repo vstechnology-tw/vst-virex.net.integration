@@ -1,6 +1,6 @@
 # MQTT 事件
 
-MQTT 是 Virex.NET 相容服務傳給整合用戶端的傳出事件通道，不用於命令或查詢。
+MQTT 是雙向整合通道。服務會發布事件到 `virex/{eventName}`；用戶端可以發布 RESTful API 對應的命令與查詢到 `virex/commands/...`，並在 `virex/responses/{correlationId}` 收到對應回應。
 
 ## 基本資訊
 
@@ -10,7 +10,7 @@ MQTT 是 Virex.NET 相容服務傳給整合用戶端的傳出事件通道，不�
 | 預設 topic 前綴 | `virex` |
 | topic 格式 | `virex/{eventName}` |
 | 資料格式 | JSON |
-| 方向 | 服務發布，用戶端訂閱 |
+| 方向 | 服務發布事件；用戶端發布命令／查詢 |
 
 模擬器按 **Start Servers** 後會啟動內嵌 MQTT broker。本機用戶端不需要另外安裝外部 broker。
 
@@ -25,6 +25,22 @@ MQTT 是 Virex.NET 相容服務傳給整合用戶端的傳出事件通道，不�
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.zh-Hant.md) | 建立結果摘要。 |
 | `virex/errorChanged` | [ErrorInfo](payloads/system/error-info.zh-Hant.md) | 公開錯誤狀態改變。 |
 | `virex/commandRejected` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) | 命令因狀態規則或驗證失敗被拒絕。 |
+
+## 命令 topic 總覽
+
+每個命令 payload 都應包含 `correlationId`。回應會發布到 `virex/responses/{correlationId}`。
+
+| RESTful API 對應 | MQTT 命令 topic | 回應 payload 欄位 |
+| --- | --- | --- |
+| `GET /api/status` | `virex/commands/status/get` | `status` |
+| `GET /api/error` | `virex/commands/error/get` | `error` |
+| `GET /api/product-info` | `virex/commands/product-info/get` | `productInfo` |
+| `POST /api/product-info` | `virex/commands/product-info/set` | `commandResponse` |
+| `POST /api/system/initialize` | `virex/commands/system/initialize` | `commandResponse` |
+| `POST /api/system/deinitialize` | `virex/commands/system/deinitialize` | `commandResponse` |
+| `POST /api/system/start` | `virex/commands/system/start` | `commandResponse` |
+| `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
+| `GET /api/results` | `virex/commands/results/query` | `results` |
 
 ## 訂閱範例
 
@@ -273,6 +289,24 @@ virex/commandRejected
 ### 說明
 
 可用這個事件關聯 RESTful API、TCP 或 UI 命令被拒絕的情境。所有傳輸方式都使用相同狀態規則。
+
+## RecoveryAction 與用戶端復原
+
+`statusChanged`、`errorChanged` 與 `commandRejected` 都可能包含選填的 `recoveryAction` 欄位。擷取失敗需要清理時，公開協定會回報 `state: "Deinitializing"` 與 `recoveryAction: "Deinitialize"`；內部的 `Faulted` 狀態不會提供給客戶端。
+
+```json
+{"state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"hasError":true,"message":"Camera acquisition failed.","state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"accepted":false,"state":"Deinitializing","command":"Start","errorCode":"requires_deinitialize","recoveryAction":"Deinitialize","message":"Deinitialize is required before another command can be accepted."}
+```
+
+用戶端應保持 **Deinitialize** 操作可按，直到服務回傳 `Uninitialized`。只有 Deinitialize 無法復原服務時，App 重啟才是 UI 層的最後手段。
 
 ## 錯誤處理
 

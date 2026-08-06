@@ -21,7 +21,7 @@ All request and response bodies use JSON. `POST` without body can send empty bod
 | ProductInfo | GET | `/api/product-info` | Read the current ProductInfo. | Any | [ProductInfo](payloads/product/product-info.md) |
 | ProductInfo | POST | `/api/product-info` | Updates the current ProductInfo. | `Ready` | [CommandResponse](payloads/commands/command-response.md) |
 | System | POST | `/api/system/initialize` | Initialize the system. | `Uninitialized` | [CommandResponse](payloads/commands/command-response.md) |
-| System | POST | `/api/system/deinitialize` | Deinitialize the system. | `Ready` | [CommandResponse](payloads/commands/command-response.md) |
+| System | POST | `/api/system/deinitialize` | Deinitialize the system or retry recovery cleanup. | `Ready` or public recovery state `Deinitializing` | [CommandResponse](payloads/commands/command-response.md) |
 | System | POST | `/api/system/start` | Start a run. | `Ready` | [CommandResponse](payloads/commands/command-response.md) |
 | System | POST | `/api/system/stop` | Stop the current run. | `Running` | [CommandResponse](payloads/commands/command-response.md) |
 | Results | GET | `/api/results` | Query result summaries. | Any | [ResultList](payloads/results/result-list.md) |
@@ -365,7 +365,7 @@ De-initialization system. The API will wait until `DeinitializationCompleted` be
 | HTTP status | Body | Description |
 | --- | --- | --- |
 | `200 OK` | [CommandResponse](payloads/commands/command-response.md) | Deinitialization completed. |
-| `409 Conflict` | [CommandResponse](payloads/commands/command-response.md) | The current state does not allow deinitialization. |
+| `409 Conflict` | [CommandResponse](payloads/commands/command-response.md) | The current state does not allow deinitialization or recovery retry. |
 
 ### Example
 
@@ -407,11 +407,14 @@ De-initialization system. The API will wait until `DeinitializationCompleted` be
 
 ### State Restrictions
 
-Only calls allowed at `Ready`.
+Calls are allowed at `Ready`. They are also accepted at public recovery state
+`Deinitializing` so the client can retry cleanup after an automatic recovery
+attempt fails.
 
 ### Error handling
 
-If the current state is not `Ready`, returns `accepted=false` and `errorCode=invalid_state`.
+If the current state is neither `Ready` nor public recovery state
+`Deinitializing`, returns `accepted=false` and `errorCode=invalid_state`.
 
 ## POST /api/system/start
 

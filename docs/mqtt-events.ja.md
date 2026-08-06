@@ -1,6 +1,6 @@
 # MQTT イベント
 
-MQTT は、Virex.NET 互換サービスから統合クライアントへの送信イベント チャネルです。コマンドやクエリには使用されません。
+MQTT は双方向の統合チャネルです。サービスは `virex/{eventName}` にイベントを発行します。クライアントは RESTful API に相当するコマンドとクエリを `virex/commands/...` に発行し、`virex/responses/{correlationId}` で対応する応答を受信できます。
 
 ## 基本情報
 
@@ -10,7 +10,7 @@ MQTT は、Virex.NET 互換サービスから統合クライアントへの送�
 |既定のトピックプレフィックス | `virex` |
 |トピックの形式 | `virex/{eventName}` |
 |データ形式 | JSON |
-|方向 |サービスが発行し、クライアントがサブスクライブします |
+|方向 |サービスがイベントを発行し、クライアントがコマンド/クエリを発行します |
 
 **Start Servers** が押された後、シミュレーターは組み込みの MQTT ブローカーを開始します。ローカル クライアントには外部ブローカーは必要ありません。
 
@@ -25,6 +25,22 @@ MQTT は、Virex.NET 互換サービスから統合クライアントへの送�
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.ja.md) |結果の概要が作成されます。 |
 | `virex/errorChanged` | [ErrorInfo](payloads/system/error-info.ja.md) |公開エラー情報が変更されます。 |
 | `virex/commandRejected` | [CommandResponse](payloads/commands/command-response.ja.md) |コマンドは状態の規則または検証によって拒否されます。 |
+
+## コマンドトピックの概要
+
+各コマンド ペイロードには `correlationId` を含める必要があります。応答は `virex/responses/{correlationId}` に発行されます。
+
+| RESTful API 相当 | MQTT コマンドトピック | 応答ペイロード フィールド |
+| --- | --- | --- |
+| `GET /api/status` | `virex/commands/status/get` | `status` |
+| `GET /api/error` | `virex/commands/error/get` | `error` |
+| `GET /api/product-info` | `virex/commands/product-info/get` | `productInfo` |
+| `POST /api/product-info` | `virex/commands/product-info/set` | `commandResponse` |
+| `POST /api/system/initialize` | `virex/commands/system/initialize` | `commandResponse` |
+| `POST /api/system/deinitialize` | `virex/commands/system/deinitialize` | `commandResponse` |
+| `POST /api/system/start` | `virex/commands/system/start` | `commandResponse` |
+| `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
+| `GET /api/results` | `virex/commands/results/query` | `results` |
 
 ## サブスクリプションの例
 
@@ -273,6 +289,24 @@ virex/commandRejected
 ### 注記
 
 このイベントを使用して、拒否された RESTful API、TCP、または UI コマンドを関連付けます。すべてのトランスポートは同じ状態ルールを使用します。
+
+## RecoveryAction とクライアントの復旧
+
+`statusChanged`、`errorChanged`、`commandRejected` にはオプションの `recoveryAction` フィールドを含めることができます。取得エラーの後にクリーンアップが必要な場合、公開契約では `state: "Deinitializing"` と `recoveryAction: "Deinitialize"` を返します。内部状態 `Faulted` はクライアントには公開されません。
+
+```json
+{"state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"hasError":true,"message":"Camera acquisition failed.","state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"accepted":false,"state":"Deinitializing","command":"Start","errorCode":"requires_deinitialize","recoveryAction":"Deinitialize","message":"Deinitialize is required before another command can be accepted."}
+```
+
+クライアントは **Deinitialize** 操作を有効なままにし、サービスが `Uninitialized` を返すまで再試行してください。アプリケーションの再起動は、Deinitialize で復旧できない場合に限る UI の最終手段です。
 
 ## エラー処理
 

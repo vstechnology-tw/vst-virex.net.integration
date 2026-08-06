@@ -108,4 +108,33 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.Equal(SystemStates.Uninitialized, response.State);
         Assert.Equal(SystemStates.Uninitialized, session.Status.State);
     }
+
+    [Fact]
+    public async Task AcquisitionFaultMakesDeinitializeRetryableUntilCleanupSucceeds()
+    {
+        var session = new SimulatorSession();
+        await session.InitializeAsync();
+        await session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue });
+        session.ConfigureDeinitializeFailures(1);
+
+        var firstAttempt = await session.SimulateAcquisitionFaultAsync("camera disconnected");
+
+        Assert.False(firstAttempt.Accepted);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, firstAttempt.ErrorCode);
+        Assert.Equal(RecoveryActions.Deinitialize, firstAttempt.RecoveryAction);
+        Assert.Equal(SystemStates.Deinitializing, firstAttempt.State);
+        Assert.Equal(SystemStates.Deinitializing, session.Status.State);
+        Assert.Equal(RecoveryActions.Deinitialize, session.Status.RecoveryAction);
+        Assert.True(session.Error.HasError);
+        Assert.Equal("camera disconnected", session.Error.Message);
+        Assert.Equal(RecoveryActions.Deinitialize, session.Error.RecoveryAction);
+
+        var retry = await session.DeinitializeAsync();
+
+        Assert.True(retry.Accepted);
+        Assert.Equal(SystemStates.Uninitialized, retry.State);
+        Assert.Equal(SystemStates.Uninitialized, session.Status.State);
+        Assert.False(session.Error.HasError);
+        Assert.Null(session.Error.RecoveryAction);
+    }
 }

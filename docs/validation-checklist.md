@@ -11,7 +11,7 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 | Update ProductInfo | `POST /api/product-info` is accepted in `Ready` and returns `Ready`. |
 | Start | `POST /api/system/start` is accepted in `Ready` and returns `Running`. |
 | Stop | `POST /api/system/stop` is accepted in `Running` and returns `Ready`. |
-| Deinitialize | `POST /api/system/deinitialize` is accepted in `Ready` and returns `Uninitialized`. |
+| Deinitialize | `POST /api/system/deinitialize` is accepted in `Ready`; after an injected cleanup failure it remains accepted in `Deinitializing` and a successful retry returns `Uninitialized`. |
 | Invalid command | Invalid commands return `accepted=false`, `errorCode=invalid_state`, and the current `state`. |
 | Results | `GET /api/results` returns summaries matching the ProductInfo snapshot fields. |
 

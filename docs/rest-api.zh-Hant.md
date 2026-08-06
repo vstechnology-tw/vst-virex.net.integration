@@ -21,7 +21,7 @@ RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以�
 | ProductInfo | GET | `/api/product-info` | 讀取目前 ProductInfo。 | Any | [ProductInfo](payloads/product/product-info.zh-Hant.md) |
 | ProductInfo | POST | `/api/product-info` | 更新目前 ProductInfo。 | `Ready` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | System | POST | `/api/system/initialize` | 初始化系統。 | `Uninitialized` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
-| System | POST | `/api/system/deinitialize` | 反初始化系統。 | `Ready` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
+| System | POST | `/api/system/deinitialize` | 反初始化系統或重試復原清理。 | `Ready` 或公開復原狀態 `Deinitializing` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | System | POST | `/api/system/start` | 啟動一次執行。 | `Ready` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | System | POST | `/api/system/stop` | 停止目前執行。 | `Running` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | Results | GET | `/api/results` | 查詢結果摘要。 | Any | [ResultList](payloads/results/result-list.zh-Hant.md) |
@@ -365,7 +365,7 @@ RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以�
 | HTTP status | Body | 說明 |
 | --- | --- | --- |
 | `200 OK` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) | 反初始化完成。 |
-| `409 Conflict` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) | 目前狀態不允許反初始化。 |
+| `409 Conflict` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) | 目前狀態不允許反初始化或復原重試。 |
 
 ### 範例
 
@@ -407,11 +407,11 @@ RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以�
 
 ### 狀態限制
 
-只允許在 `Ready` 呼叫。
+`Ready` 合法；公開復原狀態 `Deinitializing` 也接受此命令，讓用戶端可以在自動復原失敗後重試清理。
 
 ### 錯誤處理
 
-如果目前狀態不是 `Ready`，回傳 `accepted=false` 與 `errorCode=invalid_state`。
+如果目前狀態既不是 `Ready` 也不是公開復原狀態 `Deinitializing`，回傳 `accepted=false` 與 `errorCode=invalid_state`。
 
 ## POST /api/system/start
 

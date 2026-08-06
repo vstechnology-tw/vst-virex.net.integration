@@ -61,7 +61,7 @@ The simulator is not a production inspection engine and does not expose private 
 | --- | --- |
 | **Start Servers** | Starts RESTful API, TCP, and MQTT endpoints. Does not change system state. |
 | **Initialize** | Sends the initialize command. Only valid in `Uninitialized`. |
-| **Deinitialize** | Sends the deinitialize command. Only valid in `Ready`. |
+| **Deinitialize** | Sends the deinitialize command. Valid in `Ready` and retryable in public recovery state `Deinitializing`. |
 | **Apply ProductInfo** | Updates the current ProductInfo. Only valid in `Ready`. |
 | **Start Single** | Starts a single run with `runMode=single`. Only valid in `Ready`; the response state is `Running`. The simulator emits a result and returns to `Ready` after the run-completed event. |
 | **Start Continue** | Starts a continuous run with `runMode=continue`. Only valid in `Ready`; the response state is `Running`. The simulator keeps emitting results until **Stop** is pressed. |

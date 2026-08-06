@@ -27,7 +27,7 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 |フレームタイプ |ペイロード |有効な状態 |結果 |
 | --- | --- | --- | --- |
 | `initialize` | [SystemInitializeRequest](payloads/commands/system-initialize-request.ja.md) と `type` | `Uninitialized` | `Initializing` に遷移します。完了後、`Ready` の `statusChanged` を送信します。 |
-| `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md) と `type` | `Ready` | `Deinitializing` に遷移します。完了後、`Uninitialized` の `statusChanged` を送信します。 |
+| `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md) と `type` | `Ready` または公開復旧状態 `Deinitializing` | `Deinitializing` に遷移または再試行します。クリーンアップ成功後、`Uninitialized` の `statusChanged` を送信します。 |
 | `productInfo` | [ProductInfo](payloads/product/product-info.ja.md) と `type` | `Ready` | ProductInfo を更新し、`productInfoChanged` を発行します。 |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.ja.md) と `type` | `Ready` | `Running` に遷移します。完了はイベントと結果によって報告されます。 |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.ja.md) と `type` | `Running` |実行を停止し、`Ready` に戻ります。 |
@@ -145,7 +145,7 @@ TCP 経由でシステムを非初期化します。`DeinitializationCompleted` 
 
 ### 状態制限
 
-`Ready` でのみ有効です。
+`Ready` および公開復旧状態 `Deinitializing` で有効です。
 
 ### 成功イベント
 
@@ -157,7 +157,9 @@ TCP 経由でシステムを非初期化します。`DeinitializationCompleted` 
 
 ### エラー処理
 
-現在の状態が `Ready` ではない場合、サービスは `commandRejected` を送信します。
+クリーンアップに失敗した場合、サービスは `errorCode: "requires_deinitialize"` と
+`recoveryAction: "Deinitialize"` を含む `commandRejected` を送信します。クライアントは
+Deinitialize を再試行できるようにします。その他の公開状態ではコマンドを拒否します。
 
 ## productInfo コマンド
 

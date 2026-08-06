@@ -11,7 +11,7 @@
 | ProductInfo 업데이트 | `POST /api/product-info`는 `Ready`에서 허용되며 `Ready`를 반환합니다. |
 | 시작 | `POST /api/system/start`는 `Ready`에서 허용되며 `Running`를 반환합니다. |
 | 중지 | `POST /api/system/stop`는 `Running`에서 허용되며 `Ready`를 반환합니다. |
-| Deinitialize | `POST /api/system/deinitialize`는 `Ready`에서 허용되며 `Uninitialized`를 반환합니다. |
+| Deinitialize | `POST /api/system/deinitialize`는 `Ready`에서 허용되며, 정리 실패를 주입한 후에도 `Deinitializing`에서 재시도할 수 있고 성공하면 `Uninitialized`를 반환합니다. |
 | 잘못된 명령 | 잘못된 명령은 `accepted=false`, `errorCode=invalid_state` 및 현재 `state`를 반환합니다. |
 | 결과 | `GET /api/results`는 ProductInfo 스냅샷 필드와 일치하는 요약을 반환합니다. |
 

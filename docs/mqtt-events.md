@@ -316,6 +316,24 @@ virex/commandRejected
 
 Use this event to correlate RESTful API, TCP, or UI commands that were rejected. All transports use the same state rules.
 
+## RecoveryAction and client recovery
+
+`statusChanged`, `errorChanged`, and `commandRejected` may include the optional `recoveryAction` field. When an acquisition failure requires cleanup, the public contract reports `state: "Deinitializing"` and `recoveryAction: "Deinitialize"`; the internal `Faulted` state is never exposed to clients.
+
+```json
+{"state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"hasError":true,"message":"Camera acquisition failed.","state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"accepted":false,"state":"Deinitializing","command":"Start","errorCode":"requires_deinitialize","recoveryAction":"Deinitialize","message":"Deinitialize is required before another command can be accepted."}
+```
+
+The client should keep the **Deinitialize** action enabled and retry it until the service returns `Uninitialized`. Restarting the application is a UI-only last resort after Deinitialize cannot recover the service.
+
 ## Error handling
 
 MQTT events do not have HTTP status codes. Malformed JSON, unknown topics, broker disconnections, and subscription failures should be treated as transport-layer errors. `commandRejected` is an application-layer rejection reported by the Virex.NET compatible service.

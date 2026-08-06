@@ -11,7 +11,7 @@
 | ProductInfo を更新 | `POST /api/product-info` は `Ready` で受け入れられ、`Ready` を返します。 |
 |開始 | `POST /api/system/start` は `Ready` で受け入れられ、`Running` を返します。 |
 |停止 | `POST /api/system/stop` は `Running` で受け入れられ、`Ready` を返します。 |
-| Deinitialize | `POST /api/system/deinitialize` は `Ready` で受け入れられ、`Uninitialized` を返します。 |
+| Deinitialize | `POST /api/system/deinitialize` は `Ready` で受け入れられ、クリーンアップ失敗を注入した後も `Deinitializing` で再試行でき、成功すると `Uninitialized` を返します。 |
 |無効なコマンド |無効なコマンドは、`accepted=false`、`errorCode=invalid_state`、および現在の `state` を返します。 |
 |結果 | `GET /api/results` は、ProductInfo スナップショット フィールドに一致する概要を返します。 |
 

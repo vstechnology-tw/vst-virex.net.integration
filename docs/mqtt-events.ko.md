@@ -1,6 +1,6 @@
 # MQTT 이벤트
 
-MQTT는 Virex.NET 호환 서비스에서 통합 클라이언트로 송신 이벤트 채널입니다. 명령이나 쿼리에는 사용되지 않습니다.
+MQTT는 양방향 통합 채널입니다. 서비스는 `virex/{eventName}`으로 이벤트를 게시합니다. 클라이언트는 RESTful API에 해당하는 명령과 쿼리를 `virex/commands/...`으로 게시하고 `virex/responses/{correlationId}`에서 연결된 응답을 받을 수 있습니다.
 
 ## 기본 정보
 
@@ -10,7 +10,7 @@ MQTT는 Virex.NET 호환 서비스에서 통합 클라이언트로 송신 이벤
 | 기본 토픽 접두사 | `virex` |
 | 토픽 형식 | `virex/{eventName}` |
 | 데이터 형식 | JSON |
-| 방향 | 서비스가 게시하고 클라이언트가 구독합니다 |
+| 방향 | 서비스는 이벤트를 게시하고 클라이언트는 명령/쿼리를 게시합니다 |
 
 시뮬레이터는 **Start Servers**를 누른 후 내장된 MQTT 브로커를 시작합니다. 로컬 클라이언트에는 외부 브로커가 필요하지 않습니다.
 
@@ -25,6 +25,22 @@ MQTT는 Virex.NET 호환 서비스에서 통합 클라이언트로 송신 이벤
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.ko.md) | 결과 요약이 생성됩니다. |
 | `virex/errorChanged` | [ErrorInfo](payloads/system/error-info.ko.md) | 공개 오류 정보가 변경됩니다. |
 | `virex/commandRejected` | [CommandResponse](payloads/commands/command-response.ko.md) | 상태 규칙이나 유효성 검사에 의해 명령이 거부됩니다. |
+
+## 명령 토픽 개요
+
+각 명령 페이로드에는 `correlationId`가 포함되어야 합니다. 응답은 `virex/responses/{correlationId}`에 게시됩니다.
+
+| RESTful API 해당 항목 | MQTT 명령 토픽 | 응답 페이로드 필드 |
+| --- | --- | --- |
+| `GET /api/status` | `virex/commands/status/get` | `status` |
+| `GET /api/error` | `virex/commands/error/get` | `error` |
+| `GET /api/product-info` | `virex/commands/product-info/get` | `productInfo` |
+| `POST /api/product-info` | `virex/commands/product-info/set` | `commandResponse` |
+| `POST /api/system/initialize` | `virex/commands/system/initialize` | `commandResponse` |
+| `POST /api/system/deinitialize` | `virex/commands/system/deinitialize` | `commandResponse` |
+| `POST /api/system/start` | `virex/commands/system/start` | `commandResponse` |
+| `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
+| `GET /api/results` | `virex/commands/results/query` | `results` |
 
 ## 구독 예시
 
@@ -273,6 +289,24 @@ virex/commandRejected
 ### 참고
 
 이 이벤트를 사용하여 거부된 RESTful API, TCP 또는 UI 명령을 연관시키십시오. 모든 전송은 동일한 주 규칙을 사용합니다.
+
+## RecoveryAction 및 클라이언트 복구
+
+`statusChanged`, `errorChanged`, `commandRejected`에는 선택적 `recoveryAction` 필드가 포함될 수 있습니다. 취득 오류 후 정리가 필요하면 공개 계약은 `state: "Deinitializing"` 및 `recoveryAction: "Deinitialize"`를 보고합니다. 내부 `Faulted` 상태는 클라이언트에 공개되지 않습니다.
+
+```json
+{"state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"hasError":true,"message":"Camera acquisition failed.","state":"Deinitializing","recoveryAction":"Deinitialize"}
+```
+
+```json
+{"accepted":false,"state":"Deinitializing","command":"Start","errorCode":"requires_deinitialize","recoveryAction":"Deinitialize","message":"Deinitialize is required before another command can be accepted."}
+```
+
+클라이언트는 **Deinitialize** 작업을 계속 사용할 수 있게 하고 서비스가 `Uninitialized`를 반환할 때까지 재시도해야 합니다. Deinitialize로 복구할 수 없을 때만 애플리케이션 재시작이 UI의 마지막 수단입니다.
 
 ## 오류 처리
 

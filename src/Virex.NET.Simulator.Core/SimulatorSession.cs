@@ -14,6 +14,9 @@ public sealed class SimulatorSession
     private string _activeRunCondition = string.Empty;
     private CancellationTokenSource? _singleRunCompletion;
     private CancellationTokenSource? _continuousRun;
+    private int _deinitializeFailuresRemaining;
+    private string? _deinitializeFailureMessage;
+    private string? _pendingDeinitializationError;
 
     public SimulatorSession()
     {
@@ -74,6 +77,39 @@ public sealed class SimulatorSession
 
     public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default) =>
         new DeinitializeSystemCommandHandler(this).Handle(new DeinitializeSystemCommand(), cancellationToken).AsTask();
+
+    public void ConfigureDeinitializeFailures(int attempts, string? message = null)
+    {
+        if (attempts < 0)
+            throw new ArgumentOutOfRangeException(nameof(attempts));
+
+        Volatile.Write(ref _deinitializeFailuresRemaining, attempts);
+        _deinitializeFailureMessage = message;
+    }
+
+    public async Task<CommandResponse> SimulateAcquisitionFaultAsync(
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            throw new ArgumentException("A fault message is required.", nameof(message));
+
+        if (State == SimulatorState.Running)
+        {
+            var stopResponse = await StopAsync(
+                new SystemStopRequest { Reason = "Simulated acquisition fault" },
+                cancellationToken).ConfigureAwait(false);
+            if (!stopResponse.Accepted)
+                return stopResponse;
+        }
+
+        if (State != SimulatorState.Ready)
+            return Reject("SimulateAcquisitionFault");
+
+        _pendingDeinitializationError = message;
+        LogMessage("Acquisition fault simulated: " + message);
+        return await DeinitializeAsync(cancellationToken).ConfigureAwait(false);
+    }
 
     public Task<CommandResponse> SetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken = default) =>
         new SetProductInfoCommandHandler(this).Handle(new SetProductInfoCommand(productInfo), cancellationToken).AsTask();
@@ -136,8 +172,25 @@ public sealed class SimulatorSession
                 return Reject("Deinitialize");
 
             await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
+            var failureMessage = _pendingDeinitializationError
+                ?? _deinitializeFailureMessage
+                ?? "Simulated deinitialization failed.";
+            if (HasPendingDeinitializeFailure())
+                SetError(failureMessage);
             await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
+
+            if (TryConsumeDeinitializeFailure())
+            {
+                SetError(failureMessage);
+                return Reject(
+                    "Deinitialize",
+                    CommandErrorCodes.RequiresDeinitialize,
+                    failureMessage);
+            }
+
             await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
+            _pendingDeinitializationError = null;
+            SetError(null);
             return Accept("Deinitialize", "Deinitialized.");
         }
         finally
@@ -269,6 +322,7 @@ public sealed class SimulatorSession
             .Permit(SimulatorTrigger.RunCompleted, SimulatorState.Ready);
 
         _machine.Configure(SimulatorState.Deinitializing)
+            .PermitReentry(SimulatorTrigger.Deinitialize)
             .Permit(SimulatorTrigger.DeinitializationCompleted, SimulatorState.Uninitialized);
 
         _machine.OnTransitionCompleted(t =>
@@ -313,6 +367,40 @@ public sealed class SimulatorSession
 
     private static string? RecoveryActionFor(SimulatorState state) =>
         state == SimulatorState.Deinitializing ? RecoveryActions.Deinitialize : null;
+
+    private void SetError(string? message)
+    {
+        Error = new ErrorInfo
+        {
+            HasError = !string.IsNullOrWhiteSpace(message),
+            Message = string.IsNullOrWhiteSpace(message) ? null : message,
+            State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
+        };
+        ErrorChanged?.Invoke(this, Error);
+    }
+
+    private bool HasPendingDeinitializeFailure() =>
+        !string.IsNullOrWhiteSpace(_pendingDeinitializationError)
+        || Volatile.Read(ref _deinitializeFailuresRemaining) > 0;
+
+    private bool TryConsumeDeinitializeFailure()
+    {
+        while (true)
+        {
+            var remaining = Volatile.Read(ref _deinitializeFailuresRemaining);
+            if (remaining <= 0)
+                return false;
+
+            if (Interlocked.CompareExchange(
+                    ref _deinitializeFailuresRemaining,
+                    remaining - 1,
+                    remaining) == remaining)
+            {
+                return true;
+            }
+        }
+    }
 
     private ResultSummary EmitResult(string resultPathPrefix)
     {

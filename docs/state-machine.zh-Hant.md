@@ -11,7 +11,7 @@
 | `Ready` | 閒置中，可接受 ProductInfo、啟動、反初始化命令。 |
 | `UpdatingProductInfo` | ProductInfo 更新已接受，等待完成事件。 |
 | `Running` | 執行中。內部執行階段不對外公開。 |
-| `Deinitializing` | 反初始化命令已接受，等待完成事件。 |
+| `Deinitializing` | 反初始化執行中，或是可重試的復原狀態；在完成前用戶端必須保持反初始化可操作。 |
 
 ## 命令與事件
 
@@ -33,7 +33,7 @@
 | `SetProductInfo` | `Ready` | 進入 `UpdatingProductInfo`；`ProductInfoUpdateCompleted` 讓狀態回到 `Ready`。 |
 | `Start` | `Ready` | 保存目前 ProductInfo 快照，並進入 `Running`。 |
 | `Stop` | `Running` | 停止目前執行，並讓狀態回到 `Ready`。 |
-| `Deinitialize` | `Ready` | 進入 `Deinitializing`；`DeinitializationCompleted` 讓狀態變成 `Uninitialized`。 |
+| `Deinitialize` | `Ready` 或 `Deinitializing`（復原重試） | 進入或維持 `Deinitializing`；成功完成後狀態變成 `Uninitialized`。 |
 
 ## 拒絕的命令
 
