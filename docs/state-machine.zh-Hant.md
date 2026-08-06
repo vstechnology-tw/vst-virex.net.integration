@@ -41,6 +41,13 @@
 
 例如，`Running` 狀態下送出 `SetProductInfo` 是非法的，因為 ProductInfo 只能在 `Ready` 狀態改變。
 
+## 復原契約
+
+若內部 acquisition fault 使目前來源不再可信，對外不得公開 `Faulted`。系統會先投影為
+`Deinitializing`，並在 `CommandResponse`、`SystemStatus` 或 `ErrorInfo` 帶上
+`recoveryAction: "Deinitialize"`。客戶應保持 Deinitialize 可操作；第一次自動反初始化失敗時，
+客戶仍可重試相同命令。只有 Deinitialize 重試仍無法完成時，重新啟動 App 才是最後手段。
+
 ## 結果快照
 
 `Start` 會立即保存目前的 `ProductInfo`。後續產生的結果會使用這份快照，即使未來實作允許執行中改變產品資料，也不應影響已啟動執行的結果。

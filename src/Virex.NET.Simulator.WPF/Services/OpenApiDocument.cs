@@ -12,7 +12,7 @@ internal static class OpenApiDocument
         info = new
         {
             title = "Virex.NET Simulator API",
-            version = "2.0.3.1",
+            version = "2.2.0",
         },
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
@@ -64,12 +64,17 @@ internal static class OpenApiDocument
                         ["chamberID"] = StringSchema(),
                     },
                     RequiredProductInfoFields),
-                ["SystemStatus"] = ObjectSchema(new Dictionary<string, object> { ["state"] = StringSchema() }),
+                ["SystemStatus"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["state"] = StringSchema(),
+                    ["recoveryAction"] = NullableStringSchema(),
+                }),
                 ["ErrorInfo"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["hasError"] = BoolSchema(),
                     ["message"] = NullableStringSchema(),
                     ["state"] = StringSchema(),
+                    ["recoveryAction"] = NullableStringSchema(),
                 }),
                 ["CommandResponse"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -78,6 +83,7 @@ internal static class OpenApiDocument
                     ["command"] = StringSchema(),
                     ["errorCode"] = NullableStringSchema(),
                     ["message"] = StringSchema(),
+                    ["recoveryAction"] = NullableStringSchema(),
                 }),
                 ["SystemStartRequest"] = ObjectSchema(new Dictionary<string, object>
                 {

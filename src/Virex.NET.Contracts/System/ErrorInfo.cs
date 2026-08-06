@@ -7,4 +7,6 @@ public sealed class ErrorInfo
     public string? Message { get; set; }
 
     public string State { get; set; } = SystemStates.Uninitialized;
+
+    public string? RecoveryAction { get; set; }
 }

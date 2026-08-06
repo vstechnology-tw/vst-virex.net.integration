@@ -21,6 +21,7 @@ It is not a lifecycle state. `hasError=false` means there are currently no activ
 | `hasError` | boolean | Yes | Whether an active error currently exists. |
 | `message` | string | No | Error message. Omitted if there is no message. |
 | `state` | string | Yes | Lifecycle state when the error information is reported. |
+| `recoveryAction` | string | No | Operator recovery action required by the error; omitted when no action is required. |
 
 ## Use location
 

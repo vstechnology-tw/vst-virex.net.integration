@@ -43,12 +43,17 @@ public sealed class SimulatorSession
 
     public SimulatorState State { get; private set; }
 
-    public SystemStatus Status => new SystemStatus { State = SimulatorStateNames.ToDto(State) };
+    public SystemStatus Status => new SystemStatus
+    {
+        State = SimulatorStateNames.ToDto(State),
+        RecoveryAction = RecoveryActionFor(State),
+    };
 
     public ErrorInfo Error { get; private set; } = new ErrorInfo
     {
         HasError = false,
         State = SystemStates.Uninitialized,
+        RecoveryAction = null,
     };
 
     public ProductInfo ProductInfo { get; private set; }
@@ -89,6 +94,7 @@ public sealed class SimulatorSession
             HasError = true,
             Message = message,
             State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
         };
         LogMessage("Error emitted: " + message);
         ErrorChanged?.Invoke(this, Error);
@@ -269,6 +275,7 @@ public sealed class SimulatorSession
         {
             LogMessage("Status: state=" + SimulatorStateNames.ToDto(t.Destination));
             Error.State = SimulatorStateNames.ToDto(t.Destination);
+            Error.RecoveryAction = RecoveryActionFor(t.Destination);
             StatusChanged?.Invoke(this, Status);
         });
     }
@@ -296,12 +303,16 @@ public sealed class SimulatorSession
             Accepted = false,
             Command = command,
             State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
             ErrorCode = errorCode,
             Message = message ?? "Command is not valid in the current state.",
         };
         CommandRejected?.Invoke(this, response);
         return response;
     }
+
+    private static string? RecoveryActionFor(SimulatorState state) =>
+        state == SimulatorState.Deinitializing ? RecoveryActions.Deinitialize : null;
 
     private ResultSummary EmitResult(string resultPathPrefix)
     {

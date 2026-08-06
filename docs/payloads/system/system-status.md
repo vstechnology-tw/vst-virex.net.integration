@@ -15,6 +15,7 @@
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `state` | string | Yes | Current lifecycle state. |
+| `recoveryAction` | string | No | Operator recovery action required by the state; recovery normally uses `Deinitialize`. Omitted when no action is required. |
 
 ## State Values
 

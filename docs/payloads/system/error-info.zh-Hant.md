@@ -21,6 +21,7 @@
 | `hasError` | boolean | 是 | 目前是否存在作用中的錯誤。 |
 | `message` | string | 否 | 公開錯誤訊息。沒有訊息時省略。 |
 | `state` | string | 是 | 回報錯誤資訊時的生命週期狀態。 |
+| `recoveryAction` | string | 否 | 錯誤需要操作人員採取的復原動作；無動作時省略。 |
 
 ## 使用位置
 

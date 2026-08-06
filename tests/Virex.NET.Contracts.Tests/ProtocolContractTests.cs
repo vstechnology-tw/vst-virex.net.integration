@@ -16,6 +16,31 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public void RecoveryActionIsAnOptionalPublicContractField()
+    {
+        var statusJson = ProtocolJson.Serialize(new SystemStatus
+        {
+            State = SystemStates.Deinitializing,
+            RecoveryAction = RecoveryActions.Deinitialize,
+        });
+        var responseJson = ProtocolJson.Serialize(new CommandResponse
+        {
+            Accepted = false,
+            State = SystemStates.Deinitializing,
+            Command = "Stop",
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            Message = "Deinitialize is required.",
+        });
+
+        using var status = JsonDocument.Parse(statusJson);
+        using var response = JsonDocument.Parse(responseJson);
+        Assert.Equal(RecoveryActions.Deinitialize, status.RootElement.GetProperty("recoveryAction").GetString());
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, response.RootElement.GetProperty("errorCode").GetString());
+        Assert.Equal(RecoveryActions.Deinitialize, response.RootElement.GetProperty("recoveryAction").GetString());
+    }
+
+    [Fact]
     public void ProductInfoParserAcceptsNumberOrStringSlot()
     {
         Assert.True(ProductInfoJsonParser.TryParse(

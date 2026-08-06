@@ -10,5 +10,7 @@ public sealed class CommandResponse
 
     public string? ErrorCode { get; set; }
 
+    public string? RecoveryAction { get; set; }
+
     public string Message { get; set; } = string.Empty;
 }

@@ -1,7 +1,7 @@
 # Virex.NET Integration Kit
 
-[![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0)
-[![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client/2.1.0)
+[![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.0)
+[![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client/2.2.0)
 
 This repository contains the public Virex.NET integration contract, C# client SDK, local simulator, samples, and documentation. It does not include private Virex.NET production internals.
 

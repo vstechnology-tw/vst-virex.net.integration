@@ -41,6 +41,13 @@ Any command sent from a state not listed in the table above is invalid. Invalid 
 
 For example, sending `SetProductInfo` while the state is `Running` is invalid because ProductInfo can only be changed while the state is `Ready`.
 
+## Recovery contract
+
+When an internal acquisition fault makes the current sources untrusted, `Faulted` must not be exposed to clients.
+The public projection remains `Deinitializing` and `CommandResponse`, `SystemStatus`, or `ErrorInfo` carries
+`recoveryAction: "Deinitialize"`. Clients must keep Deinitialize actionable and may retry it when the first automatic
+deinitialization attempt fails. Restarting the app is the last resort only after Deinitialize retries cannot complete.
+
 ## Result snapshot
 
 `Start` immediately captures the current `ProductInfo`. Generated results use that snapshot. Even if a future implementation allows product information to change during a run, that change must not affect results for a run that has already started.
