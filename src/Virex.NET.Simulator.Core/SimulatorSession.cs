@@ -110,31 +110,54 @@ public sealed class SimulatorSession
         _deinitializeFailureMessage = message;
     }
 
-    public async Task<CommandResponse> SimulateAcquisitionFaultAsync(
+    public Task<CommandResponse> SimulateAcquisitionFaultAsync(
         string message,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("A fault message is required.", nameof(message));
 
-        if (State == SimulatorState.Running)
+        lock (_deinitializationGate)
         {
-            var stopResponse = await StopAsync(
-                new SystemStopRequest { Reason = "Simulated acquisition fault" },
-                cancellationToken).ConfigureAwait(false);
-            if (!stopResponse.Accepted)
-                return stopResponse;
+            if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization)
+                return activeDeinitialization;
+
+            _activeDeinitialization = SimulateAcquisitionFaultCoreAsync(message, cancellationToken);
+            return _activeDeinitialization;
         }
-
-        if (State != SimulatorState.Ready)
-            return Reject("SimulateAcquisitionFault");
-
-        _pendingDeinitializationError = message;
-        BeginRecovery(message, "Acquisition", "Deinitializing", CommandErrorCodes.RequiresDeinitialize);
-        LogMessage("Acquisition fault simulated: " + message);
-        return await DeinitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    private async Task<CommandResponse> SimulateAcquisitionFaultCoreAsync(
+        string message,
+        CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (State == SimulatorState.Running)
+            {
+                StopActiveRunTimers();
+                await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
+                LogMessage("Stopped. reason=Simulated acquisition fault");
+            }
+
+            if (State != SimulatorState.Ready)
+                return Reject("SimulateAcquisitionFault");
+
+            _pendingDeinitializationError = message;
+            BeginRecovery(
+                message,
+                "Acquisition",
+                "Deinitializing",
+                CommandErrorCodes.RequiresDeinitialize);
+            LogMessage("Acquisition fault simulated: " + message);
+            return await HandleDeinitializeUnderGateAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
     public Task<CommandResponse> SetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken = default) =>
         new SetProductInfoCommandHandler(this).Handle(new SetProductInfoCommand(productInfo), cancellationToken).AsTask();
 
@@ -202,43 +225,7 @@ public sealed class SimulatorSession
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (!CanFire(SimulatorTrigger.Deinitialize))
-                return Reject("Deinitialize");
-
-            var failureMessage = RecoveryMessageSanitizer.Sanitize(
-                _pendingDeinitializationError
-                ?? _deinitializeFailureMessage
-                ?? "Simulated deinitialization failed.")
-                ?? "Simulated deinitialization failed.";
-            var hasPendingFailure = HasPendingDeinitializeFailure();
-            if (hasPendingFailure)
-            {
-                BeginRecovery(
-                    failureMessage,
-                    string.IsNullOrWhiteSpace(_pendingDeinitializationError) ? "Simulator" : "Acquisition",
-                    "Deinitializing",
-                    CommandErrorCodes.RequiresDeinitialize);
-            }
-
-            await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
-            if (hasPendingFailure)
-                SetError(failureMessage);
-            await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
-
-            if (TryConsumeDeinitializeFailure())
-            {
-                SetError(failureMessage);
-                return Reject(
-                    "Deinitialize",
-                    CommandErrorCodes.RequiresDeinitialize,
-                    failureMessage);
-            }
-
-            ClearRecovery();
-            await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
-            _pendingDeinitializationError = null;
-            SetError(null);
-            return Accept("Deinitialize", "Deinitialized.");
+            return await HandleDeinitializeUnderGateAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -246,6 +233,47 @@ public sealed class SimulatorSession
         }
     }
 
+    private async Task<CommandResponse> HandleDeinitializeUnderGateAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!CanFire(SimulatorTrigger.Deinitialize))
+            return Reject("Deinitialize");
+
+        var failureMessage = RecoveryMessageSanitizer.Sanitize(
+            _pendingDeinitializationError
+            ?? _deinitializeFailureMessage
+            ?? "Simulated deinitialization failed.")
+            ?? "Simulated deinitialization failed.";
+        var hasPendingFailure = HasPendingDeinitializeFailure();
+        if (hasPendingFailure)
+        {
+            BeginRecovery(
+                failureMessage,
+                string.IsNullOrWhiteSpace(_pendingDeinitializationError) ? "Simulator" : "Acquisition",
+                "Deinitializing",
+                CommandErrorCodes.RequiresDeinitialize);
+        }
+
+        await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
+        if (hasPendingFailure)
+            SetError(failureMessage);
+        await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
+
+        if (TryConsumeDeinitializeFailure())
+        {
+            SetError(failureMessage);
+            return Reject(
+                "Deinitialize",
+                CommandErrorCodes.RequiresDeinitialize,
+                failureMessage);
+        }
+
+        ClearRecovery();
+        await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
+        _pendingDeinitializationError = null;
+        SetError(null);
+        return Accept("Deinitialize", "Deinitialized.");
+    }
     internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);

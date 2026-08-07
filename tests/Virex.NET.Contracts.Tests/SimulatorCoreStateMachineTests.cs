@@ -110,6 +110,30 @@ public sealed class SimulatorCoreStateMachineTests
     }
 
     [Fact]
+    public async Task ConcurrentFaultAndStartShareOneSerializedRecoveryTransition()
+    {
+        var session = new SimulatorSession();
+        Assert.True((await session.InitializeAsync()).Accepted);
+        Assert.True((await session.StartAsync(new SystemStartRequest
+        {
+            RunMode = ControlRunModes.Continue,
+        })).Accepted);
+        session.ConfigureDeinitializeFailures(1, "Camera close failed.");
+
+        var firstFault = session.SimulateAcquisitionFaultAsync("Camera acquisition failed.");
+        var joinedFault = session.SimulateAcquisitionFaultAsync("A later fault must not overwrite recovery.");
+        var concurrentStart = session.StartAsync(new SystemStartRequest
+        {
+            RunMode = ControlRunModes.Continue,
+        });
+
+        Assert.Same(firstFault, joinedFault);
+        Assert.False((await firstFault).Accepted);
+        Assert.False((await concurrentStart).Accepted);
+        Assert.Equal(SimulatorState.Deinitializing, session.State);
+        Assert.Equal("Camera acquisition failed.", session.Status.RecoveryDetails);
+    }
+    [Fact]
     public async Task AcquisitionFaultMakesDeinitializeRetryableUntilCleanupSucceeds()
     {
         var session = new SimulatorSession();
