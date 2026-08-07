@@ -10,7 +10,7 @@ TCP ソケットは、同じ単純なストリーミング プロトコルを介
 |既定のポート | `5089` |
 |フレーミング方法 | NDJSON |
 |エンコーディング | UTF-8 |
-|方向 |クライアントはコマンド フレームを送信します。サービスはイベントフレームを送信します |
+|方向 |クライアントはコマンドおよびクエリ フレームを送信します。サービスは直接応答およびイベント フレームを送信します |
 
 各フレームは JSON オブジェクトで、`\n` で終わります。
 
@@ -22,15 +22,19 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 
 ## フレームの概要
 
-### 受信コマンド
+### 受信コマンドとクエリ
 
 |フレームタイプ |ペイロード |有効な状態 |結果 |
 | --- | --- | --- | --- |
+| `status` | `type` のみ |すべて |直接応答 `type: "status"` を返します。 |
+| `error` | `type` のみ |すべて |直接応答 `type: "error"` を返します。 |
+| `getProductInfo` | `type` のみ |すべて |直接応答 `type: "productInfo"` を返します。 |
 | `initialize` | [SystemInitializeRequest](payloads/commands/system-initialize-request.ja.md) と `type` | `Uninitialized` | `Initializing` に遷移します。完了後、`Ready` の `statusChanged` を送信します。 |
 | `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md) と `type` | `Ready` または公開復旧状態 `Deinitializing` | `Deinitializing` に遷移または再試行します。クリーンアップ成功後、`Uninitialized` の `statusChanged` を送信します。 |
 | `productInfo` | [ProductInfo](payloads/product/product-info.ja.md) と `type` | `Ready` | ProductInfo を更新し、`productInfoChanged` を発行します。 |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.ja.md) と `type` | `Ready` | `Running` に遷移します。完了はイベントと結果によって報告されます。 |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.ja.md) と `type` | `Running` |実行を停止し、`Ready` に戻ります。 |
+| `results` |結果クエリ条件と `type` |すべて |直接応答 `type: "results"` を返します。 |
 
 ### 発信イベント
 
@@ -261,6 +265,137 @@ TCP 上での現在の実行を停止します。
 ### エラー処理
 
 現在の状態が `Running` ではない場合、サービスは `commandRejected` を送信します。
+
+## status クエリ
+
+### 目的
+
+TCP で現在の公開システム状態を読み取ります。これはクエリ フレームであり、ライフサイクル コマンドではないため、任意の状態で送信できます。
+
+### フレーム
+
+```json
+{"type":"status"}
+```
+
+### ペイロード
+
+`type: "status"` 以外のフィールドは不要です。
+
+### 状態の制約
+
+どの状態でも呼び出すことができます。
+
+### 応答フレーム
+
+サービスは直接応答を送信します。
+
+```json
+{"type":"status","state":"Ready"}
+```
+
+### 注記
+
+クエリ応答の `type` は `status` です。状態変更イベントは引き続き `statusChanged` を使用します。
+
+## error クエリ
+
+### 目的
+
+TCP で現在の公開エラー情報を読み取ります。このクエリは、RESTful API `GET /api/error` および MQTT `commands/error/get` と同じ [ErrorInfo](payloads/system/error-info.ja.md) の形を返します。
+
+### フレーム
+
+```json
+{"type":"error"}
+```
+
+### ペイロード
+
+`type: "error"` 以外のフィールドは不要です。
+
+### 状態の制約
+
+どの状態でも呼び出すことができます。
+
+### 応答フレーム
+
+サービスは直接応答を送信します。
+
+```json
+{"type":"error","hasError":false,"message":"","state":"Ready"}
+```
+
+### 注記
+
+クエリ応答の `type` は `error` です。エラー変更イベントは引き続き `errorChanged` を使用します。
+
+## getProductInfo クエリ
+
+### 目的
+
+システム状態を変更せずに、TCP で現在の ProductInfo を読み取ります。
+
+### フレーム
+
+```json
+{"type":"getProductInfo"}
+```
+
+### ペイロード
+
+`type: "getProductInfo"` 以外のフィールドは不要です。
+
+### 状態の制約
+
+どの状態でも呼び出すことができます。
+
+### 応答フレーム
+
+サービスは直接応答を送信します。
+
+```json
+{"type":"productInfo","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### 注記
+
+クエリ応答の `type` は `productInfo` です。ProductInfo 更新イベントは引き続き `productInfoChanged` を使用します。
+
+## results クエリ
+
+### 目的
+
+TCP で公開結果サマリーを照会します。結果にはサマリーのみが含まれ、非公開の検査詳細、欠陥リスト、クロップ リスト、画像バイナリは含まれません。
+
+### フレーム
+
+```json
+{"type":"results","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+### ペイロード
+
+|フィールド |必須 |説明 |
+| --- | --- | --- |
+| `type` | Yes | `results` である必要があります。 |
+| `lotID` | No | 任意の Lot ID フィルター。 |
+| `waferID` | No | 任意の Wafer ID フィルター。 |
+| `recipe` | No | 任意の Recipe フィルター。 |
+
+複数のフィルターは AND で結合されます。
+
+### 状態の制約
+
+どの状態でも呼び出すことができます。
+
+### 応答フレーム
+
+サービスは直接応答を送信します。
+
+```json
+{"type":"results","items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
+```
 
 ## statusChanged イベント
 

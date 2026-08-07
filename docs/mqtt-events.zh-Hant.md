@@ -1,6 +1,6 @@
-# MQTT 事件
+# MQTT 通訊協定
 
-MQTT 是雙向整合通道。服務會發布事件到 `virex/{eventName}`；用戶端可以發布 RESTful API 對應的命令與查詢到 `virex/commands/...`，並在 `virex/responses/{correlationId}` 收到對應回應。
+MQTT 是雙向整合通道。服務會把事件發布到 `virex/{eventName}`；用戶端可以把等價於 RESTful API 的命令與查詢發布到 `virex/commands/...`，並從 `virex/responses/{correlationId}` 接收對應回應。
 
 ## 基本資訊
 
@@ -8,13 +8,13 @@ MQTT 是雙向整合通道。服務會發布事件到 `virex/{eventName}`；用�
 | --- | --- |
 | 預設 broker | `127.0.0.1:1883` |
 | 預設 topic 前綴 | `virex` |
-| topic 格式 | `virex/{eventName}` |
+| topic 格式 | 事件：`virex/{eventName}`；命令：`virex/commands/...`；回應：`virex/responses/{correlationId}` |
 | 資料格式 | JSON |
-| 方向 | 服務發布事件；用戶端發布命令／查詢 |
+| 方向 | 服務發布事件；用戶端發布命令與查詢要求 |
 
 模擬器按 **Start Servers** 後會啟動內嵌 MQTT broker。本機用戶端不需要另外安裝外部 broker。
 
-## 主題總覽
+## 事件 Topic 總覽
 
 | topic | 資料內容 | 發布時機 |
 | --- | --- | --- |
@@ -26,11 +26,11 @@ MQTT 是雙向整合通道。服務會發布事件到 `virex/{eventName}`；用�
 | `virex/errorChanged` | [ErrorInfo](payloads/system/error-info.zh-Hant.md) | 公開錯誤狀態改變。 |
 | `virex/commandRejected` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) | 命令因狀態規則或驗證失敗被拒絕。 |
 
-## 命令 topic 總覽
+## 命令 Topic 總覽
 
-每個命令 payload 都應包含 `correlationId`。回應會發布到 `virex/responses/{correlationId}`。
+每個命令或查詢 payload 建議包含 `correlationId`。服務會把回應發布到 `virex/responses/{correlationId}`。如果省略 `correlationId`，服務會自動產生一個，但用戶端通常應該自行提供，才能穩定訂閱並關聯回應。
 
-| RESTful API 對應 | MQTT 命令 topic | 回應 payload 欄位 |
+| RESTful API 等價操作 | MQTT command topic | 回應 payload 欄位 |
 | --- | --- | --- |
 | `GET /api/status` | `virex/commands/status/get` | `status` |
 | `GET /api/error` | `virex/commands/error/get` | `error` |
@@ -41,6 +41,266 @@ MQTT 是雙向整合通道。服務會發布事件到 `virex/{eventName}`；用�
 | `POST /api/system/start` | `virex/commands/system/start` | `commandResponse` |
 | `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
 | `GET /api/results` | `virex/commands/results/query` | `results` |
+
+## 命令要求 Envelope
+
+所有 MQTT command topic 都接收 UTF-8 JSON 物件。共用欄位如下：
+
+| 欄位 | 使用 topic | 說明 |
+| --- | --- | --- |
+| `correlationId` | 所有 command topic | 用戶端提供的 request id。回應會發布到 `virex/responses/{correlationId}`。 |
+| `productInfo` | `commands/product-info/set` | 選用巢狀 [ProductInfo](payloads/product/product-info.zh-Hant.md)。服務也相容接受扁平 ProductInfo payload。 |
+| `condition` | `commands/system/start` | 選用執行條件，會複製到結果摘要。 |
+| `runMode` | `commands/system/start` | 選用執行模式。支援值請參考 [ControlRunModes](payloads/commands/control-run-modes.zh-Hant.md)。 |
+| `reason` | `commands/system/stop` | 選用停止原因。 |
+| `lotID` | `commands/results/query` | 選用結果查詢篩選條件。 |
+| `waferID` | `commands/results/query` | 選用結果查詢篩選條件。 |
+| `recipe` | `commands/results/query` | 選用結果查詢篩選條件。 |
+
+要求範例：
+
+```json
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
+```
+
+## 命令回應 Envelope
+
+所有命令回應 payload 使用相同 envelope：
+
+| 欄位 | 說明 |
+| --- | --- |
+| `correlationId` | 用來建立 response topic 的 request id。 |
+| `topic` | base topic 底下的命令 topic，例如 `commands/status/get`。 |
+| `accepted` | 命令或查詢被接受時為 `true`。對生命週期命令來說，這會對應 `commandResponse.accepted`。 |
+| `errorCode` | MQTT 層級失敗時出現，例如 `unknown_topic`。 |
+| `message` | 選用 MQTT 層級訊息。 |
+| `status` | `commands/status/get` 的回應欄位。 |
+| `error` | `commands/error/get` 的回應欄位。 |
+| `productInfo` | `commands/product-info/get` 的回應欄位。 |
+| `commandResponse` | initialize、set ProductInfo、start、stop、deinitialize 等改變狀態命令的回應欄位。 |
+| `results` | `commands/results/query` 的回應欄位。 |
+
+回應 topic 範例：
+
+```text
+virex/responses/start-1
+```
+
+回應 payload 範例：
+
+```json
+{"correlationId":"start-1","topic":"commands/system/start","accepted":true,"commandResponse":{"accepted":true,"state":"Running","command":"Start","message":"Started."}}
+```
+
+## 命令 Topic 詳細說明
+
+### 查詢 status
+
+發布到：
+
+```text
+virex/commands/status/get
+```
+
+要求 payload：
+
+```json
+{"correlationId":"status-1"}
+```
+
+回應：
+
+```text
+virex/responses/status-1
+```
+
+```json
+{"correlationId":"status-1","topic":"commands/status/get","accepted":true,"status":{"state":"Ready"}}
+```
+
+### 查詢 error
+
+發布到：
+
+```text
+virex/commands/error/get
+```
+
+要求 payload：
+
+```json
+{"correlationId":"error-1"}
+```
+
+回應 payload 欄位：`error`。
+
+```json
+{"correlationId":"error-1","topic":"commands/error/get","accepted":true,"error":{"hasError":false,"state":"Ready"}}
+```
+
+### 查詢 ProductInfo
+
+發布到：
+
+```text
+virex/commands/product-info/get
+```
+
+要求 payload：
+
+```json
+{"correlationId":"product-get-1"}
+```
+
+回應 payload 欄位：`productInfo`。
+
+```json
+{"correlationId":"product-get-1","topic":"commands/product-info/get","accepted":true,"productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+### 設定 ProductInfo
+
+發布到：
+
+```text
+virex/commands/product-info/set
+```
+
+要求 payload：
+
+```json
+{"correlationId":"product-set-1","productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+回應 payload 欄位：`commandResponse`。
+
+```json
+{"correlationId":"product-set-1","topic":"commands/product-info/set","accepted":true,"commandResponse":{"accepted":true,"state":"Ready","command":"SetProductInfo","message":"ProductInfo updated."}}
+```
+
+### Initialize
+
+發布到：
+
+```text
+virex/commands/system/initialize
+```
+
+要求 payload：
+
+```json
+{"correlationId":"initialize-1"}
+```
+
+回應 payload 欄位：`commandResponse`。
+
+### Start run
+
+發布到：
+
+```text
+virex/commands/system/start
+```
+
+要求 payload：
+
+```json
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
+```
+
+回應 payload 欄位：`commandResponse`。命令被接受後，服務也會發布 `statusChanged`、`runStarted`，稍後發布 `resultCreated` / `runCompleted` 事件。
+
+### Stop run
+
+發布到：
+
+```text
+virex/commands/system/stop
+```
+
+要求 payload：
+
+```json
+{"correlationId":"stop-1","reason":"operator-request"}
+```
+
+回應 payload 欄位：`commandResponse`。
+
+### 查詢 results
+
+發布到：
+
+```text
+virex/commands/results/query
+```
+
+要求 payload：
+
+```json
+{"correlationId":"results-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+回應 payload 欄位：`results`。
+
+```json
+{"correlationId":"results-1","topic":"commands/results/query","accepted":true,"results":{"items":[],"count":0}}
+```
+
+### Deinitialize
+
+發布到：
+
+```text
+virex/commands/system/deinitialize
+```
+
+要求 payload：
+
+```json
+{"correlationId":"deinitialize-1"}
+```
+
+回應 payload 欄位：`commandResponse`。
+
+## 命令範例
+
+=== "C# SDK"
+
+    ```csharp
+    var commands = new VirexMqttCommandClient(new VirexClientOptions
+    {
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+
+    var status = await commands.GetStatusAsync();
+    var error = await commands.GetErrorAsync();
+    var productInfo = await commands.GetProductInfoAsync();
+    var results = await commands.QueryResultsAsync(lotID: "LOT-001");
+    ```
+
+=== "C# Raw"
+
+    ```csharp
+    var correlationId = "status-1";
+    await client.SubscribeAsync($"virex/responses/{correlationId}");
+    var message = new MqttApplicationMessageBuilder()
+        .WithTopic("virex/commands/status/get")
+        .WithPayload(JsonSerializer.Serialize(new { correlationId }))
+        .Build();
+    await client.PublishAsync(message);
+    ```
+
+=== "Python"
+
+    ```python
+    correlation_id = "status-1"
+    client.subscribe(f"virex/responses/{correlation_id}")
+    client.publish(
+        "virex/commands/status/get",
+        json.dumps({"correlationId": correlation_id}))
+    ```
 
 ## 訂閱範例
 
@@ -289,28 +549,6 @@ virex/commandRejected
 ### 說明
 
 可用這個事件關聯 RESTful API、TCP 或 UI 命令被拒絕的情境。所有傳輸方式都使用相同狀態規則。
-
-## RecoveryAction 與用戶端復原
-
-`statusChanged`、`errorChanged` 與 `commandRejected` 都可能包含選填的 `recoveryAction` 欄位。擷取失敗需要清理時，公開協定會回報 `state: "Deinitializing"` 與 `recoveryAction: "Deinitialize"`；內部的 `Faulted` 狀態不會提供給客戶端。
-
-```json
-{"state":"Deinitializing","recoveryAction":"Deinitialize"}
-```
-
-```json
-{"hasError":true,"message":"Camera acquisition failed.","state":"Deinitializing","recoveryAction":"Deinitialize"}
-```
-
-```json
-{"accepted":false,"state":"Deinitializing","command":"Start","errorCode":"requires_deinitialize","recoveryAction":"Deinitialize","message":"Deinitialize is required before another command can be accepted."}
-```
-
-用戶端應保持 **Deinitialize** 操作可按，直到服務回傳 `Uninitialized`。只有 Deinitialize 無法復原服務時，App 重啟才是 UI 層的最後手段。
-
-事件可以包含選填的 `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的
-`recoveryDetails`；錯誤與拒絕回應也可以包含穩定的 `errorCode`。用戶端應忽略未知的
-additive 欄位。
 
 ## 錯誤處理
 

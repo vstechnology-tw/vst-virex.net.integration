@@ -1,6 +1,6 @@
-# MQTT イベント
+# MQTT プロトコル
 
-MQTT は双方向の統合チャネルです。サービスは `virex/{eventName}` にイベントを発行します。クライアントは RESTful API に相当するコマンドとクエリを `virex/commands/...` に発行し、`virex/responses/{correlationId}` で対応する応答を受信できます。
+MQTT は双方向の統合チャネルです。サービスはイベントを `virex/{eventName}` に発行します。クライアントは RESTful API と同等のコマンドやクエリを `virex/commands/...` に発行し、対応する応答を `virex/responses/{correlationId}` で受け取れます。
 
 ## 基本情報
 
@@ -8,13 +8,13 @@ MQTT は双方向の統合チャネルです。サービスは `virex/{eventName
 | --- | --- |
 |既定のブローカー | `127.0.0.1:1883` |
 |既定のトピックプレフィックス | `virex` |
-|トピックの形式 | `virex/{eventName}` |
+|トピックの形式 |イベント: `virex/{eventName}`、コマンド: `virex/commands/...`、応答: `virex/responses/{correlationId}` |
 |データ形式 | JSON |
-|方向 |サービスがイベントを発行し、クライアントがコマンド/クエリを発行します |
+|方向 |サービスがイベントを発行し、クライアントがコマンド/クエリ要求を発行します |
 
 **Start Servers** が押された後、シミュレーターは組み込みの MQTT ブローカーを開始します。ローカル クライアントには外部ブローカーは必要ありません。
 
-## トピックの概要
+## イベント トピックの概要
 
 |トピック |ペイロード |発行時 |
 | --- | --- | --- |
@@ -26,11 +26,11 @@ MQTT は双方向の統合チャネルです。サービスは `virex/{eventName
 | `virex/errorChanged` | [ErrorInfo](payloads/system/error-info.ja.md) |公開エラー情報が変更されます。 |
 | `virex/commandRejected` | [CommandResponse](payloads/commands/command-response.ja.md) |コマンドは状態の規則または検証によって拒否されます。 |
 
-## コマンドトピックの概要
+## コマンド トピックの概要
 
-各コマンド ペイロードには `correlationId` を含める必要があります。応答は `virex/responses/{correlationId}` に発行されます。
+各コマンドまたはクエリの payload には `correlationId` を含めることを推奨します。応答は `virex/responses/{correlationId}` に発行されます。`correlationId` を省略した場合、サービスが生成しますが、クライアントは通常、自分で指定して応答を確実に関連付けます。
 
-| RESTful API 相当 | MQTT コマンドトピック | 応答ペイロード フィールド |
+| RESTful API 相当 | MQTT コマンド topic | 応答 payload フィールド |
 | --- | --- | --- |
 | `GET /api/status` | `virex/commands/status/get` | `status` |
 | `GET /api/error` | `virex/commands/error/get` | `error` |
@@ -41,6 +41,266 @@ MQTT は双方向の統合チャネルです。サービスは `virex/{eventName
 | `POST /api/system/start` | `virex/commands/system/start` | `commandResponse` |
 | `POST /api/system/stop` | `virex/commands/system/stop` | `commandResponse` |
 | `GET /api/results` | `virex/commands/results/query` | `results` |
+
+## コマンド要求 envelope
+
+すべての MQTT コマンド topic は UTF-8 JSON オブジェクトを受け取ります。共通フィールドは次のとおりです。
+
+|フィールド |使用 topic |説明 |
+| --- | --- | --- |
+| `correlationId` |すべてのコマンド topic |クライアント指定の request id。応答は `virex/responses/{correlationId}` に発行されます。 |
+| `productInfo` | `commands/product-info/set` |任意のネストされた [ProductInfo](payloads/product/product-info.ja.md)。互換性のため、フラットな ProductInfo payload も受け付けます。 |
+| `condition` | `commands/system/start` |任意の実行条件。結果サマリーにコピーされます。 |
+| `runMode` | `commands/system/start` |任意の実行モード。対応値は [ControlRunModes](payloads/commands/control-run-modes.ja.md) を参照してください。 |
+| `reason` | `commands/system/stop` |任意の停止理由。 |
+| `lotID` | `commands/results/query` |任意の結果クエリ フィルター。 |
+| `waferID` | `commands/results/query` |任意の結果クエリ フィルター。 |
+| `recipe` | `commands/results/query` |任意の結果クエリ フィルター。 |
+
+要求例:
+
+```json
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
+```
+
+## コマンド応答 envelope
+
+すべてのコマンド応答 payload は同じ envelope を使用します。
+
+|フィールド |説明 |
+| --- | --- |
+| `correlationId` |応答 topic の作成に使用された request id。 |
+| `topic` |base topic 配下のコマンド topic。例: `commands/status/get`。 |
+| `accepted` |コマンド/クエリが受け付けられた場合は `true`。ライフサイクル コマンドでは `commandResponse.accepted` と対応します。 |
+| `errorCode` |`unknown_topic` など、MQTT レベルの失敗時に出現します。 |
+| `message` |任意の MQTT レベル メッセージ。 |
+| `status` |`commands/status/get` の応答フィールド。 |
+| `error` |`commands/error/get` の応答フィールド。 |
+| `productInfo` |`commands/product-info/get` の応答フィールド。 |
+| `commandResponse` |initialize、set ProductInfo、start、stop、deinitialize など状態変更コマンドの応答フィールド。 |
+| `results` |`commands/results/query` の応答フィールド。 |
+
+応答 topic 例:
+
+```text
+virex/responses/start-1
+```
+
+応答 payload 例:
+
+```json
+{"correlationId":"start-1","topic":"commands/system/start","accepted":true,"commandResponse":{"accepted":true,"state":"Running","command":"Start","message":"Started."}}
+```
+
+## コマンド topic の詳細
+
+### status のクエリ
+
+発行先:
+
+```text
+virex/commands/status/get
+```
+
+要求 payload:
+
+```json
+{"correlationId":"status-1"}
+```
+
+応答:
+
+```text
+virex/responses/status-1
+```
+
+```json
+{"correlationId":"status-1","topic":"commands/status/get","accepted":true,"status":{"state":"Ready"}}
+```
+
+### error のクエリ
+
+発行先:
+
+```text
+virex/commands/error/get
+```
+
+要求 payload:
+
+```json
+{"correlationId":"error-1"}
+```
+
+応答 payload フィールド: `error`。
+
+```json
+{"correlationId":"error-1","topic":"commands/error/get","accepted":true,"error":{"hasError":false,"state":"Ready"}}
+```
+
+### ProductInfo のクエリ
+
+発行先:
+
+```text
+virex/commands/product-info/get
+```
+
+要求 payload:
+
+```json
+{"correlationId":"product-get-1"}
+```
+
+応答 payload フィールド: `productInfo`。
+
+```json
+{"correlationId":"product-get-1","topic":"commands/product-info/get","accepted":true,"productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+### ProductInfo の設定
+
+発行先:
+
+```text
+virex/commands/product-info/set
+```
+
+要求 payload:
+
+```json
+{"correlationId":"product-set-1","productInfo":{"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}}
+```
+
+応答 payload フィールド: `commandResponse`。
+
+```json
+{"correlationId":"product-set-1","topic":"commands/product-info/set","accepted":true,"commandResponse":{"accepted":true,"state":"Ready","command":"SetProductInfo","message":"ProductInfo updated."}}
+```
+
+### Initialize
+
+発行先:
+
+```text
+virex/commands/system/initialize
+```
+
+要求 payload:
+
+```json
+{"correlationId":"initialize-1"}
+```
+
+応答 payload フィールド: `commandResponse`。
+
+### Start run
+
+発行先:
+
+```text
+virex/commands/system/start
+```
+
+要求 payload:
+
+```json
+{"correlationId":"start-1","condition":"golden-sample","runMode":"continue"}
+```
+
+応答 payload フィールド: `commandResponse`。コマンドが受け付けられた後、サービスは `statusChanged`、`runStarted`、その後 `resultCreated` / `runCompleted` イベントも発行します。
+
+### Stop run
+
+発行先:
+
+```text
+virex/commands/system/stop
+```
+
+要求 payload:
+
+```json
+{"correlationId":"stop-1","reason":"operator-request"}
+```
+
+応答 payload フィールド: `commandResponse`。
+
+### results のクエリ
+
+発行先:
+
+```text
+virex/commands/results/query
+```
+
+要求 payload:
+
+```json
+{"correlationId":"results-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+応答 payload フィールド: `results`。
+
+```json
+{"correlationId":"results-1","topic":"commands/results/query","accepted":true,"results":{"items":[],"count":0}}
+```
+
+### Deinitialize
+
+発行先:
+
+```text
+virex/commands/system/deinitialize
+```
+
+要求 payload:
+
+```json
+{"correlationId":"deinitialize-1"}
+```
+
+応答 payload フィールド: `commandResponse`。
+
+## コマンド例
+
+=== "C# SDK"
+
+    ```csharp
+    var commands = new VirexMqttCommandClient(new VirexClientOptions
+    {
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+
+    var status = await commands.GetStatusAsync();
+    var error = await commands.GetErrorAsync();
+    var productInfo = await commands.GetProductInfoAsync();
+    var results = await commands.QueryResultsAsync(lotID: "LOT-001");
+    ```
+
+=== "C# Raw"
+
+    ```csharp
+    var correlationId = "status-1";
+    await client.SubscribeAsync($"virex/responses/{correlationId}");
+    var message = new MqttApplicationMessageBuilder()
+        .WithTopic("virex/commands/status/get")
+        .WithPayload(JsonSerializer.Serialize(new { correlationId }))
+        .Build();
+    await client.PublishAsync(message);
+    ```
+
+=== "Python"
+
+    ```python
+    correlation_id = "status-1"
+    client.subscribe(f"virex/responses/{correlation_id}")
+    client.publish(
+        "virex/commands/status/get",
+        json.dumps({"correlationId": correlation_id}))
+    ```
 
 ## サブスクリプションの例
 
@@ -289,28 +549,6 @@ virex/commandRejected
 ### 注記
 
 このイベントを使用して、拒否された RESTful API、TCP、または UI コマンドを関連付けます。すべてのトランスポートは同じ状態ルールを使用します。
-
-## RecoveryAction とクライアントの復旧
-
-`statusChanged`、`errorChanged`、`commandRejected` にはオプションの `recoveryAction` フィールドを含めることができます。取得エラーの後にクリーンアップが必要な場合、公開契約では `state: "Deinitializing"` と `recoveryAction: "Deinitialize"` を返します。内部状態 `Faulted` はクライアントには公開されません。
-
-```json
-{"state":"Deinitializing","recoveryAction":"Deinitialize"}
-```
-
-```json
-{"hasError":true,"message":"Camera acquisition failed.","state":"Deinitializing","recoveryAction":"Deinitialize"}
-```
-
-```json
-{"accepted":false,"state":"Deinitializing","command":"Start","errorCode":"requires_deinitialize","recoveryAction":"Deinitialize","message":"Deinitialize is required before another command can be accepted."}
-```
-
-クライアントは **Deinitialize** 操作を有効なままにし、サービスが `Uninitialized` を返すまで再試行してください。アプリケーションの再起動は、Deinitialize で復旧できない場合に限る UI の最終手段です。
-
-イベントには任意の `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、
-サニタイズ済みの `recoveryDetails` を含めることができます。エラーおよび拒否応答には
-安定した `errorCode` も含めることができます。クライアントは未知の追加フィールドを無視します。
 
 ## エラー処理
 

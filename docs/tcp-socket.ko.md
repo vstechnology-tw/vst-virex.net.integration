@@ -10,7 +10,7 @@ TCP 소켓은 동일한 단순 스트리밍 프로토콜을 통해 명령을 보
 | 기본 포트 | `5089` |
 | 프레이밍 방식 | NDJSON |
 | 인코딩 | UTF-8 |
-| 방향 | 클라이언트는 명령 프레임을 보냅니다. 서비스가 이벤트 프레임을 보냅니다 |
+| 방향 | 클라이언트는 명령 및 쿼리 프레임을 보냅니다. 서비스는 직접 응답 및 이벤트 프레임을 보냅니다 |
 
 각 프레임은 JSON 개체이며 `\n`로 끝납니다.
 
@@ -22,15 +22,19 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
 
 ## 프레임 개요
 
-### 수신 명령
+### 수신 명령 및 쿼리
 
 | 프레임 유형 | 페이로드 | 유효한 상태 | 결과 |
 | --- | --- | --- | --- |
+| `status` | `type`만 사용 | 모두 | 직접 응답 `type: "status"`를 반환합니다. |
+| `error` | `type`만 사용 | 모두 | 직접 응답 `type: "error"`를 반환합니다. |
+| `getProductInfo` | `type`만 사용 | 모두 | 직접 응답 `type: "productInfo"`를 반환합니다. |
 | `initialize` | `type`가 포함된 [SystemInitializeRequest](payloads/commands/system-initialize-request.ko.md) | `Uninitialized` | `Initializing` 상태로 전환됩니다. 완료 후 `Ready` 상태의 `statusChanged`를 보냅니다. |
 | `deinitialize` | `type`가 포함된 [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ko.md) | `Ready` 또는 공개 복구 상태 `Deinitializing` | `Deinitializing`으로 전환하거나 재시도합니다. 정리 성공 후 `Uninitialized` 상태의 `statusChanged`를 보냅니다. |
 | `productInfo` | `type`가 포함된 [ProductInfo](payloads/product/product-info.ko.md) | `Ready` | ProductInfo를 업데이트하고 `productInfoChanged`를 내보냅니다. |
 | `start` | `type`가 포함된 [SystemStartRequest](payloads/commands/system-start-request.ko.md) | `Ready` | `Running` 상태로 전환됩니다. 완료는 이벤트와 결과로 보고됩니다. |
 | `stop` | `type`가 포함된 [SystemStopRequest](payloads/commands/system-stop-request.ko.md) | `Running` | 실행을 중지하고 `Ready`로 돌아갑니다. |
+| `results` | 결과 쿼리 조건과 `type` | 모두 | 직접 응답 `type: "results"`를 반환합니다. |
 
 ### 송신 이벤트
 
@@ -261,6 +265,137 @@ TCP를 통한 현재 실행을 중지합니다.
 ### 오류 처리
 
 현재 상태가 `Running`가 아닌 경우 서비스는 `commandRejected`를 보냅니다.
+
+## status 쿼리
+
+### 목적
+
+TCP를 통해 현재 공개 시스템 상태를 읽습니다. 이는 쿼리 프레임이며 수명 주기 명령이 아니므로 모든 상태에서 보낼 수 있습니다.
+
+### 프레임
+
+```json
+{"type":"status"}
+```
+
+### 페이로드
+
+`type: "status"` 외에는 필드가 필요하지 않습니다.
+
+### 상태 제한
+
+모든 상태에서 호출할 수 있습니다.
+
+### 응답 프레임
+
+서비스는 직접 응답을 보냅니다.
+
+```json
+{"type":"status","state":"Ready"}
+```
+
+### 참고
+
+쿼리 응답의 `type`은 `status`입니다. 상태 변경 이벤트는 계속 `statusChanged`를 사용합니다.
+
+## error 쿼리
+
+### 목적
+
+TCP를 통해 현재 공개 오류 정보를 읽습니다. 이 쿼리는 RESTful API `GET /api/error` 및 MQTT `commands/error/get`과 동일한 [ErrorInfo](payloads/system/error-info.ko.md) 형태를 반환합니다.
+
+### 프레임
+
+```json
+{"type":"error"}
+```
+
+### 페이로드
+
+`type: "error"` 외에는 필드가 필요하지 않습니다.
+
+### 상태 제한
+
+모든 상태에서 호출할 수 있습니다.
+
+### 응답 프레임
+
+서비스는 직접 응답을 보냅니다.
+
+```json
+{"type":"error","hasError":false,"message":"","state":"Ready"}
+```
+
+### 참고
+
+쿼리 응답의 `type`은 `error`입니다. 오류 변경 이벤트는 계속 `errorChanged`를 사용합니다.
+
+## getProductInfo 쿼리
+
+### 목적
+
+시스템 상태를 변경하지 않고 TCP를 통해 현재 ProductInfo를 읽습니다.
+
+### 프레임
+
+```json
+{"type":"getProductInfo"}
+```
+
+### 페이로드
+
+`type: "getProductInfo"` 외에는 필드가 필요하지 않습니다.
+
+### 상태 제한
+
+모든 상태에서 호출할 수 있습니다.
+
+### 응답 프레임
+
+서비스는 직접 응답을 보냅니다.
+
+```json
+{"type":"productInfo","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### 참고
+
+쿼리 응답의 `type`은 `productInfo`입니다. ProductInfo 업데이트 이벤트는 계속 `productInfoChanged`를 사용합니다.
+
+## results 쿼리
+
+### 목적
+
+TCP를 통해 공개 결과 요약을 조회합니다. 결과에는 요약만 포함되며 비공개 검사 세부 정보, 결함 목록, 크롭 목록 또는 이미지 바이너리는 포함되지 않습니다.
+
+### 프레임
+
+```json
+{"type":"results","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+### 페이로드
+
+| 필드 | 필수 | 설명 |
+| --- | --- | --- |
+| `type` | Yes | `results`여야 합니다. |
+| `lotID` | No | 선택 사항인 Lot ID 필터입니다. |
+| `waferID` | No | 선택 사항인 Wafer ID 필터입니다. |
+| `recipe` | No | 선택 사항인 Recipe 필터입니다. |
+
+여러 필터는 AND로 결합됩니다.
+
+### 상태 제한
+
+모든 상태에서 호출할 수 있습니다.
+
+### 응답 프레임
+
+서비스는 직접 응답을 보냅니다.
+
+```json
+{"type":"results","items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
+```
 
 ## statusChanged 이벤트
 

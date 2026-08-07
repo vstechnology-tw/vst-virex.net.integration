@@ -10,7 +10,7 @@ TCP Socket 是雙向整合通道，適合需要用同一個簡單串流協定送
 | 預設 port | `5089` |
 | 分幀方式 | NDJSON |
 | 編碼 | UTF-8 |
-| 方向 | 用戶端傳送命令資料框；服務傳送事件資料框 |
+| 方向 | 用戶端傳送命令與查詢資料框；服務傳送直接回應與事件資料框 |
 
 每個資料框都是一個 JSON 物件，並以 `\n` 結尾。
 
@@ -22,15 +22,19 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 
 ## 資料框總覽
 
-### 傳入命令
+### 傳入命令與查詢
 
 | 資料框類型 | 資料內容 | 合法狀態 | 結果 |
 | --- | --- | --- | --- |
+| `status` | 只有 `type` | Any | 回傳直接回應 `type: "status"`。 |
+| `error` | 只有 `type` | Any | 回傳直接回應 `type: "error"`。 |
+| `getProductInfo` | 只有 `type` | Any | 回傳直接回應 `type: "productInfo"`。 |
 | `initialize` | [SystemInitializeRequest](payloads/commands/system-initialize-request.zh-Hant.md) 加上 `type` | `Uninitialized` | 進入 `Initializing`；完成後送出狀態為 `Ready` 的 `statusChanged`。 |
 | `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.zh-Hant.md) 加上 `type` | `Ready` 或公開復原狀態 `Deinitializing` | 進入或維持 `Deinitializing`；清理成功後送出狀態為 `Uninitialized` 的 `statusChanged`。 |
 | `productInfo` | [ProductInfo](payloads/product/product-info.zh-Hant.md) 加上 `type` | `Ready` | 更新 ProductInfo 並發出 `productInfoChanged`。 |
 | `start` | [SystemStartRequest](payloads/commands/system-start-request.zh-Hant.md) 加上 `type` | `Ready` | 進入 `Running`；完成結果由事件與結果查詢提供。 |
 | `stop` | [SystemStopRequest](payloads/commands/system-stop-request.zh-Hant.md) 加上 `type` | `Running` | 停止執行並回到 `Ready`。 |
+| `results` | 結果查詢條件加上 `type` | Any | 回傳直接回應 `type: "results"`。 |
 
 ### 傳出事件
 
@@ -261,6 +265,137 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 ### 錯誤處理
 
 如果目前狀態不是 `Running`，服務會送出 `commandRejected`。
+
+## status 查詢
+
+### 用途
+
+透過 TCP 讀取目前公開系統狀態。這是查詢資料框，不是生命週期命令，任何狀態都可以送出。
+
+### 資料框
+
+```json
+{"type":"status"}
+```
+
+### 資料內容
+
+除了 `type: "status"` 之外，不需要其他欄位。
+
+### 狀態限制
+
+任何狀態都可以呼叫。
+
+### 回應資料框
+
+服務會送出直接回應：
+
+```json
+{"type":"status","state":"Ready"}
+```
+
+### 說明
+
+查詢回應的 `type` 是 `status`。狀態改變事件仍使用 `statusChanged`。
+
+## error 查詢
+
+### 用途
+
+透過 TCP 讀取目前公開錯誤資訊。這個查詢回傳與 RESTful API `GET /api/error` 以及 MQTT `commands/error/get` 相同的 [ErrorInfo](payloads/system/error-info.zh-Hant.md) 內容。
+
+### 資料框
+
+```json
+{"type":"error"}
+```
+
+### 資料內容
+
+除了 `type: "error"` 之外，不需要其他欄位。
+
+### 狀態限制
+
+任何狀態都可以呼叫。
+
+### 回應資料框
+
+服務會送出直接回應：
+
+```json
+{"type":"error","hasError":false,"message":"","state":"Ready"}
+```
+
+### 說明
+
+查詢回應的 `type` 是 `error`。錯誤改變事件仍使用 `errorChanged`。
+
+## getProductInfo 查詢
+
+### 用途
+
+透過 TCP 讀取目前 ProductInfo，不改變系統狀態。
+
+### 資料框
+
+```json
+{"type":"getProductInfo"}
+```
+
+### 資料內容
+
+除了 `type: "getProductInfo"` 之外，不需要其他欄位。
+
+### 狀態限制
+
+任何狀態都可以呼叫。
+
+### 回應資料框
+
+服務會送出直接回應：
+
+```json
+{"type":"productInfo","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### 說明
+
+查詢回應的 `type` 是 `productInfo`。ProductInfo 更新事件仍使用 `productInfoChanged`。
+
+## results 查詢
+
+### 用途
+
+透過 TCP 查詢公開結果摘要。結果只包含摘要，不包含私有檢測細節、缺陷清單、裁切圖或影像二進位資料。
+
+### 資料框
+
+```json
+{"type":"results","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A"}
+```
+
+### 資料內容
+
+| 欄位 | 必填 | 說明 |
+| --- | --- | --- |
+| `type` | Yes | 必須是 `results`。 |
+| `lotID` | No | 選用 Lot ID 篩選條件。 |
+| `waferID` | No | 選用 Wafer ID 篩選條件。 |
+| `recipe` | No | 選用 Recipe 篩選條件。 |
+
+多個篩選條件會以 AND 合併。
+
+### 狀態限制
+
+任何狀態都可以呼叫。
+
+### 回應資料框
+
+服務會送出直接回應：
+
+```json
+{"type":"results","items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
+```
 
 ## statusChanged 事件
 
