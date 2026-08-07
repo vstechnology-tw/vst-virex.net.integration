@@ -12,6 +12,7 @@
 |開始 | `POST /api/system/start` は `Ready` で受け入れられ、`Running` を返します。 |
 |停止 | `POST /api/system/stop` は `Running` で受け入れられ、`Ready` を返します。 |
 | Deinitialize | `POST /api/system/deinitialize` は `Ready` で受け入れられ、クリーンアップ失敗を注入した後も `Deinitializing` で再試行でき、成功すると `Uninitialized` を返します。 |
+| 復旧投影 | 復旧中、`/api/status`、`/api/error`、およびコマンド応答は `state: Deinitializing`、`recoveryAction: Deinitialize`、任意の開始時刻/ソース/フェーズ/サニタイズ済み詳細、該当する安定したエラーコードを公開し、内部の `Faulted` または `RequiresDeinitialize` 状態は公開しません。 |
 |無効なコマンド |無効なコマンドは、`accepted=false`、`errorCode=invalid_state`、および現在の `state` を返します。 |
 |結果 | `GET /api/results` は、ProductInfo スナップショット フィールドに一致する概要を返します。 |
 
@@ -24,6 +25,7 @@
 | ProductInfo コマンド | `type: "productInfo"` は、`Ready` の ProductInfo を更新します。 |
 |開始/stop コマンド | `type: "start"` および `type: "stop"` は、RESTful API と同じ状態ルールに従います。 |
 |イベント解析 |クライアントは、`statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、および `commandRejected` を処理できます。 |
+| 復旧イベントフィールド | `statusChanged`、`errorChanged`、`commandRejected` は Deinitialize を継続して使用できる復旧アクション、任意のコンテキスト、安定したエラーコード、サニタイズ済み詳細を保持します。 |
 
 ## MQTT
 
@@ -34,6 +36,7 @@
 | ProductInfoイベント |クライアントは `productInfoChanged` を受信します。 |
 |結果イベント |クライアントは `resultCreated` を受け取ります。 |
 |拒否イベント |コマンドが拒否された場合、クライアントは `commandRejected` を受け取ります。 |
+| 復旧イベントフィールド | `statusChanged`、`errorChanged`、`commandRejected` は Deinitialize を継続して使用できる復旧アクション、任意のコンテキスト、安定したエラーコード、サニタイズ済み詳細を保持します。 |
 
 ## 移植性
 

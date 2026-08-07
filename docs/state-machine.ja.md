@@ -45,6 +45,8 @@
 
 内部の acquisition fault により現在のソースを信頼できなくなった場合でも、`Faulted` をクライアントに公開しません。公開状態は `Deinitializing` となり、`CommandResponse`、`SystemStatus`、または `ErrorInfo` に `recoveryAction: "Deinitialize"` が含まれます。自動クリーンアップが失敗しても Deinitialize は使用可能なまま再試行できます。再試行でも完了できない場合のみ、アプリの再起動を最後の手段とします。
 
+復旧ペイロードには、任意の `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、サニタイズ済みの `recoveryDetails`、およびエラー/コマンド用の安定した `errorCode` も含めることができます。これらは追加フィールドであり、クライアントは未知のフィールドを無視します。
+
 ## 結果のスナップショット
 
 `Start` は、現在の `ProductInfo` をすぐにキャプチャします。生成された結果はそのスナップショットを使用します。将来の実装で実行中に製品情報を変更できるようになったとしても、その変更はすでに開始されている実行の結果に影響を与えてはなりません。

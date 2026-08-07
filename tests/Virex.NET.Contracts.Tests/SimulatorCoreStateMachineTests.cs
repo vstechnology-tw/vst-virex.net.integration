@@ -122,11 +122,18 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.False(firstAttempt.Accepted);
         Assert.Equal(CommandErrorCodes.RequiresDeinitialize, firstAttempt.ErrorCode);
         Assert.Equal(RecoveryActions.Deinitialize, firstAttempt.RecoveryAction);
+        Assert.Equal("Acquisition", firstAttempt.RecoverySource);
+        Assert.Equal("Deinitializing", firstAttempt.RecoveryPhase);
+        Assert.Equal("camera disconnected", firstAttempt.RecoveryDetails);
+        Assert.NotNull(firstAttempt.RecoveryStartedAt);
         Assert.Equal(SystemStates.Deinitializing, firstAttempt.State);
         Assert.Equal(SystemStates.Deinitializing, session.Status.State);
         Assert.Equal(RecoveryActions.Deinitialize, session.Status.RecoveryAction);
+        Assert.Equal("Acquisition", session.Status.RecoverySource);
+        Assert.Equal("Deinitializing", session.Status.RecoveryPhase);
         Assert.True(session.Error.HasError);
         Assert.Equal("camera disconnected", session.Error.Message);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, session.Error.ErrorCode);
         Assert.Equal(RecoveryActions.Deinitialize, session.Error.RecoveryAction);
 
         var retry = await session.DeinitializeAsync();
@@ -136,5 +143,50 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.Equal(SystemStates.Uninitialized, session.Status.State);
         Assert.False(session.Error.HasError);
         Assert.Null(session.Error.RecoveryAction);
+    }
+
+    [Fact]
+    public void RecoveryDetailsAreSanitizedBeforeTheyReachThePublicContract()
+    {
+        var session = new SimulatorSession();
+
+        session.EmitError("native cleanup failed\npassword=secret C:\\recipes\\private.json");
+
+        Assert.Equal("native cleanup failed password=[redacted] [path]", session.Error.Message);
+        Assert.Equal("simulated_error", session.Error.ErrorCode);
+        Assert.Null(session.Error.RecoveryAction);
+        Assert.Null(session.Error.RecoveryDetails);
+    }
+
+    [Fact]
+    public async Task ConcurrentDeinitializeCallsJoinOneRecoveryAttemptAndACompletedFailureCanRetry()
+    {
+        var session = new SimulatorSession();
+        await session.InitializeAsync();
+        session.ConfigureDeinitializeFailures(1, "native cleanup failed");
+        var deinitializing = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        session.StatusChanged += (_, status) =>
+        {
+            if (status.State == SystemStates.Deinitializing)
+                deinitializing.TrySetResult(null);
+        };
+
+        var first = session.DeinitializeAsync();
+        await deinitializing.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var second = session.DeinitializeAsync();
+
+        Assert.Same(first, second);
+        var failed = await first;
+        Assert.False(failed.Accepted);
+        Assert.NotNull(failed.RecoveryStartedAt);
+        Assert.Equal("native cleanup failed", failed.RecoveryDetails);
+        Assert.Equal(SystemStates.Deinitializing, session.Status.State);
+
+        var retry = await session.DeinitializeAsync();
+
+        Assert.True(retry.Accepted);
+        Assert.Equal(SystemStates.Uninitialized, retry.State);
+        Assert.Null(retry.RecoveryAction);
+        Assert.Null(retry.RecoveryStartedAt);
     }
 }

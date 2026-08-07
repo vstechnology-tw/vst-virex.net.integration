@@ -12,5 +12,13 @@ public sealed class CommandResponse
 
     public string? RecoveryAction { get; set; }
 
+    public DateTimeOffset? RecoveryStartedAt { get; set; }
+
+    public string? RecoverySource { get; set; }
+
+    public string? RecoveryPhase { get; set; }
+
+    public string? RecoveryDetails { get; set; }
+
     public string Message { get; set; } = string.Empty;
 }

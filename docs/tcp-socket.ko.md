@@ -161,6 +161,11 @@ TCP를 통해 시스템을 반초기화합니다. `DeinitializationCompleted`가
 `recoveryAction: "Deinitialize"`를 포함한 `commandRejected`를 보냅니다. 클라이언트는
 Deinitialize를 다시 시도할 수 있도록 유지해야 하며, 다른 공개 상태에서는 명령을 거부합니다.
 
+`statusChanged`, `errorChanged`, `commandRejected`는 선택적 `recoveryStartedAt`,
+`recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails`를 유지할 수 있습니다.
+오류 및 거부 응답에는 안정적인 `errorCode`도 포함될 수 있습니다. `Faulted`와
+`RequiresDeinitialize`는 공개되지 않습니다.
+
 ## productInfo 명령
 
 ### 목적

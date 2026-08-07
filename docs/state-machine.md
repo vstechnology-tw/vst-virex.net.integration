@@ -48,6 +48,10 @@ The public projection remains `Deinitializing` and `CommandResponse`, `SystemSta
 `recoveryAction: "Deinitialize"`. Clients must keep Deinitialize actionable and may retry it when the first automatic
 deinitialization attempt fails. Restarting the app is the last resort only after Deinitialize retries cannot complete.
 
+Recovery payloads may also contain optional `recoveryStartedAt`, `recoverySource`,
+`recoveryPhase`, sanitized `recoveryDetails`, and (for errors/commands) a stable
+`errorCode`. These fields are additive; clients must ignore unknown fields.
+
 ## Result snapshot
 
 `Start` immediately captures the current `ProductInfo`. Generated results use that snapshot. Even if a future implementation allows product information to change during a run, that change must not affect results for a run that has already started.

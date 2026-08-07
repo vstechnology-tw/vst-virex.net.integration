@@ -413,6 +413,11 @@ RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以�
 
 如果目前狀態既不是 `Ready` 也不是公開復原狀態 `Deinitializing`，回傳 `accepted=false` 與 `errorCode=invalid_state`。
 
+復原中的回應與狀態/錯誤 payload 可以包含選填的 `recoveryAction`、
+`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的
+`recoveryDetails`。`ErrorInfo` 與 `CommandResponse` 也可以包含穩定的
+`errorCode`；這些都是 additive 欄位。
+
 ## POST /api/system/start
 
 ### 用途

@@ -413,6 +413,11 @@ RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령�
 
 현재 상태가 `Ready`도 공개 복구 상태 `Deinitializing`도 아닌 경우 `accepted=false` 및 `errorCode=invalid_state`를 반환합니다.
 
+복구 중 응답과 상태/오류 payload에는 선택적 `recoveryAction`, `recoveryStartedAt`,
+`recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails`가 포함될 수 있습니다.
+`ErrorInfo`와 `CommandResponse`에는 안정적인 `errorCode`도 포함될 수 있으며, 모두
+추가 필드입니다.
+
 ## POST /api/system/start
 
 ### 목적

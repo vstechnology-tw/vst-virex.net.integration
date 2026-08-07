@@ -161,6 +161,11 @@ TCP 経由でシステムを非初期化します。`DeinitializationCompleted` 
 `recoveryAction: "Deinitialize"` を含む `commandRejected` を送信します。クライアントは
 Deinitialize を再試行できるようにします。その他の公開状態ではコマンドを拒否します。
 
+`statusChanged`、`errorChanged`、`commandRejected` は、任意の
+`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、サニタイズ済みの
+`recoveryDetails` を保持できます。エラーと拒否応答には安定した `errorCode` も
+含めることができます。`Faulted` と `RequiresDeinitialize` は公開されません。
+
 ## productInfo コマンド
 
 ### 目的

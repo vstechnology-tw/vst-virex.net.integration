@@ -45,6 +45,8 @@
 
 내부 acquisition fault로 현재 소스를 신뢰할 수 없게 되어도 `Faulted`를 클라이언트에 공개하지 않습니다. 공개 상태는 `Deinitializing`으로 투영되고 `CommandResponse`, `SystemStatus` 또는 `ErrorInfo`에 `recoveryAction: "Deinitialize"`가 포함됩니다. 자동 정리가 실패해도 Deinitialize는 계속 사용할 수 있으며 재시도할 수 있습니다. 재시도로도 완료되지 않을 때만 앱 재시작을 마지막 수단으로 사용합니다.
 
+복구 페이로드에는 선택적 `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails` 및 오류/명령에 대한 안정적인 `errorCode`가 포함될 수 있습니다. 이는 추가 필드이므로 클라이언트는 알 수 없는 필드를 무시해야 합니다.
+
 ## 결과 스냅샷
 
 `Start`는 현재 `ProductInfo`를 즉시 캡처합니다. 생성된 결과는 해당 스냅샷을 사용합니다. 향후 구현에서 실행 중에 제품 정보가 변경되도록 허용하더라도 해당 변경 사항은 이미 시작된 실행의 결과에 영향을 주어서는 안 됩니다.

@@ -23,6 +23,11 @@ Examples:
 
 Read `GET /api/status` first, then send the command when the state allows it.
 
+If the response state is `Deinitializing`, read `recoveryAction`,
+`recoveryStartedAt`, `recoverySource`, `recoveryPhase`, sanitized
+`recoveryDetails`, and `errorCode` when present. Keep Deinitialize enabled and
+retry it; do not wait for the internal `Faulted` or `RequiresDeinitialize` names.
+
 ## No Results Returned
 
 Check:

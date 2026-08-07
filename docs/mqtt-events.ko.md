@@ -308,6 +308,10 @@ virex/commandRejected
 
 클라이언트는 **Deinitialize** 작업을 계속 사용할 수 있게 하고 서비스가 `Uninitialized`를 반환할 때까지 재시도해야 합니다. Deinitialize로 복구할 수 없을 때만 애플리케이션 재시작이 UI의 마지막 수단입니다.
 
+이벤트에는 선택적 `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, 정리된
+`recoveryDetails`가 포함될 수 있습니다. 오류 및 거부 응답에는 안정적인 `errorCode`도
+포함될 수 있으며 클라이언트는 알 수 없는 추가 필드를 무시해야 합니다.
+
 ## 오류 처리
 
 MQTT 이벤트에는 HTTP 상태 코드가 없습니다. 잘못된 JSON, 알 수 없는 토픽, 브로커 연결 끊김 및 구독 실패는 전송 계층 오류로 처리되어야 합니다. `commandRejected`는 Virex.NET 호환 서비스에서 보고한 애플리케이션 계층 거부입니다.

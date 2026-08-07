@@ -86,16 +86,16 @@ catch (VirexClientException ex)
 return 0;
 
 static void PrintStatus(SystemStatus status) =>
-    Console.WriteLine($"Status: state={status.State}");
+    Console.WriteLine($"Status: state={status.State}, recoveryAction={status.RecoveryAction}, startedAt={status.RecoveryStartedAt}, source={status.RecoverySource}, phase={status.RecoveryPhase}, details={status.RecoveryDetails}");
 
 static void PrintError(ErrorInfo error) =>
-    Console.WriteLine($"Error: hasError={error.HasError}, state={error.State}, message={error.Message}");
+    Console.WriteLine($"Error: hasError={error.HasError}, state={error.State}, errorCode={error.ErrorCode}, recoveryAction={error.RecoveryAction}, startedAt={error.RecoveryStartedAt}, source={error.RecoverySource}, phase={error.RecoveryPhase}, details={error.RecoveryDetails}, message={error.Message}");
 
 static void PrintProductInfo(ProductInfo info) =>
     Console.WriteLine($"ProductInfo: lotID={info.LotID}, waferID={info.WaferID}, recipe={info.Recipe}, slot={info.Slot}, foupID={info.FoupID}, chamberID={info.ChamberID}");
 
 static void PrintCommand(CommandResponse response) =>
-    Console.WriteLine($"{response.Command}: accepted={response.Accepted}, state={response.State}, message={response.Message}");
+    Console.WriteLine($"{response.Command}: accepted={response.Accepted}, state={response.State}, errorCode={response.ErrorCode}, recoveryAction={response.RecoveryAction}, startedAt={response.RecoveryStartedAt}, source={response.RecoverySource}, phase={response.RecoveryPhase}, details={response.RecoveryDetails}, message={response.Message}");
 
 static void PrintStep(string title)
 {

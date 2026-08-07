@@ -23,6 +23,11 @@
 
 先讀 `GET /api/status`，等狀態允許後再送命令。
 
+如果回應狀態是 `Deinitializing`，請讀取存在的 `recoveryAction`、
+`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的
+`recoveryDetails` 與 `errorCode`。保持 Deinitialize 可操作並重試，不要等待內部
+`Faulted` 或 `RequiresDeinitialize` 名稱。
+
 ## 沒有回傳結果
 
 檢查：

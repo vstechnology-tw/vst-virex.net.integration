@@ -308,6 +308,10 @@ virex/commandRejected
 
 クライアントは **Deinitialize** 操作を有効なままにし、サービスが `Uninitialized` を返すまで再試行してください。アプリケーションの再起動は、Deinitialize で復旧できない場合に限る UI の最終手段です。
 
+イベントには任意の `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、
+サニタイズ済みの `recoveryDetails` を含めることができます。エラーおよび拒否応答には
+安定した `errorCode` も含めることができます。クライアントは未知の追加フィールドを無視します。
+
 ## エラー処理
 
 MQTT イベントには、HTTP ステータス コードがありません。不正な形式の JSON、不明なトピック、ブローカーの切断、およびサブスクリプションの失敗は、トランスポート層のエラーとして扱う必要があります。 `commandRejected` は、Virex.NET 互換サービスによって報告されるアプリケーション層の拒否です。

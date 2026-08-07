@@ -308,6 +308,10 @@ virex/commandRejected
 
 用戶端應保持 **Deinitialize** 操作可按，直到服務回傳 `Uninitialized`。只有 Deinitialize 無法復原服務時，App 重啟才是 UI 層的最後手段。
 
+事件可以包含選填的 `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的
+`recoveryDetails`；錯誤與拒絕回應也可以包含穩定的 `errorCode`。用戶端應忽略未知的
+additive 欄位。
+
 ## 錯誤處理
 
 MQTT 事件沒有 HTTP status code。JSON 格式錯誤、未知 topic、broker 斷線、訂閱失敗都應視為傳輸層錯誤。`commandRejected` 則是 Virex.NET 相容服務回報的應用層拒絕。

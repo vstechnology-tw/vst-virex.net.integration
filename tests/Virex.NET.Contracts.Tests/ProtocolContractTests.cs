@@ -41,6 +41,57 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public void RecoveryProjectionFieldsAreSharedByStatusErrorAndCommands()
+    {
+        var startedAt = new DateTimeOffset(2026, 8, 7, 1, 2, 3, TimeSpan.Zero);
+        var statusJson = ProtocolJson.Serialize(new SystemStatus
+        {
+            State = SystemStates.Deinitializing,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            RecoveryStartedAt = startedAt,
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+        var errorJson = ProtocolJson.Serialize(new ErrorInfo
+        {
+            HasError = true,
+            State = SystemStates.Deinitializing,
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            RecoveryStartedAt = startedAt,
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+        var responseJson = ProtocolJson.Serialize(new CommandResponse
+        {
+            Accepted = false,
+            State = SystemStates.Deinitializing,
+            Command = "Deinitialize",
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            RecoveryStartedAt = startedAt,
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+
+        using var status = JsonDocument.Parse(statusJson);
+        using var error = JsonDocument.Parse(errorJson);
+        using var response = JsonDocument.Parse(responseJson);
+        foreach (var document in new[] { status, error, response })
+        {
+            Assert.Equal("Cam01", document.RootElement.GetProperty("recoverySource").GetString());
+            Assert.Equal("Deinitializing", document.RootElement.GetProperty("recoveryPhase").GetString());
+            Assert.Equal("native close failed", document.RootElement.GetProperty("recoveryDetails").GetString());
+            Assert.NotEqual(JsonValueKind.Null, document.RootElement.GetProperty("recoveryStartedAt").ValueKind);
+        }
+
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, error.RootElement.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
     public void ProductInfoParserAcceptsNumberOrStringSlot()
     {
         Assert.True(ProductInfoJsonParser.TryParse(

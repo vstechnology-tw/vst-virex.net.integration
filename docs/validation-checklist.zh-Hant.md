@@ -12,6 +12,7 @@
 | 啟動 | `POST /api/system/start` 在 `Ready` 被接受，回 `Running`。 |
 | 停止 | `POST /api/system/stop` 在 `Running` 被接受，回 `Ready`。 |
 | 反初始化 | `POST /api/system/deinitialize` 在 `Ready` 被接受；注入清理失敗後仍可在 `Deinitializing` 重試，成功後回 `Uninitialized`。 |
+| 復原投影 | 復原期間，`/api/status`、`/api/error` 與命令回應會提供 `state: Deinitializing`、`recoveryAction: Deinitialize`、可選的開始時間/來源/階段/已清理細節欄位，以及適用的穩定錯誤代碼；不會提供內部 `Faulted` 或 `RequiresDeinitialize` 狀態。 |
 | 非法命令 | 非法命令回 `accepted=false`、`errorCode=invalid_state` 與目前 `state`。 |
 | 結果 | `GET /api/results` 回傳符合 ProductInfo 快照欄位的摘要。 |
 
@@ -24,6 +25,7 @@
 | ProductInfo 命令 | `type: "productInfo"` 在 `Ready` 更新 ProductInfo。 |
 | 啟動/停止命令 | `type: "start"` 與 `type: "stop"` 遵守 RESTful API 相同狀態規則。 |
 | 事件解析 | 用戶端可處理 `statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、`commandRejected`。 |
+| 復原事件欄位 | `statusChanged`、`errorChanged` 與 `commandRejected` 保留復原動作、選填內容、穩定錯誤代碼與已清理細節，讓 Deinitialize 持續可操作。 |
 
 ## MQTT
 
@@ -34,6 +36,7 @@
 | ProductInfo 事件 | 用戶端收到 `productInfoChanged`。 |
 | 結果事件 | 用戶端收到 `resultCreated`。 |
 | 拒絕事件 | 服務發布拒絕命令事件時，用戶端收到 `commandRejected`。 |
+| 復原事件欄位 | `statusChanged`、`errorChanged` 與 `commandRejected` 保留復原動作、選填內容、穩定錯誤代碼與已清理細節，讓 Deinitialize 持續可操作。 |
 
 ## 可攜性
 

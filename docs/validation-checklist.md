@@ -12,6 +12,7 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 | Start | `POST /api/system/start` is accepted in `Ready` and returns `Running`. |
 | Stop | `POST /api/system/stop` is accepted in `Running` and returns `Ready`. |
 | Deinitialize | `POST /api/system/deinitialize` is accepted in `Ready`; after an injected cleanup failure it remains accepted in `Deinitializing` and a successful retry returns `Uninitialized`. |
+| Recovery projection | During recovery, `/api/status`, `/api/error`, and command responses expose `state: Deinitializing`, `recoveryAction: Deinitialize`, optional started-at/source/phase/sanitized-details context, and stable error codes where applicable; internal `Faulted` and `RequiresDeinitialize` states are never exposed. |
 | Invalid command | Invalid commands return `accepted=false`, `errorCode=invalid_state`, and the current `state`. |
 | Results | `GET /api/results` returns summaries matching the ProductInfo snapshot fields. |
 
@@ -24,6 +25,7 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 | ProductInfo command | `type: "productInfo"` updates ProductInfo in `Ready`. |
 | Start/stop commands | `type: "start"` and `type: "stop"` follow the same state rules as RESTful API. |
 | Event parsing | Client can handle `statusChanged`, `productInfoChanged`, `runStarted`, `runCompleted`, `resultCreated`, `errorChanged`, and `commandRejected`. |
+| Recovery event fields | `statusChanged`, `errorChanged`, and `commandRejected` preserve the recovery action, optional context, stable error code, and sanitized details needed to keep Deinitialize actionable. |
 
 ## MQTT
 
@@ -34,6 +36,7 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 | ProductInfo event | Client receives `productInfoChanged`. |
 | Result event | Client receives `resultCreated`. |
 | Rejection event | Client receives `commandRejected` when a command is rejected. |
+| Recovery event fields | `statusChanged`, `errorChanged`, and `commandRejected` preserve the recovery action, optional context, stable error code, and sanitized details needed to keep Deinitialize actionable. |
 
 ## Portability
 

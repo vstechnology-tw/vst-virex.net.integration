@@ -161,6 +161,11 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 `errorCode: "requires_deinitialize"` 與 `recoveryAction: "Deinitialize"` 的
 `commandRejected`；用戶端必須保持反初始化可操作以再次重試。其他公開狀態則拒絕此命令。
 
+`statusChanged`、`errorChanged`、`commandRejected` 可以保留選填的
+`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的
+`recoveryDetails`；錯誤與拒絕回應也可以包含穩定的 `errorCode`。`Faulted` 與
+`RequiresDeinitialize` 不會公開。
+
 ## productInfo 命令
 
 ### 用途

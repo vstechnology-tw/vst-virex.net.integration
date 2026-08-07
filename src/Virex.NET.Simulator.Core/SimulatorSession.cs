@@ -1,12 +1,20 @@
 using Stateless;
+using System.Text.RegularExpressions;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Simulator.Core;
 
 public sealed class SimulatorSession
 {
+    private static readonly Regex SensitiveValuePattern = new(
+        @"(?<key>password|passwd|secret|token|credential|authorization|api[-_]?key)\s*[:=]\s*\S+",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+    private static readonly Regex PathPattern = new(
+        @"(?:(?:[A-Za-z]:[\\/])|(?:\\\\)|(?:/))[^\s,;]+",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly TimeSpan StatePreviewDelay = TimeSpan.FromSeconds(1);
     private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
+    private readonly object _deinitializationGate = new object();
     private readonly List<ResultSummary> _results = new List<ResultSummary>();
     private readonly StateMachine<SimulatorState, SimulatorTrigger> _machine;
     private int _resultSequence;
@@ -17,6 +25,12 @@ public sealed class SimulatorSession
     private int _deinitializeFailuresRemaining;
     private string? _deinitializeFailureMessage;
     private string? _pendingDeinitializationError;
+    private Task<CommandResponse>? _activeDeinitialization;
+    private DateTimeOffset? _recoveryStartedAt;
+    private string? _recoverySource;
+    private string? _recoveryPhase;
+    private string? _recoveryDetails;
+    private string? _recoveryErrorCode;
 
     public SimulatorSession()
     {
@@ -50,6 +64,10 @@ public sealed class SimulatorSession
     {
         State = SimulatorStateNames.ToDto(State),
         RecoveryAction = RecoveryActionFor(State),
+        RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+        RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+        RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+        RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
     };
 
     public ErrorInfo Error { get; private set; } = new ErrorInfo
@@ -75,8 +93,19 @@ public sealed class SimulatorSession
     public Task<CommandResponse> InitializeAsync(CancellationToken cancellationToken = default) =>
         new InitializeSystemCommandHandler(this).Handle(new InitializeSystemCommand(), cancellationToken).AsTask();
 
-    public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default) =>
-        new DeinitializeSystemCommandHandler(this).Handle(new DeinitializeSystemCommand(), cancellationToken).AsTask();
+    public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_deinitializationGate)
+        {
+            if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization)
+                return activeDeinitialization;
+
+            _activeDeinitialization = new DeinitializeSystemCommandHandler(this)
+                .Handle(new DeinitializeSystemCommand(), CancellationToken.None)
+                .AsTask();
+            return _activeDeinitialization;
+        }
+    }
 
     public void ConfigureDeinitializeFailures(int attempts, string? message = null)
     {
@@ -107,6 +136,7 @@ public sealed class SimulatorSession
             return Reject("SimulateAcquisitionFault");
 
         _pendingDeinitializationError = message;
+        BeginRecovery(message, "Acquisition", "Deinitializing", CommandErrorCodes.RequiresDeinitialize);
         LogMessage("Acquisition fault simulated: " + message);
         return await DeinitializeAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -125,14 +155,24 @@ public sealed class SimulatorSession
 
     public void EmitError(string message)
     {
+        var safeMessage = SanitizeRecoveryDetails(message) ?? "Simulated error.";
+        if (State == SimulatorState.Deinitializing)
+            BeginRecovery(safeMessage, "Simulator", "Error", "simulated_error");
+        else
+            ClearRecovery();
         Error = new ErrorInfo
         {
             HasError = true,
-            Message = message,
+            Message = safeMessage,
             State = SimulatorStateNames.ToDto(State),
             RecoveryAction = RecoveryActionFor(State),
+            ErrorCode = "simulated_error",
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
         };
-        LogMessage("Error emitted: " + message);
+        LogMessage("Error emitted: " + safeMessage);
         ErrorChanged?.Invoke(this, Error);
     }
 
@@ -171,11 +211,23 @@ public sealed class SimulatorSession
             if (!CanFire(SimulatorTrigger.Deinitialize))
                 return Reject("Deinitialize");
 
-            await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
-            var failureMessage = _pendingDeinitializationError
+            var failureMessage = SanitizeRecoveryDetails(
+                _pendingDeinitializationError
                 ?? _deinitializeFailureMessage
+                ?? "Simulated deinitialization failed.")
                 ?? "Simulated deinitialization failed.";
-            if (HasPendingDeinitializeFailure())
+            var hasPendingFailure = HasPendingDeinitializeFailure();
+            if (hasPendingFailure)
+            {
+                BeginRecovery(
+                    failureMessage,
+                    string.IsNullOrWhiteSpace(_pendingDeinitializationError) ? "Simulator" : "Acquisition",
+                    "Deinitializing",
+                    CommandErrorCodes.RequiresDeinitialize);
+            }
+
+            await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
+            if (hasPendingFailure)
                 SetError(failureMessage);
             await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
 
@@ -188,6 +240,7 @@ public sealed class SimulatorSession
                     failureMessage);
             }
 
+            ClearRecovery();
             await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
             _pendingDeinitializationError = null;
             SetError(null);
@@ -330,6 +383,11 @@ public sealed class SimulatorSession
             LogMessage("Status: state=" + SimulatorStateNames.ToDto(t.Destination));
             Error.State = SimulatorStateNames.ToDto(t.Destination);
             Error.RecoveryAction = RecoveryActionFor(t.Destination);
+            Error.ErrorCode = Error.HasError ? _recoveryErrorCode : null;
+            Error.RecoveryStartedAt = RecoveryActionFor(t.Destination) is null ? null : _recoveryStartedAt;
+            Error.RecoverySource = RecoveryActionFor(t.Destination) is null ? null : _recoverySource;
+            Error.RecoveryPhase = RecoveryActionFor(t.Destination) is null ? null : _recoveryPhase;
+            Error.RecoveryDetails = RecoveryActionFor(t.Destination) is null ? null : _recoveryDetails;
             StatusChanged?.Invoke(this, Status);
         });
     }
@@ -347,6 +405,11 @@ public sealed class SimulatorSession
             Accepted = true,
             Command = command,
             State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
             Message = message,
         };
 
@@ -359,6 +422,10 @@ public sealed class SimulatorSession
             State = SimulatorStateNames.ToDto(State),
             RecoveryAction = RecoveryActionFor(State),
             ErrorCode = errorCode,
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
             Message = message ?? "Command is not valid in the current state.",
         };
         CommandRejected?.Invoke(this, response);
@@ -370,14 +437,59 @@ public sealed class SimulatorSession
 
     private void SetError(string? message)
     {
+        var hasError = !string.IsNullOrWhiteSpace(message);
         Error = new ErrorInfo
         {
-            HasError = !string.IsNullOrWhiteSpace(message),
-            Message = string.IsNullOrWhiteSpace(message) ? null : message,
+            HasError = hasError,
+            Message = hasError ? message : null,
             State = SimulatorStateNames.ToDto(State),
             RecoveryAction = RecoveryActionFor(State),
+            ErrorCode = hasError ? _recoveryErrorCode : null,
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
         };
         ErrorChanged?.Invoke(this, Error);
+    }
+
+    private void BeginRecovery(
+        string? details,
+        string source,
+        string phase,
+        string errorCode)
+    {
+        _recoveryStartedAt ??= DateTimeOffset.UtcNow;
+        _recoverySource = source;
+        _recoveryPhase = phase;
+        _recoveryDetails = SanitizeRecoveryDetails(details);
+        _recoveryErrorCode = errorCode;
+    }
+
+    private void ClearRecovery()
+    {
+        _recoveryStartedAt = null;
+        _recoverySource = null;
+        _recoveryPhase = null;
+        _recoveryDetails = null;
+        _recoveryErrorCode = null;
+    }
+
+    private static string? SanitizeRecoveryDetails(string? details)
+    {
+        if (string.IsNullOrWhiteSpace(details))
+            return null;
+
+        var sanitized = details!.Trim().Replace("\r", " ").Replace("\n", " ");
+        var stackTraceMarker = sanitized.IndexOf(" at ", StringComparison.Ordinal);
+        if (stackTraceMarker >= 0)
+            sanitized = sanitized.Substring(0, stackTraceMarker);
+
+        sanitized = SensitiveValuePattern.Replace(sanitized, "${key}=[redacted]");
+        sanitized = PathPattern.Replace(sanitized, "[path]");
+        sanitized = string.Concat(sanitized.Select(character =>
+            char.IsControl(character) ? ' ' : character));
+        return sanitized.Length <= 512 ? sanitized : sanitized.Substring(0, 512) + "...";
     }
 
     private bool HasPendingDeinitializeFailure() =>

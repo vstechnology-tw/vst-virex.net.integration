@@ -48,6 +48,8 @@
 `recoveryAction: "Deinitialize"`。客戶應保持 Deinitialize 可操作；第一次自動反初始化失敗時，
 客戶仍可重試相同命令。只有 Deinitialize 重試仍無法完成時，重新啟動 App 才是最後手段。
 
+復原 payload 也可能包含選填的 `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的 `recoveryDetails`，以及錯誤/命令使用的穩定 `errorCode`。這些都是 additive 欄位；用戶端應忽略未知欄位。
+
 ## 結果快照
 
 `Start` 會立即保存目前的 `ProductInfo`。後續產生的結果會使用這份快照，即使未來實作允許執行中改變產品資料，也不應影響已啟動執行的結果。

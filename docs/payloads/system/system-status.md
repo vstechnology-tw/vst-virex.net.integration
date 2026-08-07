@@ -6,7 +6,12 @@
 
 ```json
 {
-  "state": "Ready"
+  "state": "Deinitializing",
+  "recoveryAction": "Deinitialize",
+  "recoveryStartedAt": "2026-08-07T10:00:00.000+00:00",
+  "recoverySource": "Acquisition",
+  "recoveryPhase": "Deinitializing",
+  "recoveryDetails": "Camera acquisition failed."
 }
 ```
 
@@ -16,6 +21,10 @@
 | --- | --- | --- | --- |
 | `state` | string | Yes | Current lifecycle state. |
 | `recoveryAction` | string | No | Operator recovery action required by the state; recovery normally uses `Deinitialize`. Omitted when no action is required. |
+| `recoveryStartedAt` | string (date-time) | No | UTC timestamp at which the current recovery attempt began. |
+| `recoverySource` | string | No | Subsystem that reported the failure, such as `Acquisition`. |
+| `recoveryPhase` | string | No | Recovery phase currently in progress, such as `Deinitializing`. |
+| `recoveryDetails` | string | No | Human-readable recovery context. |
 
 ## State Values
 

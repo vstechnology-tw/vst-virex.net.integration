@@ -68,6 +68,10 @@ internal static class OpenApiDocument
                 {
                     ["state"] = StringSchema(),
                     ["recoveryAction"] = NullableStringSchema(),
+                    ["recoveryStartedAt"] = NullableStringSchema("date-time"),
+                    ["recoverySource"] = NullableStringSchema(),
+                    ["recoveryPhase"] = NullableStringSchema(),
+                    ["recoveryDetails"] = NullableStringSchema(),
                 }),
                 ["ErrorInfo"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -75,6 +79,11 @@ internal static class OpenApiDocument
                     ["message"] = NullableStringSchema(),
                     ["state"] = StringSchema(),
                     ["recoveryAction"] = NullableStringSchema(),
+                    ["errorCode"] = NullableStringSchema(),
+                    ["recoveryStartedAt"] = NullableStringSchema("date-time"),
+                    ["recoverySource"] = NullableStringSchema(),
+                    ["recoveryPhase"] = NullableStringSchema(),
+                    ["recoveryDetails"] = NullableStringSchema(),
                 }),
                 ["CommandResponse"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -84,6 +93,10 @@ internal static class OpenApiDocument
                     ["errorCode"] = NullableStringSchema(),
                     ["message"] = StringSchema(),
                     ["recoveryAction"] = NullableStringSchema(),
+                    ["recoveryStartedAt"] = NullableStringSchema("date-time"),
+                    ["recoverySource"] = NullableStringSchema(),
+                    ["recoveryPhase"] = NullableStringSchema(),
+                    ["recoveryDetails"] = NullableStringSchema(),
                 }),
                 ["SystemStartRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -186,7 +199,7 @@ internal static class OpenApiDocument
 
     private static object StringSchema(string? format = null) => new { type = "string", format };
 
-    private static object NullableStringSchema() => new { type = "string", nullable = true };
+    private static object NullableStringSchema(string? format = null) => new { type = "string", format, nullable = true };
 
     private static object BoolSchema() => new { type = "boolean" };
 
