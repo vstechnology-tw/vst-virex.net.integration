@@ -33,19 +33,19 @@
 
 |パッケージ |目的 |
 | --- | --- |
-| [Virex.NET.Contracts 2.1.0](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0) |公開 C# データモデル、RESTful API ルート、MQTT トピック名、TCP/NDJSON フォーマットおよび解析ツールを提供します。 |
-| [Virex.NET.Client 2.1.0](https://www.nuget.org/packages/Virex.NET.Client/2.1.0) | C# RESTful API、TCP、および MQTT の SDK ラッパー。 |
+| [Virex.NET.Contracts 2.2.1](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.1) |公開 C# データモデル、RESTful API ルート、MQTT トピック名、TCP/NDJSON フォーマットおよび解析ツールを提供します。 |
+| [Virex.NET.Client 2.2.1](https://www.nuget.org/packages/Virex.NET.Client/2.2.1) | C# RESTful API、TCP、および MQTT の SDK ラッパー。 |
 
 SDK をインストールします。
 
 ```powershell
-dotnet add package Virex.NET.Client --version 2.1.0
+dotnet add package Virex.NET.Client --version 2.2.1
 ```
 
 共有契約パッケージのみをインストールします。
 
 ```powershell
-dotnet add package Virex.NET.Contracts --version 2.1.0
+dotnet add package Virex.NET.Contracts --version 2.2.1
 ```
 
 `Virex.NET.Client` および `Virex.NET.Contracts` は `netstandard2.0` をターゲットとします。

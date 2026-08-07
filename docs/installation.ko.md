@@ -33,19 +33,19 @@
 
 | 패키지 | 목적 |
 | --- | --- |
-| [Virex.NET.Contracts 2.1.0](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0) | 공개 C# 데이터 모델, RESTful API 경로, MQTT 토픽 이름, TCP/NDJSON 형식 지정 및 구문 분석 도구를 제공합니다. |
-| [Virex.NET.Client 2.1.0](https://www.nuget.org/packages/Virex.NET.Client/2.1.0) | RESTful API, TCP 및 MQTT용 C# SDK 래퍼입니다. |
+| [Virex.NET.Contracts 2.2.1](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.1) | 공개 C# 데이터 모델, RESTful API 경로, MQTT 토픽 이름, TCP/NDJSON 형식 지정 및 구문 분석 도구를 제공합니다. |
+| [Virex.NET.Client 2.2.1](https://www.nuget.org/packages/Virex.NET.Client/2.2.1) | RESTful API, TCP 및 MQTT용 C# SDK 래퍼입니다. |
 
 SDK를 설치합니다.
 
 ```powershell
-dotnet add package Virex.NET.Client --version 2.1.0
+dotnet add package Virex.NET.Client --version 2.2.1
 ```
 
 공유 계약 패키지만 설치하십시오.
 
 ```powershell
-dotnet add package Virex.NET.Contracts --version 2.1.0
+dotnet add package Virex.NET.Contracts --version 2.2.1
 ```
 
 `Virex.NET.Client` 및 `Virex.NET.Contracts`는 `netstandard2.0`를 대상으로 합니다.

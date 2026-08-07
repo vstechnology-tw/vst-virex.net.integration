@@ -12,7 +12,7 @@ internal static class OpenApiDocument
         info = new
         {
             title = "Virex.NET Simulator API",
-            version = "2.2.0",
+            version = "2.2.1",
         },
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
@@ -69,6 +69,7 @@ internal static class OpenApiDocument
                     ["state"] = StringSchema(),
                     ["recoveryAction"] = NullableStringSchema(),
                     ["recoveryStartedAt"] = NullableStringSchema("date-time"),
+                    ["errorCode"] = NullableStringSchema(),
                     ["recoverySource"] = NullableStringSchema(),
                     ["recoveryPhase"] = NullableStringSchema(),
                     ["recoveryDetails"] = NullableStringSchema(),

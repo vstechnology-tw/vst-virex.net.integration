@@ -33,19 +33,19 @@ For simulator buttons, default endpoints, and operating procedures, see [Simulat
 
 | Package | Purpose |
 | --- | --- |
-| [Virex.NET.Contracts 2.1.0](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0) | Provides public C# data models, RESTful API routes, MQTT topic names, and TCP/NDJSON formatting and parsing tools. |
-| [Virex.NET.Client 2.1.0](https://www.nuget.org/packages/Virex.NET.Client/2.1.0) | C# SDK wrapper for RESTful API, TCP, and MQTT. |
+| [Virex.NET.Contracts 2.2.1](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.1) | Provides public C# data models, RESTful API routes, MQTT topic names, and TCP/NDJSON formatting and parsing tools. |
+| [Virex.NET.Client 2.2.1](https://www.nuget.org/packages/Virex.NET.Client/2.2.1) | C# SDK wrapper for RESTful API, TCP, and MQTT. |
 
 Install SDK:
 
 ```powershell
-dotnet add package Virex.NET.Client --version 2.1.0
+dotnet add package Virex.NET.Client --version 2.2.1
 ```
 
 Install only the shared contract package:
 
 ```powershell
-dotnet add package Virex.NET.Contracts --version 2.1.0
+dotnet add package Virex.NET.Contracts --version 2.2.1
 ```
 
 `Virex.NET.Client` and `Virex.NET.Contracts` target `netstandard2.0`.

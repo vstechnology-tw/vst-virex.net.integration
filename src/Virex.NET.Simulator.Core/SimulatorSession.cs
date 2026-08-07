@@ -1,17 +1,10 @@
 using Stateless;
-using System.Text.RegularExpressions;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Simulator.Core;
 
 public sealed class SimulatorSession
 {
-    private static readonly Regex SensitiveValuePattern = new(
-        @"(?<key>password|passwd|secret|token|credential|authorization|api[-_]?key)\s*[:=]\s*\S+",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-    private static readonly Regex PathPattern = new(
-        @"(?:(?:[A-Za-z]:[\\/])|(?:\\\\)|(?:/))[^\s,;]+",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly TimeSpan StatePreviewDelay = TimeSpan.FromSeconds(1);
     private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
     private readonly object _deinitializationGate = new object();
@@ -64,6 +57,7 @@ public sealed class SimulatorSession
     {
         State = SimulatorStateNames.ToDto(State),
         RecoveryAction = RecoveryActionFor(State),
+        ErrorCode = RecoveryActionFor(State) is null ? null : _recoveryErrorCode,
         RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
         RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
         RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
@@ -155,7 +149,7 @@ public sealed class SimulatorSession
 
     public void EmitError(string message)
     {
-        var safeMessage = SanitizeRecoveryDetails(message) ?? "Simulated error.";
+        var safeMessage = RecoveryMessageSanitizer.Sanitize(message) ?? "Simulated error.";
         if (State == SimulatorState.Deinitializing)
             BeginRecovery(safeMessage, "Simulator", "Error", "simulated_error");
         else
@@ -211,7 +205,7 @@ public sealed class SimulatorSession
             if (!CanFire(SimulatorTrigger.Deinitialize))
                 return Reject("Deinitialize");
 
-            var failureMessage = SanitizeRecoveryDetails(
+            var failureMessage = RecoveryMessageSanitizer.Sanitize(
                 _pendingDeinitializationError
                 ?? _deinitializeFailureMessage
                 ?? "Simulated deinitialization failed.")
@@ -462,7 +456,7 @@ public sealed class SimulatorSession
         _recoveryStartedAt ??= DateTimeOffset.UtcNow;
         _recoverySource = source;
         _recoveryPhase = phase;
-        _recoveryDetails = SanitizeRecoveryDetails(details);
+        _recoveryDetails = RecoveryMessageSanitizer.Sanitize(details);
         _recoveryErrorCode = errorCode;
     }
 
@@ -475,22 +469,6 @@ public sealed class SimulatorSession
         _recoveryErrorCode = null;
     }
 
-    private static string? SanitizeRecoveryDetails(string? details)
-    {
-        if (string.IsNullOrWhiteSpace(details))
-            return null;
-
-        var sanitized = details!.Trim().Replace("\r", " ").Replace("\n", " ");
-        var stackTraceMarker = sanitized.IndexOf(" at ", StringComparison.Ordinal);
-        if (stackTraceMarker >= 0)
-            sanitized = sanitized.Substring(0, stackTraceMarker);
-
-        sanitized = SensitiveValuePattern.Replace(sanitized, "${key}=[redacted]");
-        sanitized = PathPattern.Replace(sanitized, "[path]");
-        sanitized = string.Concat(sanitized.Select(character =>
-            char.IsControl(character) ? ' ' : character));
-        return sanitized.Length <= 512 ? sanitized : sanitized.Substring(0, 512) + "...";
-    }
 
     private bool HasPendingDeinitializeFailure() =>
         !string.IsNullOrWhiteSpace(_pendingDeinitializationError)

@@ -571,3 +571,6 @@ The client should keep the **Deinitialize** action enabled and retry it until th
 ## Error handling
 
 MQTT events do not have HTTP status codes. Malformed JSON, unknown topics, broker disconnections, and subscription failures should be treated as transport-layer errors. `commandRejected` is an application-layer rejection reported by the Virex.NET compatible service.
+## 2.2.1 recovery envelope
+
+During recovery, `statusChanged`, `errorChanged`, and `commandRejected` use the same optional fields: `recoveryAction`, `errorCode`, `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, and sanitized `recoveryDetails`. The public state remains `Deinitializing`; internal `Faulted`, `RequiresDeinitialize`, and `RestartApp` values are never published. Keep Deinitialize enabled for retry; application restart is a UI-only final fallback.

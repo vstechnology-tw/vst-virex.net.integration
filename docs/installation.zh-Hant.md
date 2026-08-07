@@ -33,19 +33,19 @@
 
 | 套件 | 用途 |
 | --- | --- |
-| [Virex.NET.Contracts 2.1.0](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.0) | 以 C# 模型提供公開資料模型、RESTful API 路由、MQTT 主題名稱、TCP/NDJSON 格式化與解析工具。 |
-| [Virex.NET.Client 2.1.0](https://www.nuget.org/packages/Virex.NET.Client/2.1.0) | RESTful API、TCP、MQTT 的 C# SDK 包裝層。 |
+| [Virex.NET.Contracts 2.2.1](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.1) | 以 C# 模型提供公開資料模型、RESTful API 路由、MQTT 主題名稱、TCP/NDJSON 格式化與解析工具。 |
+| [Virex.NET.Client 2.2.1](https://www.nuget.org/packages/Virex.NET.Client/2.2.1) | RESTful API、TCP、MQTT 的 C# SDK 包裝層。 |
 
 安裝 SDK：
 
 ```powershell
-dotnet add package Virex.NET.Client --version 2.1.0
+dotnet add package Virex.NET.Client --version 2.2.1
 ```
 
 只需要共用合約：
 
 ```powershell
-dotnet add package Virex.NET.Contracts --version 2.1.0
+dotnet add package Virex.NET.Contracts --version 2.2.1
 ```
 
 `Virex.NET.Client` 與 `Virex.NET.Contracts` 目標框架為 `netstandard2.0`。

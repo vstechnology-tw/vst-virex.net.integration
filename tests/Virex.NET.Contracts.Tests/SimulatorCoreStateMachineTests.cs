@@ -131,6 +131,7 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.Equal(RecoveryActions.Deinitialize, session.Status.RecoveryAction);
         Assert.Equal("Acquisition", session.Status.RecoverySource);
         Assert.Equal("Deinitializing", session.Status.RecoveryPhase);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, session.Status.ErrorCode);
         Assert.True(session.Error.HasError);
         Assert.Equal("camera disconnected", session.Error.Message);
         Assert.Equal(CommandErrorCodes.RequiresDeinitialize, session.Error.ErrorCode);

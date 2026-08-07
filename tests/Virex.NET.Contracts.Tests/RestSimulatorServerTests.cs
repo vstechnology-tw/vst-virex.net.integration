@@ -49,7 +49,11 @@ public sealed class RestSimulatorServerTests
                     Assert.True(properties.TryGetProperty(field, out _), schemaName + " is missing " + field);
             }
 
-            Assert.True(schemas.GetProperty("ErrorInfo").GetProperty("properties").TryGetProperty("errorCode", out _));
+            foreach (var schemaName in new[] { "SystemStatus", "ErrorInfo", "CommandResponse" })
+            {
+                Assert.True(
+                    schemas.GetProperty(schemaName).GetProperty("properties").TryGetProperty("errorCode", out _));
+            }
         }
         finally
         {

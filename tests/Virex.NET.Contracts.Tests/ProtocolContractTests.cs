@@ -48,6 +48,7 @@ public sealed class ProtocolContractTests
         {
             State = SystemStates.Deinitializing,
             RecoveryAction = RecoveryActions.Deinitialize,
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
             RecoveryStartedAt = startedAt,
             RecoverySource = "Cam01",
             RecoveryPhase = "Deinitializing",
@@ -89,6 +90,7 @@ public sealed class ProtocolContractTests
         }
 
         Assert.Equal(CommandErrorCodes.RequiresDeinitialize, error.RootElement.GetProperty("errorCode").GetString());
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, status.RootElement.GetProperty("errorCode").GetString());
     }
 
     [Fact]
@@ -207,4 +209,43 @@ public sealed class ProtocolContractTests
         Assert.Equal("resultCreated", doc.RootElement.GetProperty("type").GetString());
         Assert.Equal("golden-sample", doc.RootElement.GetProperty("condition").GetString());
     }
+    [Fact]
+    public void RecoverySanitizerUsesOneBoundedPublicPolicy()
+    {
+        var sanitized = RecoveryMessageSanitizer.Sanitize(
+            "native cleanup failed\npassword=secret C:\\recipes\\private.json /var/log/virex\u0001 at Driver.Close()");
+        var bounded = RecoveryMessageSanitizer.Sanitize(new string('x', 600));
+
+        Assert.Equal(
+            "native cleanup failed password=[redacted] [path] [path]",
+            sanitized);
+        Assert.NotNull(bounded);
+        Assert.Equal(512, bounded.Length);
+        Assert.EndsWith("...", bounded, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OlderClientShapeIgnoresAdditiveRecoveryFields()
+    {
+        var json = ProtocolJson.Serialize(new SystemStatus
+        {
+            State = SystemStates.Deinitializing,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            RecoveryStartedAt = DateTimeOffset.Parse("2026-08-07T00:00:00Z"),
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+
+        var legacy = JsonSerializer.Deserialize<LegacySystemStatus>(json, ProtocolJson.Options);
+
+        Assert.NotNull(legacy);
+        Assert.Equal(SystemStates.Deinitializing, legacy.State);
+    }
+
+    private sealed class LegacySystemStatus
+    {
+        public string State { get; set; } = string.Empty;
+    }
+
 }
