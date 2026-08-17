@@ -42,6 +42,7 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 | --- | --- | --- |
 | `statusChanged` | [SystemStatus](payloads/system/system-status.md) with `type` | Public state changes. |
 | `productInfoChanged` | [ProductInfo](payloads/product/product-info.md) with `type` | ProductInfo update completes. |
+| `imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.md) with `type` | Image acquisition completes; paths are supplied later by `resultCreated`. |
 | `runStarted` | [SystemStatus](payloads/system/system-status.md) with `type` | State enters `Running`. |
 | `runCompleted` | [SystemStatus](payloads/system/system-status.md) with `type` | A run leaves `Running` and returns to `Ready`. |
 | `resultCreated` | [ResultSummary](payloads/results/result-summary.md) with `type` | A result summary is created. |
@@ -430,6 +431,21 @@ Notifies the client that the ProductInfo update is complete.
 
 This event contains ProductInfo only.
 
+## imageGrabbed event
+
+### Purpose
+
+Notifies the client that one image acquisition completed. The frame is sent before simulator artifact persistence, so it contains no image or result paths.
+
+### Frame
+
+```json
+{"type":"imageGrabbed","captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### Notes
+
+The later `resultCreated` frame uses the same `captureId` and includes the persisted image and result paths.
 ## runStarted event
 
 ### Purpose

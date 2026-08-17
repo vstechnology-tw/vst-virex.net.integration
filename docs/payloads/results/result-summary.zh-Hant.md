@@ -9,6 +9,7 @@
 ```json
 {
   "resultId": "RID-1",
+  "captureId": "CAP-1",
   "timestamp": "2026-06-20T15:30:12+08:00",
   "waferID": "W01",
   "lotID": "LOT-001",
@@ -31,6 +32,7 @@
 
 | 欄位 | 型別 | 必填 | 說明 |
 | --- | --- | --- | --- |
+| `captureId` | string | Yes | Capture ID 將取像事件與本結果關聯。 |
 | `resultId` | string | 是 | 公開結果識別碼。 |
 | `timestamp` | string | 是 | 結果時間戳記。 |
 | `waferID` | string | 是 | 執行快照裡的 Wafer 識別碼。 |

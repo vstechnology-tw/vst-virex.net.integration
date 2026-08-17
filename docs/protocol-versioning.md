@@ -15,3 +15,5 @@ Use semantic versioning for public package and protocol changes.
 - Breaking changes require a major version.
 - The simulator, SDK, documentation, and contract tests must be synchronized.
 - [Payload Reference](payloads.md) must be aligned with the public payload models, routes, topics, and event structures.
+
+- v2.1.1 adds the `imageGrabbed` event and `captureId` correlation without removing existing fields, topics, or events.

@@ -20,6 +20,7 @@
 | System | [SystemStatus](payloads/system/system-status.zh-Hant.md), [ErrorInfo](payloads/system/error-info.zh-Hant.md) | 目前系統狀態與作用中錯誤資訊。 |
 | Product | [ProductInfo](payloads/product/product-info.zh-Hant.md) | 執行與結果關聯使用的產品資訊。 |
 | Commands | [CommandResponse](payloads/commands/command-response.zh-Hant.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.zh-Hant.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.zh-Hant.md), [SystemStartRequest](payloads/commands/system-start-request.zh-Hant.md), [SystemStopRequest](payloads/commands/system-stop-request.zh-Hant.md), [ControlRunModes](payloads/commands/control-run-modes.zh-Hant.md) | 命令要求與回應資料。 |
+| Events | [ImageGrabbedInfo](payloads/events/image-grabbed.zh-Hant.md) | 取像事件 metadata。 |
 | Results | [ResultSummary](payloads/results/result-summary.zh-Hant.md), [ResultList](payloads/results/result-list.zh-Hant.md) | 結果摘要資料，以及 RESTful API、TCP、MQTT 查詢回應使用的清單包裝。 |
 
 ## 關係摘要

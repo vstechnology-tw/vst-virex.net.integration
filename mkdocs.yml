@@ -152,6 +152,8 @@ nav:
       - System Payloads:
           - SystemStatus: payloads/system/system-status.md
           - ErrorInfo: payloads/system/error-info.md
+          - Event Payloads:
+              - ImageGrabbedInfo: payloads/events/image-grabbed.md
           - Product Payloads:
               - ProductInfo: payloads/product/product-info.md
           - Command Payloads:
@@ -164,6 +166,8 @@ nav:
           - Result Payloads:
               - ResultSummary: payloads/results/result-summary.md
               - ResultList: payloads/results/result-list.md
+  - Architecture Decisions:
+      - 'ADR-0001 ImageGrabbed Persistence': adr/0001-image-grabbed-before-artifact-persistence.md
   - SDK:
       - C# SDK Guide: csharp-sdk.md
   - Samples: samples.md

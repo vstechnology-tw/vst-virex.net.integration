@@ -23,7 +23,7 @@
 | 프레이밍 | 각 프레임은 `\n`로 끝나는 하나의 UTF-8 JSON 객체입니다. |
 | ProductInfo 명령 | `type: "productInfo"`는 `Ready`의 ProductInfo를 업데이트합니다. |
 | 시작/stop 명령 | `type: "start"` 및 `type: "stop"`는 REST와 동일한 상태 규칙을 따릅니다. |
-| 이벤트 분석 | 클라이언트는 `statusChanged`, `productInfoChanged`, `runStarted`, `runCompleted`, `resultCreated`, `errorChanged` 및 `commandRejected`를 처리할 수 있습니다. |
+| 이벤트 분석 | 클라이언트는 `statusChanged`, `productInfoChanged`, `imageGrabbed`, `runStarted`, `runCompleted`, `resultCreated`, `errorChanged` 및 `commandRejected`를 처리할 수 있습니다. |
 
 ## MQTT
 
@@ -32,6 +32,7 @@
 | 구독 | 클라이언트는 `virex/#` 또는 구성된 토픽 접두사를 구독할 수 있습니다. |
 | 상태 이벤트 | 클라이언트는 `statusChanged`, `runStarted` 및 `runCompleted`를 받습니다. |
 | ProductInfo 이벤트 | 클라이언트는 `productInfoChanged`를 받습니다. |
+| 이미지 이벤트 | 클라이언트는 `resultCreated` 전에 `imageGrabbed`를 받으며 취득 이벤트에는 경로가 없습니다. |
 | 결과 이벤트 | 클라이언트는 `resultCreated`를 받습니다. |
 | 거절 이벤트 | 명령이 거부되면 클라이언트는 `commandRejected`를 수신합니다. |
 

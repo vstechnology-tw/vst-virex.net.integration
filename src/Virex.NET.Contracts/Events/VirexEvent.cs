@@ -10,6 +10,8 @@ public sealed class VirexEvent
 
     public ProductInfo? ProductInfo { get; set; }
 
+    public ImageGrabbedInfo? ImageGrabbed { get; set; }
+
     public ResultSummary? Result { get; set; }
 
     public ErrorInfo? Error { get; set; }

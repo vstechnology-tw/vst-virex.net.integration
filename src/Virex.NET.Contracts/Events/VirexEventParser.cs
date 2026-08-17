@@ -29,6 +29,9 @@ public static class VirexEventParser
                 case "productInfoChanged":
                     value.ProductInfo = ProtocolJson.Deserialize<ProductInfo>(json);
                     break;
+                case "imageGrabbed":
+                    value.ImageGrabbed = ProtocolJson.Deserialize<ImageGrabbedInfo>(json);
+                    break;
                 case "runStarted":
                 case "runCompleted":
                     value.Status = ProtocolJson.Deserialize<SystemStatus>(json);

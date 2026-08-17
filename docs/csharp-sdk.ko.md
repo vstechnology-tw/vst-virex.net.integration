@@ -80,6 +80,8 @@ await client.TcpEvents.SendProductInfoAsync(new ProductInfo
 await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 ```
 
+`value.Type`이 `imageGrabbed`이면 `value.ImageGrabbed`를 읽습니다. `captureId`는 이후 `resultCreated` 이벤트와 일치하며 artifact 경로는 해당 이벤트에서 제공됩니다.
+
 ## MQTT 이벤트
 
 ```csharp
@@ -93,6 +95,8 @@ await client.MqttEvents.RunAsync(cts.Token);
 ```
 
 MQTT는 이벤트에만 사용됩니다. 명령에는 RESTful API 또는 TCP를 사용하십시오.
+
+`value.Type`이 `imageGrabbed`이면 `value.ImageGrabbed`를 읽습니다. `captureId`는 이후 `resultCreated` 이벤트와 일치하며 artifact 경로는 해당 이벤트에서 제공됩니다.
 
 ## 오류 처리
 

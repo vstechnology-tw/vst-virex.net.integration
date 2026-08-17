@@ -9,6 +9,7 @@ It contains the `ProductInfo` snapshot and `condition` captured when `Start` was
 ```json
 {
   "resultId": "RID-1",
+  "captureId": "CAP-1",
   "timestamp": "2026-06-20T15:30:12+08:00",
   "waferID": "W01",
   "lotID": "LOT-001",
@@ -31,6 +32,7 @@ It contains the `ProductInfo` snapshot and `condition` captured when `Start` was
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
+| `captureId` | string | Yes | Capture ID links the image acquisition event to this result. |
 | `resultId` | string | Yes | Result identifier. |
 | `timestamp` | string | Yes | Result timestamp. |
 | `waferID` | string | Yes | Wafer identifier from the run snapshot. |

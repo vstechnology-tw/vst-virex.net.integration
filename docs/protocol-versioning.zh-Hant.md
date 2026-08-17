@@ -15,3 +15,5 @@
 - 破壞性變更需要 major version。
 - 模擬器、SDK、文件、合約測試必須同步。
 - [資料模型參考](payloads.zh-Hant.md) 必須與公開資料模型、路由、主題、事件結構對齊。
+
+- v2.1.1 新增 `imageGrabbed` 事件與 `captureId` 關聯，不移除既有欄位、主題或事件。

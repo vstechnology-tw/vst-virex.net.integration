@@ -20,6 +20,7 @@ The simulator starts the embedded MQTT broker after **Start Servers** is pressed
 | --- | --- | --- |
 | `virex/statusChanged` | [SystemStatus](payloads/system/system-status.md) | Public state changes. |
 | `virex/productInfoChanged` | [ProductInfo](payloads/product/product-info.md) | ProductInfo update completes. |
+| `virex/imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.md) | A capture completed; no image or result path is available yet. |
 | `virex/runStarted` | [SystemStatus](payloads/system/system-status.md) | State enters `Running`. |
 | `virex/runCompleted` | [SystemStatus](payloads/system/system-status.md) | A run leaves `Running` and returns to `Ready`. |
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.md) | A result summary is created. |
@@ -420,6 +421,25 @@ virex/productInfoChanged
 
 This event contains ProductInfo only. It does not contain result data.
 
+## imageGrabbed
+
+### Purpose
+
+Notifies clients that one image acquisition completed. The event is published before simulator artifact persistence, so it contains no image or result paths.
+
+### Topic
+
+```text
+virex/imageGrabbed
+```
+
+### Payload
+
+```json
+{"captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+The later `resultCreated` event uses the same `captureId` and contains the persisted image and result paths.
 ## runStarted
 
 ### Purpose

@@ -89,6 +89,8 @@ var tcpProductInfo = await client.TcpEvents.GetProductInfoAsync();
 var tcpResults = await client.TcpEvents.QueryResultsAsync(lotID: "LOT-001");
 ```
 
+When `value.Type` is `imageGrabbed`, read `value.ImageGrabbed`. Its `captureId` matches the later `resultCreated` event, where artifact paths are available.
+
 ## MQTT commands and events
 
 MQTT command calls publish to `virex/commands/...` and wait for a correlated response on `virex/responses/{correlationId}`:
@@ -109,6 +111,8 @@ client.MqttEvents.EventReceived += (_, value) =>
 using var cts = new CancellationTokenSource();
 await client.MqttEvents.RunAsync(cts.Token);
 ```
+
+When `value.Type` is `imageGrabbed`, read `value.ImageGrabbed`. Its `captureId` matches the later `resultCreated` event, where artifact paths are available.
 
 ## Error handling
 

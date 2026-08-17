@@ -144,4 +144,90 @@ public sealed class EmbeddedMqttBrokerTests
         listener.Stop();
         return port;
     }
+    [Fact]
+    public async Task MqttPublishesImageGrabbedWithoutPathAndCorrelatesResult()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "virex-mqtt-image-grabbed-" + Guid.NewGuid().ToString("N"));
+        var port = GetFreeTcpPort();
+
+        await using var broker = new EmbeddedMqttBroker(port);
+        await broker.StartAsync();
+
+        var factory = new MqttFactory();
+        using var client = factory.CreateMqttClient();
+        var imageReceived = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resultReceived = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var imageDomainLogged = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resultDomainLogged = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var imageMqttLogged = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resultMqttLogged = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        client.ApplicationMessageReceivedAsync += e =>
+        {
+            var topic = e.ApplicationMessage.Topic;
+            var payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment.ToArray());
+            if (topic == MqttTopics.Combine(MqttTopics.DefaultBaseTopic, MqttTopics.ImageGrabbed))
+                imageReceived.TrySetResult(payload);
+            if (topic == MqttTopics.Combine(MqttTopics.DefaultBaseTopic, MqttTopics.ResultCreated))
+                resultReceived.TrySetResult(payload);
+
+            return Task.CompletedTask;
+        };
+
+        var options = new MqttClientOptionsBuilder()
+            .WithTcpServer("127.0.0.1", port)
+            .WithCleanSession()
+            .Build();
+        await client.ConnectAsync(options, CancellationToken.None);
+
+        var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
+            .WithTopicFilter(f => f.WithTopic(MqttTopics.Combine(MqttTopics.DefaultBaseTopic, "#")))
+            .Build();
+        await client.SubscribeAsync(subscribeOptions, CancellationToken.None);
+
+        var session = new SimulatorSession(root);
+        var publisher = new MqttSimulatorPublisher(session, "127.0.0.1", port, MqttTopics.DefaultBaseTopic);
+        session.Log += (_, message) =>
+        {
+            if (message.StartsWith("Event: imageGrabbed", StringComparison.Ordinal))
+                imageDomainLogged.TrySetResult(true);
+            if (message.StartsWith("Event: resultCreated", StringComparison.Ordinal))
+                resultDomainLogged.TrySetResult(true);
+            if (message.Contains("MQTT event published: topic=virex/imageGrabbed", StringComparison.Ordinal))
+                imageMqttLogged.TrySetResult(true);
+            if (message.Contains("MQTT event published: topic=virex/resultCreated", StringComparison.Ordinal))
+                resultMqttLogged.TrySetResult(true);
+        };
+        await publisher.StartAsync();
+
+        try
+        {
+            await session.InitializeAsync();
+            await session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.SingleRun });
+            await session.RunCompletedAsync();
+
+            await Task.WhenAll(
+                imageDomainLogged.Task,
+                resultDomainLogged.Task,
+                imageMqttLogged.Task,
+                resultMqttLogged.Task).WaitAsync(TimeSpan.FromSeconds(5));
+
+            var imagePayload = await imageReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var resultPayload = await resultReceived.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            using var imageDocument = JsonDocument.Parse(imagePayload);
+            using var resultDocument = JsonDocument.Parse(resultPayload);
+
+            Assert.False(imageDocument.RootElement.TryGetProperty("imagePath", out _));
+            Assert.False(imageDocument.RootElement.TryGetProperty("resultPath", out _));
+
+            var captureId = imageDocument.RootElement.GetProperty("captureId").GetString();
+            Assert.Equal(captureId, resultDocument.RootElement.GetProperty("captureId").GetString());
+        }
+        finally
+        {
+            await publisher.StopAsync();
+            await client.DisconnectAsync(new MqttClientDisconnectOptions(), CancellationToken.None);
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
 }

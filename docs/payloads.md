@@ -20,6 +20,7 @@ Each model has its own page. Vendors can use the C# types in `Virex.NET.Contract
 | System | [SystemStatus](payloads/system/system-status.md), [ErrorInfo](payloads/system/error-info.md) | Current system state and active error information. |
 | Product | [ProductInfo](payloads/product/product-info.md) | Product information associated with runs and results. |
 | Commands | [CommandResponse](payloads/commands/command-response.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.md), [SystemStartRequest](payloads/commands/system-start-request.md), [SystemStopRequest](payloads/commands/system-stop-request.md), [ControlRunModes](payloads/commands/control-run-modes.md) | Command requests and command responses. |
+| Events | [ImageGrabbedInfo](payloads/events/image-grabbed.md) | Image acquisition event metadata. |
 | Results | [ResultSummary](payloads/results/result-summary.md), [ResultList](payloads/results/result-list.md) | Result summaries and the result-list wrapper used by RESTful API, TCP, and MQTT query responses. |
 
 ## Relationship summary

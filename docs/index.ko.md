@@ -38,6 +38,7 @@ RESTful API, TCP Socket, MQTT는 동일한 공개 비즈니스 기능을 제공�
 | --- | --- |
 | `statusChanged` | 공개 lifecycle state가 변경됨. |
 | `productInfoChanged` | ProductInfo 업데이트 완료. |
+| `imageGrabbed` | 이미지 취득 완료를 알리며 경로는 이후 `resultCreated`에서 제공합니다. |
 | `runStarted` | run이 `Running`에 진입함. |
 | `runCompleted` | run이 `Ready`로 돌아옴. |
 | `resultCreated` | 공개 result summary가 생성됨. |

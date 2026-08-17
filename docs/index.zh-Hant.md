@@ -38,6 +38,7 @@ RESTful API、TCP Socket、MQTT 都提供同一組公開業務功能。通訊名
 | --- | --- |
 | `statusChanged` | 公開生命週期狀態改變。 |
 | `productInfoChanged` | ProductInfo 更新完成。 |
+| `imageGrabbed` | 已完成取像；路徑稍後由 `resultCreated` 提供。 |
 | `runStarted` | run 進入 `Running`。 |
 | `runCompleted` | run 回到 `Ready`。 |
 | `resultCreated` | 已建立公開 result summary。 |
