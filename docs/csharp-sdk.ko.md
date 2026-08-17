@@ -1,6 +1,11 @@
 # C# SDK 안내
 
+
 `Virex.NET.Client`는 공개 RESTful API, TCP 및 MQTT 통합 API에 대한 타입이 지정된 래퍼를 제공합니다.
+
+## 전체 예제
+
+모든 `using` 지시문과 project reference가 포함된 실행 가능한 C# 프로그램은[C# SDK 샘플](samples.ko.md)을 사용하세요. 아래 코드 블록은 완전한 파일에서 추린 작업 예제입니다.
 
 ## 설치
 

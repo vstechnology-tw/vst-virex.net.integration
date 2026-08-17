@@ -64,7 +64,6 @@ RESTful API 以 HTTP route 表示 commands，不提供 event stream；client 可
 | --- | --- |
 | `Virex.NET.Contracts` | 公開資料模型、RESTful API 路由、MQTT topic 名稱、TCP/NDJSON 格式化與解析工具。 |
 | `Virex.NET.Client` | C# SDK 包裝層，提供 RESTful API commands/queries、TCP socket 通訊、MQTT command/event 通訊。 |
-| `Virex.NET.Simulator.Core` | 模擬器專用狀態機與工作階段行為，供本機模擬器使用。 |
 | `Virex.NET.Simulator.WPF` | 本機模擬器，對外提供公開 RESTful API/TCP/MQTT 合約。 |
 | `samples` | C#、Python、C++ 整合範例。 |
 | `docs` | 對外通訊協定與模擬器文件。 |

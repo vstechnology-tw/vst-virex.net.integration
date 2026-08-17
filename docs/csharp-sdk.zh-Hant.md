@@ -1,6 +1,11 @@
 # C# SDK 指南
 
+
 `Virex.NET.Client` 為公開 RESTful API、TCP、MQTT 整合 API 提供強型別封裝。
+
+## 完整範例
+
+需要包含所有 `using` 與 project reference、可直接執行的 C# 程式，請使用[C# SDK 範例](samples.zh-Hant.md)。本頁程式碼區塊只展示完整檔案中的個別操作。
 
 ## 安裝
 

@@ -1,6 +1,11 @@
 # RESTful API
 
+
 RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以及查詢結果摘要。
+
+## 完整範例
+
+本頁的 language tabs 是說明單一操作的請求片段。需要包含完整 `using`、`import`、`#include` 並可直接執行的原始碼，請使用[完整範例](samples.zh-Hant.md)。C++ REST 的 `SendRequest` 是完整範例中的本機 helper，不是 library API。
 
 ## 基本資訊
 

@@ -64,7 +64,6 @@ RESTful API は commands を HTTP route として表現し、event stream は提
 | --- | --- |
 | `Virex.NET.Contracts` | 公開データモデル、RESTful API ルート、MQTT topic 名、TCP/NDJSON フォーマットおよび解析ツール。 |
 | `Virex.NET.Client` | RESTful API commands/queries、TCP socket communication、MQTT command/event communication の C# SDK ラッパー。 |
-| `Virex.NET.Simulator.Core` | ローカルシミュレーターで使用されるシミュレーター固有のステートマシンとセッション動作。 |
 | `Virex.NET.Simulator.WPF` | 公開 RESTful API/TCP/MQTT コントラクトを提供するローカルシミュレーター。 |
 | `samples` | C#、Python、C++ の統合例。 |
 | `docs` | 公開プロトコルとシミュレーターのドキュメント。 |

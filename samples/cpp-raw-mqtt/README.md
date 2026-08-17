@@ -12,4 +12,6 @@ cmake --build samples\cpp-raw-mqtt\build --config Release
 samples\cpp-raw-mqtt\build\Release\cpp-raw-mqtt.exe
 ```
 
-The sample subscribes to `virex/#` and prints received event topics.
+The source includes the Windows SDK Winsock2 headers and implements the small MQTT exchange directly; CMake links `ws2_32.lib`, so no separate MQTT library is required.
+
+The sample subscribes to `virex/#` and prints received event topics, including `imageGrabbed`.

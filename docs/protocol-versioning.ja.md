@@ -16,4 +16,50 @@
 - シミュレーター、SDK、ドキュメント、および契約テストは同期する必要があります。
 - [ペイロードリファレンス](payloads.ja.md) は、公開ペイロード モデル、ルート、トピック、イベント構造と一致している必要があります。
 
-- v2.1.1 では `imageGrabbed` イベントと `captureId` の関連付けを追加し、既存のフィールド、トピック、イベントは削除しません。
+## 公開済みリリースノート
+
+以下はお客様向けに公開されたバージョンの一覧です。各見出しは対応する GitHub Release にリンクしています。
+
+### [v2.1.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.1.1) — 2026-08-17
+
+- イベントモデル、TCP、MQTT、C# SDK、シミュレーターに公開 `imageGrabbed` イベントを追加しました。
+- `imageGrabbed` と後続の `resultCreated` を関連付ける安定した `captureId` を追加しました。
+- シミュレーターは `resultCreated` のパスを通じてテスト用の画像、プレビュー、結果ファイルを提供します。
+- シミュレーターの診断情報、トランスポート サンプル、お客様向けドキュメントを更新しました。
+
+### [v2.1.0](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.1.0) — 2026-07-01
+
+- RESTful API、TCP Socket、MQTT のコマンドとクエリの対応を完了しました。
+- ステータス、エラー、ProductInfo、ライフサイクルコマンド、結果クエリの MQTT コマンド/レスポンスを追加しました。
+- ステータス、エラー、ProductInfo、結果クエリの TCP フレームを追加しました。
+- C#、Python、C++ のサンプルを同じ 13 ステップの統合フローに揃えました。
+- Contracts、Client パッケージと .NET Framework 4.8、.NET 8、.NET 10 のシミュレーターを公開しました。
+
+### [v2.0.3.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3.1) — 2026-06-30
+
+- シミュレーターのみのリリースです。
+- TCP の initialize と deinitialize コマンドを文書化し、実装しました。
+- シミュレーターの結果画像と公開ドキュメントを `.tiff` から `.bmp` に更新しました。
+- インストール ドキュメントと OpenAPI メタデータを更新しました。
+
+### [v2.0.3](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.3) — 2026-06-28
+
+- 最新の main からパッケージとシミュレーターを再公開しました。
+- 公開内容に ProductInfo コントラクトの更新を含めました。
+
+### [v2.0.2](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.2) — 2026-06-27
+
+- 公開 `WaferInfo` コントラクトを `ProductInfo` に変更しました。
+- ProductInfo ベースのライフサイクル動作とシミュレーター対応を追加しました。
+- RESTful API、TCP、MQTT、サンプル、多言語ドキュメントを更新しました。
+
+### [v2.0.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.0.1) — 2026-06-23
+
+- 初期 2.0 公開統合コントラクトとシミュレーター配布パッケージを公開しました。
+- ドキュメントを MkDocs Material に移行し、英語、繁体字中国語、日本語、韓国語を提供しました。
+- Result Summary と REST 結果クエリ応答の違いを明確にしました。
+- 結果パスと payload フィールド、MQTT の既定値、OpenAPI/Scalar 検証、TCP フレーム動作を更新しました。
+
+## GitHub Release ページのない履歴タグ
+
+`v1.0.0` と `v1.0.1` は repository tag ですが、GitHub に公開 Release ページや release note の記録はありません。最初に公開された GitHub Release は `v2.0.1` です。

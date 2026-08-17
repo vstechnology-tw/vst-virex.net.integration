@@ -17,7 +17,7 @@ flowchart LR
 
     subgraph CompatibleEndpoint["Virex.NET 호환 엔드포인트"]
         Simulator["시뮬레이터\nVirex.NET.Simulator.WPF"]
-        Production["운영 제품\nVirex.NET WPF"]
+        Production["운영 호환 엔드포인트\nVirex.NET"]
     end
 
     Vendor --> Raw
@@ -38,7 +38,6 @@ SDK는 선택 사항입니다. 벤더는 원시 RESTful API/MQTT/TCP 통합 또�
 | --- | --- |
 | `Virex.NET.Contracts` | 공개 C# 데이터 모델, RESTful API 경로 상수, MQTT 토픽 이름, TCP/NDJSON 파서 및 이벤트 형식 지정 도우미를 제공합니다. |
 | `Virex.NET.Client` | 엄격한 타입의 도우미 API를 원하는 벤더를 위한 선택적 C# SDK 래퍼입니다. 통합 경계가 아닙니다. |
-| `Virex.NET.Simulator.Core` | 시뮬레이터별 상태 머신 및 세션 구현. 운영 서비스는 이 시뮬레이터 코어에 의존하지 않고 공개 계약을 공유해야 합니다. |
 | `Virex.NET.Simulator.WPF` | 외부에서 관찰 가능한 상태 전환 및 이벤트 동작을 시뮬레이션하는 데 사용되는 로컬 엔드포인트입니다. |
 | 운영 Virex.NET 제품 | 시뮬레이터와 동일한 공개 계약을 구현해야 하는 운영 엔드포인트입니다. |
 

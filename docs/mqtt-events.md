@@ -2,6 +2,10 @@
 
 MQTT is a bidirectional integration channel. The service publishes events to `virex/{eventName}`. Clients can publish RESTful API equivalent commands and queries to `virex/commands/...` and receive correlated responses on `virex/responses/{correlationId}`.
 
+## Complete samples
+
+The language tabs in this reference are request fragments. For directly runnable source with all `using`, `import`, and `#include` directives, use the [complete samples](samples.md). The complete C++ sample implements the raw MQTT exchange and does not require an external MQTT library.
+
 ## Basic Information
 
 | Item | Value |
@@ -425,7 +429,7 @@ This event contains ProductInfo only. It does not contain result data.
 
 ### Purpose
 
-Notifies clients that one image acquisition completed. The event is published before simulator artifact persistence, so it contains no image or result paths.
+Notifies clients that one image acquisition completed. It contains capture metadata only; related image and result paths are provided later by `resultCreated`.
 
 ### Topic
 

@@ -12,4 +12,6 @@ cmake --build samples\cpp-raw-rest\build --config Release
 samples\cpp-raw-rest\build\Release\cpp-raw-rest.exe
 ```
 
+`SendRequest` is a helper defined in `main.cpp`; it is not a function from an external library. The source includes the Windows SDK WinHTTP headers and CMake links `winhttp.lib`.
+
 The sample calls status, initialize, ProductInfo update, start, stop, and results endpoints.

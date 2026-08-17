@@ -1,6 +1,6 @@
 # ImageGrabbedInfo
 
-`ImageGrabbedInfo` は公開 `imageGrabbed` イベントの metadata payload です。画像取得後、シミュレーターが artifact を保存する前に発行されるため、画像または結果のパスは含まれません。
+`ImageGrabbedInfo` は公開 `imageGrabbed` イベントの metadata payload です。画像取得が完了すると送信され、画像または結果のパスは含まれません。関連するパスは後続の `resultCreated` で提供されます。
 
 ## JSON
 

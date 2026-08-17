@@ -1,6 +1,9 @@
 # MQTT 프로토콜
 
-MQTT는 양방향 통합 채널입니다. 서비스는 이벤트를 `virex/{eventName}`에 게시합니다. 클라이언트는 RESTful API와 동일한 명령 및 쿼리를 `virex/commands/...`에 게시하고, 대응 응답을 `virex/responses/{correlationId}`에서 받을 수 있습니다.
+
+## 전체 예제
+
+이 페이지의 language tabs는 각 작업을 설명하는 요청 조각입니다. 모든 `using`, `import`, `#include` 지시문이 포함된 실행 가능한 소스는[전체 예제](samples.ko.md)를 사용하세요. 전체 C++ 예제는 raw MQTT 교환을 직접 구현하므로 외부 MQTT 라이브러리가 필요하지 않습니다.
 
 ## 기본 정보
 
@@ -425,7 +428,7 @@ virex/productInfoChanged
 
 ### 목적
 
-하나의 이미지 취득이 완료되었음을 클라이언트에 알립니다. 이벤트는 시뮬레이터가 artifact를 저장하기 전에 게시되므로 이미지 또는 결과 경로를 포함하지 않습니다.
+하나의 이미지 취득이 완료되었음을 클라이언트에 알립니다. 취득 메타데이터만 포함하며 관련 이미지와 결과 경로는 이후 `resultCreated`에서 제공됩니다.
 
 ### Topic
 

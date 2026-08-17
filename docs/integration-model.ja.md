@@ -17,7 +17,7 @@ flowchart LR
 
     subgraph CompatibleEndpoint["Virex.NET 互換エンドポイント"]
         Simulator["シミュレーター\nVirex.NET.Simulator.WPF"]
-        Production["本番製品\nVirex.NET WPF"]
+        Production["本番互換エンドポイント\nVirex.NET"]
     end
 
     Vendor --> Raw
@@ -38,7 +38,6 @@ SDK はオプションです。ベンダーは、Raw RESTful API/MQTT/TCP 統合
 | --- | --- |
 | `Virex.NET.Contracts` |公開 C# データモデル、RESTful API ルート定数、MQTT トピック名、TCP/NDJSON パーサー、およびイベントフォーマット用ヘルパーを提供します。 |
 | `Virex.NET.Client` |厳密に型指定されたヘルパー API を必要とするベンダー向けのオプションの C# SDK ラッパー。統合境界そのものではありません。 |
-| `Virex.NET.Simulator.Core` |シミュレーター固有のステート マシンとセッションの実装。本番サービスは、このシミュレーター コアに依存するのではなく、公開コントラクトを共有する必要があります。 |
 | `Virex.NET.Simulator.WPF` |外部から観察可能な状態遷移とイベント動作をシミュレートするために使用されるローカル エンドポイント。 |
 |本番 Virex.NET 製品 |シミュレーターと同じ公開 コントラクトを実装する必要がある本番エンドポイント。 |
 

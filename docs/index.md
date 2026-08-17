@@ -64,7 +64,6 @@ All three communication interfaces use UTF-8 JSON payloads with the same public 
 | --- | --- |
 | `Virex.NET.Contracts` | Public data models, RESTful API routes, MQTT topic names, and TCP/NDJSON formatting and parsing tools. |
 | `Virex.NET.Client` | C# SDK wrapper for RESTful API commands/queries, TCP socket communication, and MQTT command/event communication. |
-| `Virex.NET.Simulator.Core` | Simulator-specific state machine and session behavior used by the local simulator. |
 | `Virex.NET.Simulator.WPF` | A local simulator that provides public RESTful API/TCP/MQTT contracts. |
 | `samples` | C#, Python, C++ integration examples. |
 | `docs` | Public protocol and simulator documentation. |

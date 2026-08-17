@@ -1,6 +1,6 @@
 # ImageGrabbedInfo
 
-`ImageGrabbedInfo`는 공개 `imageGrabbed` 이벤트의 metadata payload입니다. 이미지 취득 후 시뮬레이터가 artifact를 저장하기 전에 게시되므로 이미지 또는 결과 경로를 포함하지 않습니다.
+`ImageGrabbedInfo`는 공개 `imageGrabbed` 이벤트의 metadata payload입니다. 이미지 취득이 완료되면 전송되며 이미지 또는 결과 경로는 포함하지 않습니다. 관련 경로는 이후 `resultCreated`에서 제공됩니다.
 
 ## JSON
 
