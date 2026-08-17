@@ -4,6 +4,8 @@ public sealed class ResultSummary
 {
     public string ResultId { get; set; } = string.Empty;
 
+    public string CaptureId { get; set; } = string.Empty;
+
     public string Timestamp { get; set; } = string.Empty;
 
     public string LotID { get; set; } = string.Empty;

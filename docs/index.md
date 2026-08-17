@@ -38,6 +38,7 @@ RESTful API, TCP Socket, and MQTT expose the same public business functions. The
 | --- | --- |
 | `statusChanged` | Public lifecycle state changed. |
 | `productInfoChanged` | ProductInfo update completed. |
+| `imageGrabbed` | An image was acquired; paths are provided later by `resultCreated`. |
 | `runStarted` | A run entered `Running`. |
 | `runCompleted` | A run returned to `Ready`. |
 | `resultCreated` | A public result summary was created. |

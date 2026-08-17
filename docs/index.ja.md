@@ -38,6 +38,7 @@ RESTful API、TCP Socket、MQTT は同じ公開ビジネス機能を提供しま
 | --- | --- |
 | `statusChanged` | 公開ライフサイクル状態が変化した。 |
 | `productInfoChanged` | ProductInfo 更新が完了した。 |
+| `imageGrabbed` | 画像の取得が完了しました。パスは後続の `resultCreated` で提供されます。 |
 | `runStarted` | run が `Running` に入った。 |
 | `runCompleted` | run が `Ready` に戻った。 |
 | `resultCreated` | 公開 result summary が作成された。 |

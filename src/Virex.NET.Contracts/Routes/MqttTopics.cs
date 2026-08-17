@@ -7,6 +7,7 @@ public static class MqttTopics
     public const string Responses = "responses";
     public const string StatusChanged = "statusChanged";
     public const string ProductInfoChanged = "productInfoChanged";
+    public const string ImageGrabbed = "imageGrabbed";
     public const string RunStarted = "runStarted";
     public const string RunCompleted = "runCompleted";
     public const string ResultCreated = "resultCreated";

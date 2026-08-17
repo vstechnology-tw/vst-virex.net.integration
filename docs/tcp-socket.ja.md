@@ -42,6 +42,7 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 | --- | --- | --- |
 | `statusChanged` | [SystemStatus](payloads/system/system-status.ja.md) と `type` |公開状態が変化します。 |
 | `productInfoChanged` | [ProductInfo](payloads/product/product-info.ja.md) と `type` | ProductInfo のアップデートが完了しました。 |
+| `imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.ja.md) と `type` | 画像取得が完了しました。パスは後続の `resultCreated` で提供されます。 |
 | `runStarted` | [SystemStatus](payloads/system/system-status.ja.md) と `type` |状態は `Running` になります。 |
 | `runCompleted` | [SystemStatus](payloads/system/system-status.ja.md) と `type` |実行は `Running` を出て、`Ready` に戻ります。 |
 | `resultCreated` | [ResultSummary](payloads/results/result-summary.ja.md) と `type` |結果の概要が作成されます。 |
@@ -430,6 +431,21 @@ ProductInfo 更新が完了したことをクライアントに通知します�
 
 このイベントには ProductInfo のみが含まれます。
 
+## imageGrabbed イベント
+
+### 目的
+
+1 回の画像取得が完了したことをクライアントに通知します。このフレームはシミュレーターが artifact を保存する前に送信されるため、画像または結果のパスは含まれません。
+
+### Frame
+
+```json
+{"type":"imageGrabbed","captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### Notes
+
+後続の `resultCreated` フレームは同じ `captureId` を使用し、保存された画像と結果のパスを含みます。
 ## runStarted イベント
 
 ### 目的

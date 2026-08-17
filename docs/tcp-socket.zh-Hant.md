@@ -42,6 +42,7 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 | --- | --- | --- |
 | `statusChanged` | [SystemStatus](payloads/system/system-status.zh-Hant.md) 加上 `type` | 公開狀態改變。 |
 | `productInfoChanged` | [ProductInfo](payloads/product/product-info.zh-Hant.md) 加上 `type` | ProductInfo 更新完成。 |
+| `imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.zh-Hant.md) 加上 `type` | 取像完成；路徑稍後由 `resultCreated` 提供。 |
 | `runStarted` | [SystemStatus](payloads/system/system-status.zh-Hant.md) 加上 `type` | 狀態進入 `Running`。 |
 | `runCompleted` | [SystemStatus](payloads/system/system-status.zh-Hant.md) 加上 `type` | 一次執行離開 `Running` 並回到 `Ready`。 |
 | `resultCreated` | [ResultSummary](payloads/results/result-summary.zh-Hant.md) 加上 `type` | 建立結果摘要。 |
@@ -430,6 +431,21 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 
 這個事件只包含公開 ProductInfo。
 
+## imageGrabbed 事件
+
+### 用途
+
+通知用戶端一次取像已完成。此資料框會在模擬器儲存 artifact 前送出，因此不包含影像或結果路徑。
+
+### 資料框
+
+```json
+{"type":"imageGrabbed","captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### 說明
+
+稍後的 `resultCreated` 資料框會使用相同的 `captureId`，並包含已儲存的影像與結果路徑。
 ## runStarted 事件
 
 ### 用途

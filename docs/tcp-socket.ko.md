@@ -42,6 +42,7 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
 | --- | --- | --- |
 | `statusChanged` | `type`가 포함된 [SystemStatus](payloads/system/system-status.ko.md) | 공개 상태가 변경됩니다. |
 | `productInfoChanged` | `type`가 포함된 [ProductInfo](payloads/product/product-info.ko.md) | ProductInfo 업데이트가 완료되었습니다. |
+| `imageGrabbed` | `type`가 포함된 [ImageGrabbedInfo](payloads/events/image-grabbed.ko.md) | 이미지 취득 완료를 알리며 경로는 이후 `resultCreated`에서 제공합니다. |
 | `runStarted` | `type`가 포함된 [SystemStatus](payloads/system/system-status.ko.md) | `Running` 상태로 전환됩니다. |
 | `runCompleted` | `type`가 포함된 [SystemStatus](payloads/system/system-status.ko.md) | 실행이 `Running` 상태를 벗어나 `Ready`로 돌아갑니다. |
 | `resultCreated` | `type`가 포함된 [ResultSummary](payloads/results/result-summary.ko.md) | 결과 요약이 생성됩니다. |
@@ -430,6 +431,21 @@ ProductInfo 업데이트가 완료되었음을 클라이언트에 알립니다.
 
 이 이벤트에는 ProductInfo만 포함되어 있습니다.
 
+## imageGrabbed 이벤트
+
+### 목적
+
+하나의 이미지 취득이 완료되었음을 클라이언트에 알립니다. 이 프레임은 시뮬레이터가 artifact를 저장하기 전에 전송되므로 이미지 또는 결과 경로를 포함하지 않습니다.
+
+### 프레임
+
+```json
+{"type":"imageGrabbed","captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### 설명
+
+이후의 `resultCreated` 프레임은 같은 `captureId`를 사용하고 저장된 이미지 및 결과 경로를 포함합니다.
 ## runStarted 이벤트
 
 ### 목적

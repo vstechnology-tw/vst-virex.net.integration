@@ -9,6 +9,7 @@
 ```json
 {
   "resultId": "RID-1",
+  "captureId": "CAP-1",
   "timestamp": "2026-06-20T15:30:12+08:00",
   "waferID": "W01",
   "lotID": "LOT-001",
@@ -31,6 +32,7 @@
 
 | 필드 | 유형 | 필수 | 설명 |
 | --- | --- | --- | --- |
+| `captureId` | string | Yes | Capture ID는 이미지 취득 이벤트와 이 결과를 연결합니다. |
 | `resultId` | 문자열 | 예 | 결과 식별자. |
 | `timestamp` | 문자열 | 예 | 결과 타임스탬프. |
 | `waferID` | 문자열 | 예 | 실행 스냅샷의 웨이퍼 식별자입니다. |

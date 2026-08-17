@@ -9,6 +9,7 @@
 ```json
 {
   "resultId": "RID-1",
+  "captureId": "CAP-1",
   "timestamp": "2026-06-20T15:30:12+08:00",
   "waferID": "W01",
   "lotID": "LOT-001",
@@ -31,6 +32,7 @@
 
 |フィールド |タイプ |必須 |説明 |
 | --- | --- | --- | --- |
+| `captureId` | string | Yes | Capture ID は画像取得イベントとこの結果を関連付けます。 |
 | `resultId` |文字列 |はい |結果の識別子。 |
 | `timestamp` |文字列 |はい |結果のタイムスタンプ。 |
 | `waferID` |文字列 |はい |実行スナップショットからのウェーハ識別子。 |

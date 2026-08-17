@@ -80,6 +80,8 @@ await client.TcpEvents.SendProductInfoAsync(new ProductInfo
 await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 ```
 
+當 `value.Type` 為 `imageGrabbed` 時讀取 `value.ImageGrabbed`。它的 `captureId` 會對應稍後的 `resultCreated`，路徑會在該事件提供。
+
 ## MQTT 事件
 
 ```csharp
@@ -93,6 +95,8 @@ await client.MqttEvents.RunAsync(cts.Token);
 ```
 
 MQTT 只用於事件。命令請使用 RESTful API 或 TCP。
+
+當 `value.Type` 為 `imageGrabbed` 時讀取 `value.ImageGrabbed`。它的 `captureId` 會對應稍後的 `resultCreated`，路徑會在該事件提供。
 
 ## 錯誤處理
 

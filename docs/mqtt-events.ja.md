@@ -20,6 +20,7 @@ MQTT は双方向の統合チャネルです。サービスはイベントを `v
 | --- | --- | --- |
 | `virex/statusChanged` | [SystemStatus](payloads/system/system-status.ja.md) |公開状態が変化します。 |
 | `virex/productInfoChanged` | [ProductInfo](payloads/product/product-info.ja.md) | ProductInfo のアップデートが完了しました。 |
+| `virex/imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.ja.md) | 画像取得が完了しました。まだ画像または結果のパスはありません。 |
 | `virex/runStarted` | [SystemStatus](payloads/system/system-status.ja.md) |状態は `Running` になります。 |
 | `virex/runCompleted` | [SystemStatus](payloads/system/system-status.ja.md) |実行は `Running` を出て、`Ready` に戻ります。 |
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.ja.md) |結果の概要が作成されます。 |
@@ -420,6 +421,25 @@ virex/productInfoChanged
 
 このイベントには ProductInfo のみが含まれます。結果データは含まれません。
 
+## imageGrabbed
+
+### 目的
+
+1 回の画像取得が完了したことをクライアントに通知します。イベントはシミュレーターが artifact を保存する前に発行されるため、画像または結果のパスは含まれません。
+
+### Topic
+
+```text
+virex/imageGrabbed
+```
+
+### Payload
+
+```json
+{"captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+後続の `resultCreated` イベントは同じ `captureId` を使用し、保存された画像と結果のパスを含みます。
 ## runStarted
 
 ### 目的
