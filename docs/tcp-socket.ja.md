@@ -5,7 +5,7 @@ TCP ソケットは、同じ単純なストリーミング プロトコルを介
 
 ## 完全なサンプル
 
-このページの language tabs は各操作を説明するリクエスト断片です。すべての `using`、`import`、`#include` を含む実行可能なソースは[完全なサンプル](samples.ja.md)を使用してください。C++ TCP ヘルパーは完全なサンプル ソースに定義されています。
+このページの language tabs は各操作を説明するリクエスト断片です。すべての `using`、`import`、`#include` を含む実行可能なソースは[完全なサンプル](samples.ja.md)を使用してください。完全な C++ TCP サンプルで定義されているヘルパーは `SendAll` であり、`SendTcpFrame` はライブラリにもサンプルにも存在しません。
 
 ## 基本情報
 
@@ -59,6 +59,12 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var tcp = new VirexTcpEventClient(new VirexClientOptions
     {
         TcpHost = "127.0.0.1",
@@ -71,12 +77,17 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
     };
 
     await tcp.SendStartAsync("golden-sample", ControlRunModes.Continue);
-    await tcp.RunAsync(cancellationToken);
+    await tcp.RunAsync(CancellationToken.None);
     ```
 
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
     using var client = new TcpClient();
     await client.ConnectAsync("127.0.0.1", 5089);
     await using var stream = client.GetStream();
@@ -89,6 +100,9 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 === "Python"
 
     ```python
+    import json
+    import urllib.parse
+    import urllib.request
     import socket
 
     with socket.create_connection(("127.0.0.1", 5089)) as sock:
@@ -99,10 +113,66 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 === "C++"
 
     ```cpp
-    const std::string frame =
-        R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
-        "\n";
-    SendTcpFrame("127.0.0.1", 5089, frame);
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <cstddef>
+    #include <iostream>
+    #include <stdexcept>
+    #include <string>
+
+    #pragma comment(lib, "ws2_32.lib")
+
+    void SendAll(SOCKET socket, const std::string& value)
+    {
+        std::size_t sent = 0;
+        while (sent < value.size())
+        {
+            const int chunk = send(socket, value.data() + sent, static_cast<int>(value.size() - sent), 0);
+            if (chunk <= 0)
+            {
+                throw std::runtime_error("send failed.");
+            }
+
+            sent += static_cast<std::size_t>(chunk);
+        }
+    }
+
+    int main()
+    {
+        WSADATA wsaData{};
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            return 1;
+        }
+
+        SOCKET client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (client == INVALID_SOCKET)
+        {
+            WSACleanup();
+            return 1;
+        }
+
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_port = htons(5089);
+        if (InetPtonA(AF_INET, "127.0.0.1", &address.sin_addr) != 1 ||
+            connect(client, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == SOCKET_ERROR)
+        {
+            closesocket(client);
+            WSACleanup();
+            return 1;
+        }
+
+        const std::string frame =
+            R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
+            "\n";
+        SendAll(client, frame);
+
+        closesocket(client);
+        WSACleanup();
+        return 0;
+    }
     ```
 
 ## initialize コマンド

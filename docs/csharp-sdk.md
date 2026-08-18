@@ -22,6 +22,11 @@ dotnet add package Virex.NET.Contracts
 ## Create Client
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Contracts;
 using Virex.NET.Client;
 
 using var client = new VirexClient(new VirexClientOptions
@@ -40,8 +45,22 @@ using var client = new VirexClient(new VirexClientOptions
 ## RESTful API Command/Query Flow
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
 using Virex.NET.Contracts;
 
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var status = await client.GetStatusAsync();
 
 var initialize = await client.InitializeAsync();
@@ -67,6 +86,21 @@ var results = await client.QueryResultsAsync(lotID: "LOT-001");
 ## TCP events
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.TcpEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"TCP {value.Type}");
@@ -88,6 +122,21 @@ await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 TCP also supports RESTful API equivalent query frames:
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var tcpStatus = await client.TcpEvents.GetStatusAsync();
 var tcpError = await client.TcpEvents.GetErrorAsync();
 var tcpProductInfo = await client.TcpEvents.GetProductInfoAsync();
@@ -101,6 +150,21 @@ When `value.Type` is `imageGrabbed`, read `value.ImageGrabbed`. Its `captureId` 
 MQTT command calls publish to `virex/commands/...` and wait for a correlated response on `virex/responses/{correlationId}`:
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var mqttStatus = await client.MqttCommands.GetStatusAsync();
 var mqttInitialize = await client.MqttCommands.InitializeAsync();
 var mqttStart = await client.MqttCommands.StartAsync("mqtt-check", ControlRunModes.Continue);
@@ -108,6 +172,21 @@ var mqttResults = await client.MqttCommands.QueryResultsAsync(lotID: "LOT-001");
 ```
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.MqttEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"MQTT {value.Type}");
@@ -124,6 +203,21 @@ When `value.Type` is `imageGrabbed`, read `value.ImageGrabbed`. Its `captureId` 
 RESTful API transport failures and non-success HTTP responses throw `VirexClientException`. Protocol-level command rejections are represented by `CommandResponse`:
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var response = await client.StartAsync();
 if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 {

@@ -272,6 +272,13 @@ Response payload field: `commandResponse`.
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var commands = new VirexMqttCommandClient(new VirexClientOptions
     {
         MqttHost = "127.0.0.1",
@@ -288,23 +295,52 @@ Response payload field: `commandResponse`.
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+    using MQTTnet;
+    using MQTTnet.Client;
+
+    var factory = new MqttFactory();
+    using var client = factory.CreateMqttClient();
+    var options = new MqttClientOptionsBuilder()
+        .WithTcpServer("127.0.0.1", 1883)
+        .Build();
+    await client.ConnectAsync(options);
+
     var correlationId = "status-1";
-    await client.SubscribeAsync($"virex/responses/{correlationId}");
+    var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
+        .WithTopicFilter(filter => filter.WithTopic($"virex/responses/{correlationId}"))
+        .Build();
+    await client.SubscribeAsync(subscribeOptions);
+
     var message = new MqttApplicationMessageBuilder()
         .WithTopic("virex/commands/status/get")
         .WithPayload(JsonSerializer.Serialize(new { correlationId }))
         .Build();
     await client.PublishAsync(message);
+    await client.DisconnectAsync();
     ```
 
 === "Python"
 
     ```python
+    import json
+    import paho.mqtt.client as mqtt
+
+    client = mqtt.Client()
+    client.connect("127.0.0.1", 1883)
+    client.loop_start()
+
     correlation_id = "status-1"
     client.subscribe(f"virex/responses/{correlation_id}")
     client.publish(
         "virex/commands/status/get",
         json.dumps({"correlationId": correlation_id}))
+
+    client.loop_stop()
+    client.disconnect()
     ```
 
 ## Subscription example
@@ -312,6 +348,13 @@ Response payload field: `commandResponse`.
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var subscriber = new VirexMqttEventSubscriber(new VirexClientOptions
     {
         MqttHost = "127.0.0.1",
@@ -324,54 +367,63 @@ Response payload field: `commandResponse`.
         Console.WriteLine(e.Type);
     };
 
-    await subscriber.RunAsync(cancellationToken);
+    await subscriber.RunAsync(CancellationToken.None);
     ```
 
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+    using MQTTnet;
+    using MQTTnet.Client;
+
     var factory = new MqttFactory();
     using var client = factory.CreateMqttClient();
-    client.ApplicationMessageReceivedAsync += e =>
-    {
-        var json = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
-        Console.WriteLine($"{e.ApplicationMessage.Topic}: {json}");
-        return Task.CompletedTask;
-    };
-
     var options = new MqttClientOptionsBuilder()
         .WithTcpServer("127.0.0.1", 1883)
         .Build();
-
     await client.ConnectAsync(options);
-    await client.SubscribeAsync("virex/#");
+
+    var correlationId = "status-1";
+    var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
+        .WithTopicFilter(filter => filter.WithTopic($"virex/responses/{correlationId}"))
+        .Build();
+    await client.SubscribeAsync(subscribeOptions);
+
+    var message = new MqttApplicationMessageBuilder()
+        .WithTopic("virex/commands/status/get")
+        .WithPayload(JsonSerializer.Serialize(new { correlationId }))
+        .Build();
+    await client.PublishAsync(message);
+    await client.DisconnectAsync();
     ```
 
 === "Python"
 
     ```python
+    import json
     import paho.mqtt.client as mqtt
 
-    def on_message(client, userdata, message):
-        print(message.topic, message.payload.decode("utf-8"))
-
     client = mqtt.Client()
-    client.on_message = on_message
     client.connect("127.0.0.1", 1883)
-    client.subscribe("virex/#")
-    client.loop_forever()
+    client.loop_start()
+
+    correlation_id = "status-1"
+    client.subscribe(f"virex/responses/{correlation_id}")
+    client.publish(
+        "virex/commands/status/get",
+        json.dumps({"correlationId": correlation_id}))
+
+    client.loop_stop()
+    client.disconnect()
     ```
 
 === "C++"
 
-    ```cpp
-    // Subscribe to virex/# with the MQTT client library used by your project.
-    // Each message payload is UTF-8 JSON.
-    OnMqttMessage([](const std::string& topic, const std::string& payload)
-    {
-        std::cout << topic << ": " << payload << std::endl;
-    });
-    ```
+    See the [complete C++ raw MQTT sample](samples.md) for the complete source file with all headers and helper definitions.
 
 ## statusChanged
 
