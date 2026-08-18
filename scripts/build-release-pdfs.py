@@ -68,6 +68,104 @@ def prefix_fragment_ids(fragment: str, section_prefix: str) -> str:
     )
 
 
+DIV_OPEN_PATTERN = re.compile(r"<div\b[^>]*>", re.IGNORECASE)
+DIV_TAG_PATTERN = re.compile(r"</?div\b[^>]*>", re.IGNORECASE)
+TABBED_SET_OPEN_PATTERN = re.compile(
+    r'''<div\b[^>]*\bclass=["'][^"']*\btabbed-set\b[^"']*["'][^>]*>''',
+    re.IGNORECASE,
+)
+
+
+def matching_div_bounds(markup: str, opening_start: int) -> tuple[int, int]:
+    depth = 0
+    for tag in DIV_TAG_PATTERN.finditer(markup, opening_start):
+        if tag.group(0).startswith("</"):
+            depth -= 1
+            if depth == 0:
+                return tag.start(), tag.end()
+        else:
+            depth += 1
+    raise RuntimeError("Could not find the closing div for a tabbed example.")
+
+
+def div_inner_bounds(markup: str, opening_start: int) -> tuple[int, int, int]:
+    opening = DIV_OPEN_PATTERN.match(markup, opening_start)
+    if not opening:
+        raise RuntimeError("Expected a div opening tag.")
+    closing_start, closing_end = matching_div_bounds(markup, opening_start)
+    return opening.end(), closing_start, closing_end
+
+
+def find_div_opening_by_class(markup: str, class_name: str, start: int = 0) -> re.Match[str] | None:
+    pattern = re.compile(
+        rf'''<div\b[^>]*\bclass=["'][^"']*\b{re.escape(class_name)}\b[^"']*["'][^>]*>''',
+        re.IGNORECASE,
+    )
+    return pattern.search(markup, start)
+
+
+def direct_div_contents(markup: str, container_start: int, container_end: int, class_name: str) -> list[str]:
+    opening_pattern = re.compile(
+        rf'''<div\b[^>]*\bclass=["'][^"']*\b{re.escape(class_name)}\b[^"']*["'][^>]*>''',
+        re.IGNORECASE,
+    )
+    contents: list[str] = []
+    next_start = container_start
+    for opening in opening_pattern.finditer(markup, container_start, container_end):
+        if opening.start() < next_start:
+            continue
+        closing_start, closing_end = matching_div_bounds(markup, opening.start())
+        if closing_end > container_end:
+            break
+        contents.append(markup[opening.end():closing_start])
+        next_start = closing_end
+    return contents
+
+
+def render_tabbed_set(markup: str) -> str:
+    labels_opening = find_div_opening_by_class(markup, "tabbed-labels")
+    content_opening = find_div_opening_by_class(markup, "tabbed-content")
+    if not labels_opening or not content_opening:
+        return markup
+
+    labels_start, labels_end, _ = div_inner_bounds(markup, labels_opening.start())
+    labels = [
+        html.unescape(re.sub(r"<[^>]+>", "", match.group(1))).strip()
+        for match in re.finditer(
+            r"<label\b[^>]*>(.*?)</label>",
+            markup[labels_start:labels_end],
+            re.IGNORECASE | re.DOTALL,
+        )
+    ]
+    content_start, content_end, _ = div_inner_bounds(markup, content_opening.start())
+    blocks = direct_div_contents(markup, content_start, content_end, "tabbed-block")
+    if not blocks:
+        return markup
+
+    rendered_blocks = []
+    for index, block in enumerate(blocks):
+        title = labels[index] if index < len(labels) else f"Example {index + 1}"
+        rendered_blocks.append(
+            f'<section class="pdf-tab-block"><h4 class="pdf-tab-title">{html.escape(title)}</h4>'
+            f'{expand_tabbed_sets(block)}</section>'
+        )
+    return f'<div class="pdf-tabbed-set">{"".join(rendered_blocks)}</div>'
+
+
+def expand_tabbed_sets(fragment: str) -> str:
+    pieces: list[str] = []
+    cursor = 0
+    search_start = 0
+    while match := TABBED_SET_OPEN_PATTERN.search(fragment, search_start):
+        _, _, closing_end = div_inner_bounds(fragment, match.start())
+        pieces.append(fragment[cursor:match.start()])
+        pieces.append(render_tabbed_set(fragment[match.start():closing_end]))
+        cursor = closing_end
+        search_start = closing_end
+    pieces.append(fragment[cursor:])
+    return "".join(pieces)
+
+
 def annotate_external_links(fragment: str) -> str:
     anchor_pattern = re.compile(
         r"(<a\b[^>]*\bhref=([\"'])(https?://[^\"']+)\2[^>]*>)(.*?)</a>",
@@ -140,6 +238,7 @@ def extract_main(
     fragment = re.sub(r"<script\b.*?</script>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
     fragment = re.sub(r"<button\b.*?</button>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
     fragment = re.sub(r"<aside\b.*?</aside>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
+    fragment = expand_tabbed_sets(fragment)
     section_prefix = f"doc-{document_index}"
     fragment = prefix_fragment_ids(fragment, section_prefix)
     fragment = rewrite_attributes(fragment, source_page, public_url, internal_targets)
@@ -250,6 +349,10 @@ html, body { margin: 0; padding: 0; background: #fff; color: #1f2933; font-famil
 .doc h2 { font-size: 17pt; border-bottom: 1px solid #c5d5dc; padding-bottom: 1.5mm; margin-top: 9mm; }
 .doc h3 { font-size: 13.5pt; margin-top: 7mm; }
 .doc h4 { font-size: 11.5pt; margin-top: 5mm; }
+.pdf-tabbed-set { margin: 5mm 0 7mm; }
+.pdf-tab-block { border: 1px solid #d6dfe3; border-radius: 3px; background: #fbfcfd; margin: 4mm 0 6mm; padding: 3mm; break-inside: avoid; page-break-inside: avoid; }
+.doc .pdf-tab-title { color: #204e61; background: #e9f1f4; border-bottom: 1px solid #c5d5dc; font-size: 11pt; line-height: 1.25; margin: -3mm -3mm 3mm; padding: 2mm 3mm; }
+.pdf-tab-block .highlight { margin: 0; }
 p, ul, ol, blockquote, pre, table, figure { margin-top: 3.5mm; margin-bottom: 3.5mm; }
 ul, ol { padding-left: 7mm; }
 blockquote { border-left: 3px solid #2688aa; background: #f3f7f9; padding: 2mm 4mm; margin-left: 0; }
