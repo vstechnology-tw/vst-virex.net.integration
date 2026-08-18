@@ -20,6 +20,9 @@ theme:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/mermaid.js?v=1
+
 extra:
   alternate:
     - name: English
