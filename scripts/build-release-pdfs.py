@@ -60,8 +60,36 @@ def local_page_path(site_path: Path, prefix: str, markdown_path: str) -> Path:
     return site_path / prefix / (markdown_path.removesuffix(".md") + ".html")
 
 
-def rewrite_attributes(fragment: str, source_page: Path, public_url: str) -> str:
+def prefix_fragment_ids(fragment: str, section_prefix: str) -> str:
+    id_pattern = re.compile(r"\bid=([\"'])([^\"']+)\1", re.IGNORECASE)
+    return id_pattern.sub(
+        lambda match: f'id={match.group(1)}{section_prefix}--{match.group(2)}{match.group(1)}',
+        fragment,
+    )
+
+
+def annotate_external_links(fragment: str) -> str:
+    anchor_pattern = re.compile(
+        r"(<a\b[^>]*\bhref=([\"'])(https?://[^\"']+)\2[^>]*>)(.*?)</a>",
+        re.IGNORECASE | re.DOTALL,
+    )
+
+    def replace(match: re.Match[str]) -> str:
+        if "external-link-note" in match.group(4):
+            return match.group(0)
+        return f'{match.group(1)}{match.group(4)}<span class="external-link-note"> [external link]</span></a>'
+
+    return anchor_pattern.sub(replace, fragment)
+
+
+def rewrite_attributes(
+    fragment: str,
+    source_page: Path,
+    public_url: str,
+    internal_targets: dict[str, int],
+) -> str:
     attribute_pattern = re.compile(r"\b(href|src)=([\"'])(.*?)\2", re.IGNORECASE)
+    public_host = urlparse(PUBLIC_ROOT).netloc
 
     def replace(match: re.Match[str]) -> str:
         name, quote, value = match.group(1), match.group(2), match.group(3)
@@ -70,6 +98,13 @@ def rewrite_attributes(fragment: str, source_page: Path, public_url: str) -> str
 
         if name.lower() == "href":
             absolute = urljoin(public_url, value)
+            parsed = urlparse(absolute)
+            target_index = internal_targets.get(parsed.path) if parsed.netloc == public_host else None
+            if target_index is not None:
+                target = f"#doc-{target_index}"
+                if parsed.fragment:
+                    target += f"--{parsed.fragment}"
+                return f"{name}={quote}{target}{quote}"
             return f"{name}={quote}{absolute}{quote}"
 
         parsed = urlparse(value)
@@ -87,10 +122,15 @@ def rewrite_attributes(fragment: str, source_page: Path, public_url: str) -> str
 
         return match.group(0)
 
-    return attribute_pattern.sub(replace, fragment)
+    return annotate_external_links(attribute_pattern.sub(replace, fragment))
 
 
-def extract_main(source_page: Path, public_url: str) -> tuple[str, str]:
+def extract_main(
+    source_page: Path,
+    public_url: str,
+    internal_targets: dict[str, int],
+    document_index: int,
+) -> tuple[str, str]:
     source = source_page.read_text(encoding="utf-8")
     match = re.search(r"<main\b[^>]*>(.*?)</main>", source, re.IGNORECASE | re.DOTALL)
     if not match:
@@ -100,7 +140,9 @@ def extract_main(source_page: Path, public_url: str) -> tuple[str, str]:
     fragment = re.sub(r"<script\b.*?</script>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
     fragment = re.sub(r"<button\b.*?</button>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
     fragment = re.sub(r"<aside\b.*?</aside>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
-    fragment = rewrite_attributes(fragment, source_page, public_url)
+    section_prefix = f"doc-{document_index}"
+    fragment = prefix_fragment_ids(fragment, section_prefix)
+    fragment = rewrite_attributes(fragment, source_page, public_url, internal_targets)
 
     heading = re.search(r"<h1\b[^>]*>(.*?)</h1>", fragment, re.IGNORECASE | re.DOTALL)
     title = re.sub(r"<[^>]+>", "", heading.group(1) if heading else source_page.stem)
@@ -164,13 +206,17 @@ def build_locale(
     label: str,
     edge_path: Path,
 ) -> Path:
+    internal_targets = {
+        urlparse(public_page_url(prefix, markdown_path)).path: index
+        for index, markdown_path in enumerate(page_paths)
+    }
     documents: list[tuple[str, str, str]] = []
-    for markdown_path in page_paths:
+    for index, markdown_path in enumerate(page_paths):
         source_page = local_page_path(site_path, prefix, markdown_path)
         if not source_page.exists():
             raise RuntimeError(f"Missing generated page: {source_page}")
         public_url = public_page_url(prefix, markdown_path)
-        title, fragment = extract_main(source_page, public_url)
+        title, fragment = extract_main(source_page, public_url, internal_targets, index)
         documents.append((title, public_url, fragment))
 
     toc = "\n".join(
@@ -179,7 +225,7 @@ def build_locale(
     )
     body = "\n".join(
         f'<section class="doc" id="doc-{index}">'
-        f'<div class="source"><a href="{url}">View this page online</a></div>{fragment}</section>'
+        f'<div class="source"><a href="{url}">View this page online <span class="external-link-note">[external link]</span></a></div>{fragment}</section>'
         for index, (_, url, fragment) in enumerate(documents)
     )
 
@@ -217,6 +263,7 @@ th { background: #e9f1f4; color: #204e61; font-weight: 600; }
 tr { break-inside: avoid; page-break-inside: avoid; }
 img, svg { max-width: 100%; height: auto; display: block; margin: 4mm auto; break-inside: avoid; page-break-inside: avoid; }
 .source { text-align: right; font-size: 8pt; margin-bottom: 3mm; }
+.external-link-note { color: #8b4a00; font-size: 8pt; font-weight: 600; white-space: nowrap; }
 .headerlink, .md-clipboard, button, nav, aside, .md-sidebar, .md-header, .md-tabs, .md-footer { display: none !important; }
 """
 
@@ -252,7 +299,7 @@ img, svg { max-width: 100%; height: auto; display: block; margin: 4mm auto; brea
                 "--headless",
                 "--disable-gpu",
                 "--allow-file-access-from-files",
-                "--print-to-pdf-no-header",
+                "--no-pdf-header-footer",
                 f"--print-to-pdf={raw_pdf}",
                 combined.as_uri(),
             ],
