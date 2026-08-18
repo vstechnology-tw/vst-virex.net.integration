@@ -75,6 +75,25 @@ jobs:
           "tag=$tag" >> $env:GITHUB_OUTPUT
           "upload_to_release=$($uploadToRelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install documentation and PDF dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-docs.txt
+
+      - name: Build documentation site
+        run: python -m mkdocs build --strict
+
+      - name: Build documentation PDF assets
+        shell: pwsh
+        run: |
+          python scripts/build-release-pdfs.py `
+            --site-path site `
+            --output artifacts/release `
+            --version "${{ steps.release.outputs.version }}"
+
       - name: Restore
         run: dotnet restore Virex.NET.Integration.slnx
 
@@ -144,6 +163,13 @@ jobs:
           path: artifacts/release/*.zip
           if-no-files-found: error
 
+      - name: Upload documentation PDF artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-release-pdfs
+          path: artifacts/release/*.pdf
+          if-no-files-found: error
+
       - name: Upload assets to GitHub Release
         if: steps.release.outputs.upload_to_release == 'true'
         shell: pwsh
@@ -152,4 +178,4 @@ jobs:
         run: |
           $tag = "${{ steps.release.outputs.tag }}"
           gh release view $tag --repo $env:GITHUB_REPOSITORY | Out-Null
-          gh release upload $tag artifacts/release/*.zip --repo $env:GITHUB_REPOSITORY --clobber
+          gh release upload $tag artifacts/release/*.zip artifacts/release/*.pdf --repo $env:GITHUB_REPOSITORY --clobber
