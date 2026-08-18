@@ -86,7 +86,7 @@ jobs:
           node-version: "22"
 
       - name: Install Mermaid CLI
-        run: npm install --global --no-fund --no-audit @mermaid-js/mermaid-cli@11.16.0
+        run: npm install --global --ignore-scripts --no-fund --no-audit @mermaid-js/mermaid-cli@11.16.0
 
       - name: Install documentation and PDF dependencies
         run: python -m pip install --disable-pip-version-check -r requirements-docs.txt

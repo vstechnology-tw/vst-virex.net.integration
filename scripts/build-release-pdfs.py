@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import html
+import json
 import os
 import re
 import shutil
@@ -218,7 +219,12 @@ def find_mermaid_cli(explicit_path: Path | None = None) -> Path:
     )
 
 
-def render_mermaid_blocks(fragment: str, mermaid_cli: Path, render_dir: Path) -> str:
+def render_mermaid_blocks(
+    fragment: str,
+    mermaid_cli: Path,
+    render_dir: Path,
+    puppeteer_config: Path | None = None,
+) -> str:
     def replace(match: re.Match[str]) -> str:
         source = html.unescape(re.sub(r"<[^>]+>", "", match.group(1)))
         digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
@@ -227,6 +233,8 @@ def render_mermaid_blocks(fragment: str, mermaid_cli: Path, render_dir: Path) ->
         if not output_path.exists():
             input_path.write_text(source, encoding="utf-8")
             command = [str(mermaid_cli), "-i", str(input_path), "-o", str(output_path), "-b", "transparent"]
+            if puppeteer_config is not None:
+                command.extend(["-p", str(puppeteer_config)])
             if mermaid_cli.suffix.lower() in {".bat", ".cmd"}:
                 command = ["cmd.exe", "/d", "/s", "/c", *command]
             elif mermaid_cli.suffix.lower() == ".ps1":
@@ -310,6 +318,7 @@ def extract_main(
     document_index: int,
     mermaid_cli: Path | None = None,
     render_dir: Path | None = None,
+    puppeteer_config: Path | None = None,
 ) -> tuple[str, str]:
     source = source_page.read_text(encoding="utf-8")
     match = re.search(r"<main\b[^>]*>(.*?)</main>", source, re.IGNORECASE | re.DOTALL)
@@ -324,7 +333,7 @@ def extract_main(
     if MERMAID_BLOCK_PATTERN.search(fragment):
         if mermaid_cli is None or render_dir is None:
             raise RuntimeError(f"Mermaid rendering is required for {source_page}")
-        fragment = render_mermaid_blocks(fragment, mermaid_cli, render_dir)
+        fragment = render_mermaid_blocks(fragment, mermaid_cli, render_dir, puppeteer_config)
     section_prefix = f"doc-{document_index}"
     fragment = prefix_fragment_ids(fragment, section_prefix)
     fragment = rewrite_attributes(fragment, source_page, public_url, internal_targets)
@@ -399,6 +408,11 @@ def build_locale(
     documents: list[tuple[str, str, str]] = []
     with tempfile.TemporaryDirectory(prefix=f"virex-mermaid-{locale_id}-") as mermaid_dir:
         render_dir = Path(mermaid_dir)
+        puppeteer_config = render_dir / "puppeteer.json"
+        puppeteer_config.write_text(
+            json.dumps({"executablePath": str(edge_path), "args": ["--disable-gpu"]}),
+            encoding="utf-8",
+        )
         for index, markdown_path in enumerate(page_paths):
             source_page = local_page_path(site_path, prefix, markdown_path)
             if not source_page.exists():
@@ -411,6 +425,7 @@ def build_locale(
                 index,
                 mermaid_cli,
                 render_dir,
+                puppeteer_config,
             )
             documents.append((title, public_url, fragment))
 
