@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -26,13 +27,20 @@ class ReleasePdfRenderingTests(unittest.TestCase):
         source_page = ROOT / "site" / "integration-model.html"
 
         with tempfile.TemporaryDirectory(prefix="virex-mermaid-test-") as temp_dir:
+            render_dir = Path(temp_dir)
+            puppeteer_config = render_dir / "puppeteer.json"
+            puppeteer_config.write_text(
+                json.dumps({"executablePath": str(builder.find_edge()), "args": ["--disable-gpu"]}),
+                encoding="utf-8",
+            )
             _, fragment = builder.extract_main(
                 source_page,
                 "https://vstechnology-tw.github.io/vst-virex.net.integration/integration-model.html",
                 {},
                 0,
                 mermaid_cli,
-                Path(temp_dir),
+                render_dir,
+                puppeteer_config,
             )
 
         self.assertNotIn("flowchart LR", fragment)
