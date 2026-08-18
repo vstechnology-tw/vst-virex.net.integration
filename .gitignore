@@ -13,4 +13,5 @@ packages/
 logs/
 /site/
 /artifacts/
+/output/
 mkdocs-serve*.log
