@@ -1,6 +1,9 @@
 # MQTT プロトコル
 
-MQTT は双方向の統合チャネルです。サービスはイベントを `virex/{eventName}` に発行します。クライアントは RESTful API と同等のコマンドやクエリを `virex/commands/...` に発行し、対応する応答を `virex/responses/{correlationId}` で受け取れます。
+
+## 完全なサンプル
+
+このページの language tabs は各操作を説明するリクエスト断片です。すべての `using`、`import`、`#include` を含む実行可能なソースは[完全なサンプル](samples.ja.md)を使用してください。完全な C++ サンプルは raw MQTT 交換を直接実装するため、外部 MQTT ライブラリは不要です。
 
 ## 基本情報
 
@@ -425,7 +428,7 @@ virex/productInfoChanged
 
 ### 目的
 
-1 回の画像取得が完了したことをクライアントに通知します。イベントはシミュレーターが artifact を保存する前に発行されるため、画像または結果のパスは含まれません。
+1 回の画像取得が完了したことをクライアントに通知します。取得メタデータのみを含み、関連する画像と結果のパスは後続の `resultCreated` で提供されます。
 
 ### Topic
 

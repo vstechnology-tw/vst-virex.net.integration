@@ -1,5 +1,8 @@
+using System;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using Virex.NET.Contracts;
 
 var host = args.Length > 0 ? args[0] : "127.0.0.1";

@@ -1,6 +1,9 @@
 # MQTT 通訊協定
 
-MQTT 是雙向整合通道。服務會把事件發布到 `virex/{eventName}`；用戶端可以把等價於 RESTful API 的命令與查詢發布到 `virex/commands/...`，並從 `virex/responses/{correlationId}` 接收對應回應。
+
+## 完整範例
+
+本頁的 language tabs 是說明單一操作的請求片段。需要包含完整 `using`、`import`、`#include` 並可直接執行的原始碼，請使用[完整範例](samples.zh-Hant.md)。完整 C++ 範例會直接實作 raw MQTT 交換，不需要第三方 MQTT library。
 
 ## 基本資訊
 
@@ -425,7 +428,7 @@ virex/productInfoChanged
 
 ### 用途
 
-通知用戶端一次取像已完成。事件會在模擬器儲存 artifact 前發布，因此不包含影像或結果路徑。
+通知用戶端一次取像已完成。事件只包含取像資訊；相關影像與結果路徑會在後續的 `resultCreated` 提供。
 
 ### Topic
 

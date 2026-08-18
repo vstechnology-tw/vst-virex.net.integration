@@ -13,7 +13,6 @@ The simulator and production-compatible services are expected to expose the same
 | --- | --- |
 | `Virex.NET.Contracts` | Public payload schemas as C# models, RESTful API routes, MQTT topic names, and TCP/NDJSON helpers. |
 | `Virex.NET.Client` | C# SDK wrappers for RESTful API, TCP, and MQTT integration. |
-| `Virex.NET.Simulator.Core` | Simulator-specific state/session behavior. |
 | `Virex.NET.Simulator.WPF` | Local Windows simulator exposing RESTful API, TCP, and MQTT endpoints. |
 | `samples` | C#, Python, and C++ integration examples. |
 | `docs` | Public protocol and simulator documentation. |

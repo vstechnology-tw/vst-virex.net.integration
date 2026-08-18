@@ -1,6 +1,6 @@
 # ImageGrabbedInfo
 
-`ImageGrabbedInfo` is the metadata payload for the public `imageGrabbed` event. It is emitted after image acquisition and before simulator artifact persistence, so it does not contain image or result paths.
+`ImageGrabbedInfo` is the metadata payload for the public `imageGrabbed` event. It is sent as soon as image acquisition completes and contains no image or result paths; related paths are provided later by `resultCreated`.
 
 ## JSON
 

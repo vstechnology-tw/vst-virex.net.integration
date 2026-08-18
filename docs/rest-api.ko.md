@@ -1,6 +1,11 @@
 # RESTful API
 
+
 RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령을 보내고, 결과 요약을 쿼리하는 데 사용됩니다.
+
+## 전체 예제
+
+이 페이지의 language tabs는 각 작업을 설명하는 요청 조각입니다. 모든 `using`, `import`, `#include` 지시문이 포함된 실행 가능한 소스는[전체 예제](samples.ko.md)를 사용하세요. C++ REST의 `SendRequest`는 전체 예제에 정의된 로컬 helper이며 라이브러리 API가 아닙니다.
 
 ## 기본 정보
 

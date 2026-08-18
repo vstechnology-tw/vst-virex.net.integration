@@ -1,6 +1,6 @@
 # ImageGrabbedInfo
 
-`ImageGrabbedInfo` 是公開 `imageGrabbed` 事件的 metadata payload。它在取像完成、模擬器儲存 artifact 前發布，因此不包含影像或結果路徑。
+`ImageGrabbedInfo` 是公開 `imageGrabbed` 事件的 metadata payload。它在取像完成後立即送出，只包含取像資訊，不包含影像或結果路徑；相關路徑會由後續的 `resultCreated` 提供。
 
 ## JSON
 

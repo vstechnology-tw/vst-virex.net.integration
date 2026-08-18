@@ -1,6 +1,11 @@
 # RESTful API
 
+
 The RESTful API is used to read state, manage ProductInfo, send system commands, and query result summaries.
+
+## Complete samples
+
+The language tabs in this reference are request fragments. For directly runnable source with all `using`, `import`, and `#include` directives, use the [complete samples](samples.md). The C++ REST `SendRequest` name is a local helper in the complete sample, not a library API.
 
 ## Basic information
 

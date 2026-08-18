@@ -1,3 +1,6 @@
+using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Virex.NET.Client;
 using Virex.NET.Contracts;
 

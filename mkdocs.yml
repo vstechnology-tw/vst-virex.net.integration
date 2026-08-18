@@ -166,8 +166,6 @@ nav:
           - Result Payloads:
               - ResultSummary: payloads/results/result-summary.md
               - ResultList: payloads/results/result-list.md
-  - Architecture Decisions:
-      - 'ADR-0001 ImageGrabbed Persistence': adr/0001-image-grabbed-before-artifact-persistence.md
   - SDK:
       - C# SDK Guide: csharp-sdk.md
   - Samples: samples.md

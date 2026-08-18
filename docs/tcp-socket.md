@@ -1,6 +1,11 @@
 # TCP Socket Protocol
 
+
 TCP Socket is a bidirectional integration channel for clients that need to send commands and receive events over the same simple streaming protocol.
+
+## Complete samples
+
+The language tabs in this reference are request fragments. For directly runnable source with all `using`, `import`, and `#include` directives, use the [complete samples](samples.md). The C++ TCP helper is defined in the complete sample source.
 
 ## Basic Information
 
@@ -435,7 +440,7 @@ This event contains ProductInfo only.
 
 ### Purpose
 
-Notifies the client that one image acquisition completed. The frame is sent before simulator artifact persistence, so it contains no image or result paths.
+Notifies the client that one image acquisition completed. The frame contains capture metadata only; related image and result paths are provided later by `resultCreated`.
 
 ### Frame
 

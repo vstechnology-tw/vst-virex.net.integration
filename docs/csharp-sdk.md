@@ -1,6 +1,11 @@
 # C# SDK Guide
 
+
 `Virex.NET.Client` provides typed wrappers for the public RESTful API, TCP, and MQTT integration APIs.
+
+## Complete sample
+
+For a directly runnable C# program with every `using` directive and project reference, use the [C# SDK sample](samples.md). The code blocks below show focused operations from that complete file.
 
 ## Install
 

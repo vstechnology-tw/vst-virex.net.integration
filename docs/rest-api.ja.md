@@ -1,6 +1,11 @@
 # RESTful API
 
+
 RESTful API は、状態の読み取り、ProductInfo の管理、システム コマンドの送信、および結果の概要のクエリに使用されます。
+
+## 完全なサンプル
+
+このページの language tabs は各操作を説明するリクエスト断片です。すべての `using`、`import`、`#include` を含む実行可能なソースは[完全なサンプル](samples.ja.md)を使用してください。C++ REST の `SendRequest` は完全なサンプル内のローカルヘルパーであり、ライブラリ API ではありません。
 
 ## 基本情報
 

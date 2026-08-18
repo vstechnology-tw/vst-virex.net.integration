@@ -1,6 +1,11 @@
 # C# SDK ガイド
 
+
 `Virex.NET.Client` は、公開 RESTful API、TCP、および MQTT 統合 API の型付きラッパーを提供します。
+
+## 完全なサンプル
+
+すべての `using` と project reference を含む実行可能な C# プログラムは[C# SDK サンプル](samples.ja.md)を使用してください。以下のコードブロックは完全なファイルから抜粋した操作例です。
 
 ## インストール
 
