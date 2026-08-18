@@ -22,6 +22,11 @@ dotnet add package Virex.NET.Contracts
 ## 建立用戶端
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Contracts;
 using Virex.NET.Client;
 
 using var client = new VirexClient(new VirexClientOptions
@@ -40,8 +45,22 @@ using var client = new VirexClient(new VirexClientOptions
 ## RESTful API 命令/查詢流程
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
 using Virex.NET.Contracts;
 
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var status = await client.GetStatusAsync();
 
 var initialize = await client.InitializeAsync();
@@ -67,6 +86,21 @@ var results = await client.QueryResultsAsync(lotID: "LOT-001");
 ## TCP 事件
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.TcpEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"TCP {value.Type}");
@@ -90,6 +124,21 @@ await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 ## MQTT 事件
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.MqttEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"MQTT {value.Type}");
@@ -108,6 +157,21 @@ MQTT 只用於事件。命令請使用 RESTful API 或 TCP。
 RESTful API 傳輸失敗與非成功 HTTP 回應會丟出 `VirexClientException`。通訊協定層級的拒絕會以 `CommandResponse` 表示：
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var response = await client.StartAsync();
 if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 {

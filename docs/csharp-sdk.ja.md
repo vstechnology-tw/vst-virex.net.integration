@@ -22,6 +22,11 @@ dotnet add package Virex.NET.Contracts
 ## クライアントの作成
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Contracts;
 using Virex.NET.Client;
 
 using var client = new VirexClient(new VirexClientOptions
@@ -40,8 +45,22 @@ using var client = new VirexClient(new VirexClientOptions
 ## RESTful API コマンド/クエリの流れ
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
 using Virex.NET.Contracts;
 
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var status = await client.GetStatusAsync();
 
 var initialize = await client.InitializeAsync();
@@ -67,6 +86,21 @@ var results = await client.QueryResultsAsync(lotID: "LOT-001");
 ## TCP イベント
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.TcpEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"TCP {value.Type}");
@@ -90,6 +124,21 @@ await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 ## MQTT イベント
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.MqttEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"MQTT {value.Type}");
@@ -108,6 +157,21 @@ MQTT はイベントにのみ使用されます。コマンドにはRESTまた�
 RESTful API 通信の失敗と成功しない HTTP 応答は `VirexClientException` をスローします。プロトコルレベルのコマンド拒否は、`CommandResponse` で表されます。
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var response = await client.StartAsync();
 if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 {

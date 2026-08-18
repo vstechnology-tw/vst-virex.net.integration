@@ -59,6 +59,12 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var tcp = new VirexTcpEventClient(new VirexClientOptions
     {
         TcpHost = "127.0.0.1",
@@ -71,12 +77,17 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
     };
 
     await tcp.SendStartAsync("golden-sample", ControlRunModes.Continue);
-    await tcp.RunAsync(cancellationToken);
+    await tcp.RunAsync(CancellationToken.None);
     ```
 
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
     using var client = new TcpClient();
     await client.ConnectAsync("127.0.0.1", 5089);
     await using var stream = client.GetStream();
@@ -89,6 +100,9 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 === "Python"
 
     ```python
+    import json
+    import urllib.parse
+    import urllib.request
     import socket
 
     with socket.create_connection(("127.0.0.1", 5089)) as sock:
