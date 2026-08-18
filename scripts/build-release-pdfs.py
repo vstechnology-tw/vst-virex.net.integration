@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import os
 import re
@@ -32,6 +33,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
+    parser.add_argument("--mermaid-cli", type=Path)
     return parser.parse_args()
 
 
@@ -62,9 +64,36 @@ def local_page_path(site_path: Path, prefix: str, markdown_path: str) -> Path:
 
 def prefix_fragment_ids(fragment: str, section_prefix: str) -> str:
     id_pattern = re.compile(r"\bid=([\"'])([^\"']+)\1", re.IGNORECASE)
-    return id_pattern.sub(
+    svg_fragments: list[str] = []
+
+    def protect_svg(match: re.Match[str]) -> str:
+        svg = match.group(0)
+        svg_id_pattern = re.compile(r"\bid=([\"'])([^\"']+)\1", re.IGNORECASE)
+        id_map = {
+            match.group(2): f"{section_prefix}--mermaid-{len(svg_fragments)}--{match.group(2)}"
+            for match in svg_id_pattern.finditer(svg)
+        }
+        for old_id, new_id in id_map.items():
+            svg = re.sub(
+                rf"(\bid=([\"'])){re.escape(old_id)}([\"'])",
+                rf"\g<1>{new_id}\g<3>",
+                svg,
+                flags=re.IGNORECASE,
+            )
+            svg = re.sub(rf"(?<![\w-])#{re.escape(old_id)}\b", f"#{new_id}", svg)
+            svg = svg.replace(f"url(#{old_id})", f"url(#{new_id})")
+        svg_fragments.append(svg)
+        return f"__PDF_SVG_{len(svg_fragments) - 1}__"
+
+    protected = re.sub(r"<svg\b.*?</svg>", protect_svg, fragment, flags=re.IGNORECASE | re.DOTALL)
+    prefixed = id_pattern.sub(
         lambda match: f'id={match.group(1)}{section_prefix}--{match.group(2)}{match.group(1)}',
-        fragment,
+        protected,
+    )
+    return re.sub(
+        r"__PDF_SVG_(\d+)__",
+        lambda match: svg_fragments[int(match.group(1))],
+        prefixed,
     )
 
 
@@ -73,6 +102,10 @@ DIV_TAG_PATTERN = re.compile(r"</?div\b[^>]*>", re.IGNORECASE)
 TABBED_SET_OPEN_PATTERN = re.compile(
     r'''<div\b[^>]*\bclass=["'][^"']*\btabbed-set\b[^"']*["'][^>]*>''',
     re.IGNORECASE,
+)
+MERMAID_BLOCK_PATTERN = re.compile(
+    r'''<pre\b[^>]*\bclass=["'][^"']*\bmermaid\b[^"']*["'][^>]*>\s*<code\b[^>]*>(.*?)</code>\s*</pre>''',
+    re.IGNORECASE | re.DOTALL,
 )
 
 
@@ -166,6 +199,53 @@ def expand_tabbed_sets(fragment: str) -> str:
     return "".join(pieces)
 
 
+def find_mermaid_cli(explicit_path: Path | None = None) -> Path:
+    candidates = []
+    if explicit_path:
+        candidates.append(explicit_path)
+    discovered = shutil.which("mmdc")
+    if discovered:
+        candidates.append(Path(discovered))
+    app_data = os.environ.get("APPDATA")
+    if app_data:
+        candidates.append(Path(app_data) / "npm" / "mmdc.cmd")
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+    raise RuntimeError(
+        "Mermaid CLI (mmdc) was not found. Install @mermaid-js/mermaid-cli or pass --mermaid-cli."
+    )
+
+
+def render_mermaid_blocks(fragment: str, mermaid_cli: Path, render_dir: Path) -> str:
+    def replace(match: re.Match[str]) -> str:
+        source = html.unescape(re.sub(r"<[^>]+>", "", match.group(1)))
+        digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:16]
+        input_path = render_dir / f"mermaid-{digest}.mmd"
+        output_path = render_dir / f"mermaid-{digest}.svg"
+        if not output_path.exists():
+            input_path.write_text(source, encoding="utf-8")
+            command = [str(mermaid_cli), "-i", str(input_path), "-o", str(output_path), "-b", "transparent"]
+            if mermaid_cli.suffix.lower() in {".bat", ".cmd"}:
+                command = ["cmd.exe", "/d", "/s", "/c", *command]
+            elif mermaid_cli.suffix.lower() == ".ps1":
+                command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", *command]
+            result = subprocess.run(command, capture_output=True, text=True)
+            if result.returncode != 0:
+                detail = (result.stderr or result.stdout).strip()[-2000:]
+                raise RuntimeError(f"Mermaid rendering failed for {input_path.name}: {detail}")
+        svg = output_path.read_text(encoding="utf-8")
+        if "<svg" not in svg:
+            raise RuntimeError(f"Mermaid renderer produced invalid SVG: {output_path}")
+        return f'<figure class="pdf-mermaid">{svg}</figure>'
+
+    rendered = MERMAID_BLOCK_PATTERN.sub(replace, fragment)
+    if MERMAID_BLOCK_PATTERN.search(rendered):
+        raise RuntimeError("A Mermaid source block remained after SVG rendering.")
+    return rendered
+
+
 def annotate_external_links(fragment: str) -> str:
     anchor_pattern = re.compile(
         r"(<a\b[^>]*\bhref=([\"'])(https?://[^\"']+)\2[^>]*>)(.*?)</a>",
@@ -228,6 +308,8 @@ def extract_main(
     public_url: str,
     internal_targets: dict[str, int],
     document_index: int,
+    mermaid_cli: Path | None = None,
+    render_dir: Path | None = None,
 ) -> tuple[str, str]:
     source = source_page.read_text(encoding="utf-8")
     match = re.search(r"<main\b[^>]*>(.*?)</main>", source, re.IGNORECASE | re.DOTALL)
@@ -239,6 +321,10 @@ def extract_main(
     fragment = re.sub(r"<button\b.*?</button>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
     fragment = re.sub(r"<aside\b.*?</aside>", "", fragment, flags=re.IGNORECASE | re.DOTALL)
     fragment = expand_tabbed_sets(fragment)
+    if MERMAID_BLOCK_PATTERN.search(fragment):
+        if mermaid_cli is None or render_dir is None:
+            raise RuntimeError(f"Mermaid rendering is required for {source_page}")
+        fragment = render_mermaid_blocks(fragment, mermaid_cli, render_dir)
     section_prefix = f"doc-{document_index}"
     fragment = prefix_fragment_ids(fragment, section_prefix)
     fragment = rewrite_attributes(fragment, source_page, public_url, internal_targets)
@@ -304,19 +390,29 @@ def build_locale(
     prefix: str,
     label: str,
     edge_path: Path,
+    mermaid_cli: Path,
 ) -> Path:
     internal_targets = {
         urlparse(public_page_url(prefix, markdown_path)).path: index
         for index, markdown_path in enumerate(page_paths)
     }
     documents: list[tuple[str, str, str]] = []
-    for index, markdown_path in enumerate(page_paths):
-        source_page = local_page_path(site_path, prefix, markdown_path)
-        if not source_page.exists():
-            raise RuntimeError(f"Missing generated page: {source_page}")
-        public_url = public_page_url(prefix, markdown_path)
-        title, fragment = extract_main(source_page, public_url, internal_targets, index)
-        documents.append((title, public_url, fragment))
+    with tempfile.TemporaryDirectory(prefix=f"virex-mermaid-{locale_id}-") as mermaid_dir:
+        render_dir = Path(mermaid_dir)
+        for index, markdown_path in enumerate(page_paths):
+            source_page = local_page_path(site_path, prefix, markdown_path)
+            if not source_page.exists():
+                raise RuntimeError(f"Missing generated page: {source_page}")
+            public_url = public_page_url(prefix, markdown_path)
+            title, fragment = extract_main(
+                source_page,
+                public_url,
+                internal_targets,
+                index,
+                mermaid_cli,
+                render_dir,
+            )
+            documents.append((title, public_url, fragment))
 
     toc = "\n".join(
         f'<li><a href="#doc-{index}">{html.escape(title)}</a></li>'
@@ -353,6 +449,8 @@ html, body { margin: 0; padding: 0; background: #fff; color: #1f2933; font-famil
 .pdf-tab-block { border: 1px solid #d6dfe3; border-radius: 3px; background: #fbfcfd; margin: 4mm 0 6mm; padding: 3mm; break-inside: avoid; page-break-inside: avoid; }
 .doc .pdf-tab-title { color: #204e61; background: #e9f1f4; border-bottom: 1px solid #c5d5dc; font-size: 11pt; line-height: 1.25; margin: -3mm -3mm 3mm; padding: 2mm 3mm; }
 .pdf-tab-block .highlight { margin: 0; }
+.pdf-mermaid { margin: 5mm 0 7mm; padding: 3mm; border: 1px solid #d6dfe3; border-radius: 3px; background: #fff; break-inside: avoid; page-break-inside: avoid; text-align: center; }
+.pdf-mermaid svg { width: 100%; max-height: 230mm; margin: 0 auto; }
 p, ul, ol, blockquote, pre, table, figure { margin-top: 3.5mm; margin-bottom: 3.5mm; }
 ul, ol { padding-left: 7mm; }
 blockquote { border-left: 3px solid #2688aa; background: #f3f7f9; padding: 2mm 4mm; margin-left: 0; }
@@ -423,6 +521,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     page_paths = resolve_nav(args.repo_root.resolve())
     edge_path = find_edge()
+    mermaid_cli = find_mermaid_cli(args.mermaid_cli)
 
     for locale_id, prefix, label in LOCALES:
         result = build_locale(
@@ -434,6 +533,7 @@ def main() -> None:
             prefix,
             label,
             edge_path,
+            mermaid_cli,
         )
         print(result)
 
