@@ -83,6 +83,21 @@ Console.WriteLine(start.State); // Running
 var results = await client.QueryResultsAsync(lotID: "LOT-001");
 ```
 
+## 復原與 Deinitialize 重試
+
+如果來源或清理失敗需要復原，公開狀態會是 `Deinitializing`，回應/狀態會帶有 `recoveryAction: "Deinitialize"`。客戶端必須保持 Deinitialize 可操作；清理被拒絕時可再次重試，只有 Deinitialize 無法完成後，App 重啟才是 UI 層的最後手段：
+
+```csharp
+var status = await client.GetStatusAsync();
+if (status.RecoveryAction == RecoveryActions.Deinitialize)
+{
+    var cleanup = await client.DeinitializeAsync();
+    Console.WriteLine($"Recovery: accepted={cleanup.Accepted}, phase={cleanup.RecoveryPhase}, details={cleanup.RecoveryDetails}");
+}
+```
+
+`Faulted` 與 `RequiresDeinitialize` 不是提供給客戶的生命週期狀態。請讀取 `state`、`recoveryAction` 與選用的復原內容欄位，不要等待內部狀態名稱。
+
 ## TCP 事件
 
 ```csharp

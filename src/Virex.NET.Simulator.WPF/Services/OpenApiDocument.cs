@@ -12,7 +12,7 @@ internal static class OpenApiDocument
         info = new
         {
             title = "Virex.NET Simulator API",
-            version = "2.0.3.1",
+            version = "2.2.2",
         },
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
@@ -26,7 +26,7 @@ internal static class OpenApiDocument
                 ["post"] = ProductInfoUpdateOperation(),
             },
             [RestRoutes.ApiSystemInitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Initialize simulator", "Moves the simulator from Uninitialized to Ready.") },
-            [RestRoutes.ApiSystemDeinitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Deinitialize simulator", "Moves the simulator from Ready to Uninitialized.") },
+            [RestRoutes.ApiSystemDeinitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Deinitialize simulator", "Moves the simulator from Ready to Uninitialized and retries cleanup from public Deinitializing recovery state.") },
             [RestRoutes.ApiSystemStart] = new Dictionary<string, object> { ["post"] = CommandOperation("Start run", "Starts a simulated run.", Ref("SystemStartRequest")) },
             [RestRoutes.ApiSystemStop] = new Dictionary<string, object> { ["post"] = CommandOperation("Stop run", "Stops the current simulated run.", Ref("SystemStopRequest")) },
             [RestRoutes.ApiResults] = new Dictionary<string, object>
@@ -64,12 +64,27 @@ internal static class OpenApiDocument
                         ["chamberID"] = StringSchema(),
                     },
                     RequiredProductInfoFields),
-                ["SystemStatus"] = ObjectSchema(new Dictionary<string, object> { ["state"] = StringSchema() }),
+                ["SystemStatus"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["state"] = StringSchema(),
+                    ["recoveryAction"] = NullableStringSchema(),
+                    ["recoveryStartedAt"] = NullableStringSchema("date-time"),
+                    ["errorCode"] = NullableStringSchema(),
+                    ["recoverySource"] = NullableStringSchema(),
+                    ["recoveryPhase"] = NullableStringSchema(),
+                    ["recoveryDetails"] = NullableStringSchema(),
+                }),
                 ["ErrorInfo"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["hasError"] = BoolSchema(),
                     ["message"] = NullableStringSchema(),
                     ["state"] = StringSchema(),
+                    ["recoveryAction"] = NullableStringSchema(),
+                    ["errorCode"] = NullableStringSchema(),
+                    ["recoveryStartedAt"] = NullableStringSchema("date-time"),
+                    ["recoverySource"] = NullableStringSchema(),
+                    ["recoveryPhase"] = NullableStringSchema(),
+                    ["recoveryDetails"] = NullableStringSchema(),
                 }),
                 ["CommandResponse"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -78,6 +93,11 @@ internal static class OpenApiDocument
                     ["command"] = StringSchema(),
                     ["errorCode"] = NullableStringSchema(),
                     ["message"] = StringSchema(),
+                    ["recoveryAction"] = NullableStringSchema(),
+                    ["recoveryStartedAt"] = NullableStringSchema("date-time"),
+                    ["recoverySource"] = NullableStringSchema(),
+                    ["recoveryPhase"] = NullableStringSchema(),
+                    ["recoveryDetails"] = NullableStringSchema(),
                 }),
                 ["SystemStartRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -180,7 +200,7 @@ internal static class OpenApiDocument
 
     private static object StringSchema(string? format = null) => new { type = "string", format };
 
-    private static object NullableStringSchema() => new { type = "string", nullable = true };
+    private static object NullableStringSchema(string? format = null) => new { type = "string", format, nullable = true };
 
     private static object BoolSchema() => new { type = "boolean" };
 

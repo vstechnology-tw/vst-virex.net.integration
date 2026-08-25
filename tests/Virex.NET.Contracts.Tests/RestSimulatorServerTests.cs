@@ -31,6 +31,29 @@ public sealed class RestSimulatorServerTests
             Assert.True(paths.TryGetProperty(RestRoutes.ApiSystemDeinitialize, out _));
             Assert.True(paths.TryGetProperty(RestRoutes.ApiSystemStart, out _));
             Assert.True(paths.TryGetProperty(RestRoutes.ApiSystemStop, out _));
+
+            var schemas = document.RootElement
+                .GetProperty("components")
+                .GetProperty("schemas");
+            var recoveryFields = new[]
+            {
+                "recoveryStartedAt",
+                "recoverySource",
+                "recoveryPhase",
+                "recoveryDetails",
+            };
+            foreach (var schemaName in new[] { "SystemStatus", "ErrorInfo", "CommandResponse" })
+            {
+                var properties = schemas.GetProperty(schemaName).GetProperty("properties");
+                foreach (var field in recoveryFields)
+                    Assert.True(properties.TryGetProperty(field, out _), schemaName + " is missing " + field);
+            }
+
+            foreach (var schemaName in new[] { "SystemStatus", "ErrorInfo", "CommandResponse" })
+            {
+                Assert.True(
+                    schemas.GetProperty(schemaName).GetProperty("properties").TryGetProperty("errorCode", out _));
+            }
         }
         finally
         {

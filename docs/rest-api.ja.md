@@ -27,7 +27,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 | ProductInfo | GET | `/api/product-info` |現在の ProductInfo を読み取ります。 |すべて | [ProductInfo](payloads/product/product-info.ja.md) |
 | ProductInfo | POST | `/api/product-info` |現在の ProductInfo を更新します。 | `Ready` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |システム | POST | `/api/system/initialize` | システムを初期化します。 | `Uninitialized` | [CommandResponse](payloads/commands/command-response.ja.md) |
-|システム | POST | `/api/system/deinitialize` | システムの初期化を解除します。 | `Ready` | [CommandResponse](payloads/commands/command-response.ja.md) |
+|システム | POST | `/api/system/deinitialize` | システムの初期化を解除、または復旧クリーンアップを再試行します。 | `Ready` または公開復旧状態 `Deinitializing` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |システム | POST | `/api/system/start` |実行を開始します。 | `Ready` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |システム | POST | `/api/system/stop` |現在の実行を停止します。 | `Running` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |結果 | GET | `/api/results` |結果の概要を照会します。 |すべて | [ResultList](payloads/results/result-list.ja.md) |
@@ -534,7 +534,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 | HTTP ステータス |本文 |説明 |
 | --- | --- | --- |
 | `200 OK` | [CommandResponse](payloads/commands/command-response.ja.md) |初期化解除が完了しました。 |
-| `409 Conflict` | [CommandResponse](payloads/commands/command-response.ja.md) |現在の状態では初期化を解除できません。 |
+| `409 Conflict` | [CommandResponse](payloads/commands/command-response.ja.md) |現在の状態では初期化解除または復旧再試行を実行できません。 |
 
 ### 例
 
@@ -596,11 +596,16 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 ### 状態の制約
 
-`Ready` での呼び出しのみが許可されます。
+`Ready` で有効です。公開復旧状態 `Deinitializing` でも、自動復旧に失敗したクリーンアップを再試行するために受け付けます。
 
 ### エラー処理
 
-現在の状態が `Ready` ではない場合、`accepted=false` および `errorCode=invalid_state` を返します。
+現在の状態が `Ready` または公開復旧状態 `Deinitializing` でない場合、`accepted=false` および `errorCode=invalid_state` を返します。
+
+復旧中の応答および状態/エラー payload には、任意の `recoveryAction`、
+`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、サニタイズ済みの
+`recoveryDetails` を含めることができます。`ErrorInfo` と `CommandResponse`
+には安定した `errorCode` も含めることができます。これらは追加フィールドです。
 
 ## POST /api/system/start
 

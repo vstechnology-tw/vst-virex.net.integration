@@ -19,9 +19,14 @@ Examples:
 - `Stop` is valid only in `Running`.
 - `SetProductInfo` is valid only in `Ready`.
 - `Initialize` is valid only in `Uninitialized`.
-- `Deinitialize` is valid only in `Ready`.
+- `Deinitialize` is valid in `Ready` and remains the retry action in public recovery state `Deinitializing`.
 
 Read `GET /api/status` first, then send the command when the state allows it.
+
+If the response state is `Deinitializing`, read `recoveryAction`,
+`recoveryStartedAt`, `recoverySource`, `recoveryPhase`, sanitized
+`recoveryDetails`, and `errorCode` when present. Keep Deinitialize enabled and
+retry it; do not wait for the internal `Faulted` or `RequiresDeinitialize` names.
 
 ## No Results Returned
 

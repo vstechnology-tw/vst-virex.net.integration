@@ -11,7 +11,7 @@
 | `Ready` | 대기 상태입니다. ProductInfo 업데이트, 시작 및 초기화 취소 명령이 유효합니다. |
 | `UpdatingProductInfo` | ProductInfo 업데이트가 수락되었으며 시스템이 완료 이벤트를 기다리고 있습니다. |
 | `Running` | 실행이 활성화되었습니다. 내부 실행 단계는 공개 상태가 아닙니다. |
-| `Deinitializing` | Deinitialize가 수락되었으며 시스템이 완료 이벤트를 기다리고 있습니다. |
+| `Deinitializing` | Deinitialize가 실행 중이거나 재시도 가능한 복구 상태입니다. 정리가 완료될 때까지 Deinitialize를 사용할 수 있어야 합니다. |
 
 ## 명령 및 이벤트
 
@@ -33,13 +33,19 @@
 | `SetProductInfo` | `Ready` | `UpdatingProductInfo` 상태로 전환됩니다. `ProductInfoUpdateCompleted`는 상태를 `Ready`로 되돌립니다. |
 | `Start` | `Ready` | 현재 ProductInfo 스냅샷을 캡처하고 `Running` 상태로 전환됩니다. |
 | `Stop` | `Running` | 활성 실행을 중지하고 상태를 `Ready`로 반환합니다. |
-| `Deinitialize` | `Ready` | `Deinitializing` 상태로 전환됩니다. `DeinitializationCompleted`는 상태를 `Uninitialized`로 변경합니다. |
+| `Deinitialize` | `Ready` 또는 `Deinitializing`(복구 재시도) | `Deinitializing`으로 전환하거나 재시도하며, 성공하면 `Uninitialized`가 됩니다. |
 
 ## 거부된 명령
 
 위 표에 나열되지 않은 상태에서 전송된 명령은 유효하지 않습니다. 잘못된 명령은 지속적으로 거부되어야 하며 현재 상태를 변경해서는 안 됩니다.
 
 예를 들어 상태가 `Running`인 동안 `SetProductInfo`를 보내는 것은 유효하지 않습니다. 왜냐하면 ProductInfo는 상태가 `Ready`인 동안에만 변경할 수 있기 때문입니다.
+
+## 복구 계약
+
+내부 acquisition fault로 현재 소스를 신뢰할 수 없게 되어도 `Faulted`를 클라이언트에 공개하지 않습니다. 공개 상태는 `Deinitializing`으로 투영되고 `CommandResponse`, `SystemStatus` 또는 `ErrorInfo`에 `recoveryAction: "Deinitialize"`가 포함됩니다. 자동 정리가 실패해도 Deinitialize는 계속 사용할 수 있으며 재시도할 수 있습니다. 재시도로도 완료되지 않을 때만 앱 재시작을 마지막 수단으로 사용합니다.
+
+복구 페이로드에는 선택적 `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails` 및 오류/명령에 대한 안정적인 `errorCode`가 포함될 수 있습니다. 이는 추가 필드이므로 클라이언트는 알 수 없는 필드를 무시해야 합니다.
 
 ## 결과 스냅샷
 

@@ -83,6 +83,21 @@ Console.WriteLine(start.State); // Running
 var results = await client.QueryResultsAsync(lotID: "LOT-001");
 ```
 
+## 復旧と Deinitialize の再試行
+
+ソースまたはクリーンアップの失敗で復旧が必要な場合、公開状態は `Deinitializing` になり、応答/状態に `recoveryAction: "Deinitialize"` が含まれます。Deinitialize 操作を継続して使用可能にし、クリーンアップが拒否された場合は再試行してください。アプリケーションの再起動は Deinitialize を完了できない場合だけの UI レベルの最終手段です。
+
+```csharp
+var status = await client.GetStatusAsync();
+if (status.RecoveryAction == RecoveryActions.Deinitialize)
+{
+    var cleanup = await client.DeinitializeAsync();
+    Console.WriteLine($"Recovery: accepted={cleanup.Accepted}, phase={cleanup.RecoveryPhase}, details={cleanup.RecoveryDetails}");
+}
+```
+
+`Faulted` と `RequiresDeinitialize` は公開ライフサイクル状態ではありません。内部状態名を待たず、`state`、`recoveryAction`、および任意の復旧コンテキストフィールドを読み取ってください。
+
 ## TCP イベント
 
 ```csharp

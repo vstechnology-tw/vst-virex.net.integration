@@ -83,6 +83,21 @@ Console.WriteLine(start.State); // Running
 var results = await client.QueryResultsAsync(lotID: "LOT-001");
 ```
 
+## Recovery and Deinitialize retry
+
+If a source or cleanup failure requires recovery, the public state is `Deinitializing` and the response/status includes `recoveryAction: "Deinitialize"`. Keep the Deinitialize command available, retry after a rejected cleanup attempt, and use application restart only as a UI-level last resort:
+
+```csharp
+var status = await client.GetStatusAsync();
+if (status.RecoveryAction == RecoveryActions.Deinitialize)
+{
+    var cleanup = await client.DeinitializeAsync();
+    Console.WriteLine($"Recovery: accepted={cleanup.Accepted}, phase={cleanup.RecoveryPhase}, details={cleanup.RecoveryDetails}");
+}
+```
+
+`Faulted` and `RequiresDeinitialize` are not public lifecycle states. Clients should read `state`, `recoveryAction`, and the optional recovery context fields instead of waiting for an internal state name.
+
 ## TCP events
 
 ```csharp

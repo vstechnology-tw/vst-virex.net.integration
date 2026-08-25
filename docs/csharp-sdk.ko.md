@@ -83,6 +83,21 @@ Console.WriteLine(start.State); // Running
 var results = await client.QueryResultsAsync(lotID: "LOT-001");
 ```
 
+## 복구 및 Deinitialize 재시도
+
+소스 또는 정리 오류로 복구가 필요하면 공개 상태는 `Deinitializing`이며 응답/상태에 `recoveryAction: "Deinitialize"`가 포함됩니다. Deinitialize 명령을 계속 사용할 수 있게 하고, 정리 거부 후 다시 시도하십시오. 애플리케이션 재시작은 Deinitialize를 완료할 수 없을 때만 UI 수준의 최후 수단입니다.
+
+```csharp
+var status = await client.GetStatusAsync();
+if (status.RecoveryAction == RecoveryActions.Deinitialize)
+{
+    var cleanup = await client.DeinitializeAsync();
+    Console.WriteLine($"Recovery: accepted={cleanup.Accepted}, phase={cleanup.RecoveryPhase}, details={cleanup.RecoveryDetails}");
+}
+```
+
+`Faulted` 및 `RequiresDeinitialize`는 공개 수명 주기 상태가 아닙니다. 내부 상태 이름을 기다리지 말고 `state`, `recoveryAction` 및 선택적 복구 컨텍스트 필드를 읽으십시오.
+
 ## TCP 이벤트
 
 ```csharp

@@ -19,9 +19,14 @@
 - `Stop`は`Running`でのみ有効です。
 - `SetProductInfo`は`Ready`でのみ有効です。
 - `Initialize`は`Uninitialized`でのみ有効です。
-・`Deinitialize`は`Ready`内でのみ有効です。
+・`Deinitialize`は`Ready`で有効で、公開復旧状態`Deinitializing`ではクリーンアップ再試行のために使用可能です。
 
 最初に `GET /api/status` を読み取り、状態が許可したときにコマンドを送信します。
+
+応答状態が `Deinitializing` の場合は、存在する `recoveryAction`、
+`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、サニタイズ済みの
+`recoveryDetails`、`errorCode` を読み取ります。Deinitialize を使用可能なまま
+再試行し、内部状態名 `Faulted` または `RequiresDeinitialize` を待ちません。
 
 ## 結果は返されませんでした
 

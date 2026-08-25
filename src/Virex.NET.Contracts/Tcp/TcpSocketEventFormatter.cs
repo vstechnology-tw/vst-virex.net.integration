@@ -3,10 +3,30 @@ namespace Virex.NET.Contracts;
 public static class TcpSocketEventFormatter
 {
     public static string FormatStatus(SystemStatus status) =>
-        Format(new { type = "statusChanged", status.State });
+        Format(new
+        {
+            type = "statusChanged",
+            status.State,
+            status.RecoveryAction,
+            status.ErrorCode,
+            status.RecoveryStartedAt,
+            status.RecoverySource,
+            status.RecoveryPhase,
+            status.RecoveryDetails,
+        });
 
     public static string FormatStatusResponse(SystemStatus status) =>
-        Format(new { type = "status", status.State });
+        Format(new
+        {
+            type = "status",
+            status.State,
+            status.RecoveryAction,
+            status.ErrorCode,
+            status.RecoveryStartedAt,
+            status.RecoverySource,
+            status.RecoveryPhase,
+            status.RecoveryDetails,
+        });
 
     public static string FormatErrorResponse(ErrorInfo error) =>
         Format(new
@@ -15,6 +35,12 @@ public static class TcpSocketEventFormatter
             error.HasError,
             error.Message,
             error.State,
+            error.RecoveryAction,
+            error.ErrorCode,
+            error.RecoveryStartedAt,
+            error.RecoverySource,
+            error.RecoveryPhase,
+            error.RecoveryDetails,
         });
 
     public static string FormatProductInfo(ProductInfo info) =>
@@ -64,10 +90,30 @@ public static class TcpSocketEventFormatter
         });
 
     public static string FormatRunStarted(SystemStatus status) =>
-        Format(new { type = "runStarted", status.State });
+        Format(new
+        {
+            type = "runStarted",
+            status.State,
+            status.RecoveryAction,
+            status.ErrorCode,
+            status.RecoveryStartedAt,
+            status.RecoverySource,
+            status.RecoveryPhase,
+            status.RecoveryDetails,
+        });
 
     public static string FormatRunCompleted(SystemStatus status) =>
-        Format(new { type = "runCompleted", status.State });
+        Format(new
+        {
+            type = "runCompleted",
+            status.State,
+            status.RecoveryAction,
+            status.ErrorCode,
+            status.RecoveryStartedAt,
+            status.RecoverySource,
+            status.RecoveryPhase,
+            status.RecoveryDetails,
+        });
 
     public static string FormatResult(ResultSummary summary) =>
         Format(new
@@ -98,6 +144,12 @@ public static class TcpSocketEventFormatter
             type = "errorChanged",
             message = error.Message,
             error.State,
+            error.RecoveryAction,
+            error.ErrorCode,
+            error.RecoveryStartedAt,
+            error.RecoverySource,
+            error.RecoveryPhase,
+            error.RecoveryDetails,
             timestamp = DateTimeOffset.Now,
         });
 
@@ -109,6 +161,11 @@ public static class TcpSocketEventFormatter
             response.State,
             response.Command,
             response.ErrorCode,
+            response.RecoveryAction,
+            response.RecoveryStartedAt,
+            response.RecoverySource,
+            response.RecoveryPhase,
+            response.RecoveryDetails,
             response.Message,
         });
 

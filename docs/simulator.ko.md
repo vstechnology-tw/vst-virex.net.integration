@@ -61,7 +61,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- |
 | **Start Servers** | RESTful API, TCP 및 MQTT 엔드포인트를 시작합니다. 시스템 상태를 변경하지 않습니다. |
 | **Initialize** | 초기화 명령을 보냅니다. `Uninitialized`에서만 유효합니다. |
-| **Deinitialize** | 초기화 해제 명령을 보냅니다. `Ready`에서만 유효합니다. |
+| **Deinitialize** | 초기화 해제 명령을 보냅니다. `Ready`에서 유효하며 공개 복구 상태 `Deinitializing`에서도 정리를 재시도할 수 있습니다. |
 | **Apply ProductInfo** | 현재 ProductInfo를 업데이트합니다. `Ready`에서만 유효합니다. |
 | **Start Single** | `runMode=single`로 단일 실행을 시작합니다. `Ready`에서만 유효합니다. 응답 상태는 `Running`입니다. 시뮬레이터는 결과를 생성하고 run-completed event 이후 `Ready`로 돌아갑니다. |
 | **Start Continue** | `runMode=continue`로 연속 실행을 시작합니다. `Ready`에서만 유효합니다. 응답 상태는 `Running`입니다. **Stop**을 누를 때까지 결과를 계속 생성합니다. |

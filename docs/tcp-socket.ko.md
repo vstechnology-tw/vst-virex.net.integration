@@ -35,7 +35,7 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
 | `error` | `type`만 사용 | 모두 | 직접 응답 `type: "error"`를 반환합니다. |
 | `getProductInfo` | `type`만 사용 | 모두 | 직접 응답 `type: "productInfo"`를 반환합니다. |
 | `initialize` | `type`가 포함된 [SystemInitializeRequest](payloads/commands/system-initialize-request.ko.md) | `Uninitialized` | `Initializing` 상태로 전환됩니다. 완료 후 `Ready` 상태의 `statusChanged`를 보냅니다. |
-| `deinitialize` | `type`가 포함된 [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ko.md) | `Ready` | `Deinitializing` 상태로 전환됩니다. 완료 후 `Uninitialized` 상태의 `statusChanged`를 보냅니다. |
+| `deinitialize` | `type`가 포함된 [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ko.md) | `Ready` 또는 공개 복구 상태 `Deinitializing` | `Deinitializing`으로 전환하거나 재시도합니다. 정리 성공 후 `Uninitialized` 상태의 `statusChanged`를 보냅니다. |
 | `productInfo` | `type`가 포함된 [ProductInfo](payloads/product/product-info.ko.md) | `Ready` | ProductInfo를 업데이트하고 `productInfoChanged`를 내보냅니다. |
 | `start` | `type`가 포함된 [SystemStartRequest](payloads/commands/system-start-request.ko.md) | `Ready` | `Running` 상태로 전환됩니다. 완료는 이벤트와 결과로 보고됩니다. |
 | `stop` | `type`가 포함된 [SystemStopRequest](payloads/commands/system-stop-request.ko.md) | `Running` | 실행을 중지하고 `Ready`로 돌아갑니다. |
@@ -225,7 +225,7 @@ TCP를 통해 시스템을 반초기화합니다. `DeinitializationCompleted`가
 
 ### 상태 제한
 
-`Ready`에서만 유효합니다.
+`Ready` 및 공개 복구 상태 `Deinitializing`에서 유효합니다.
 
 ### 성공 이벤트
 
@@ -237,7 +237,14 @@ TCP를 통해 시스템을 반초기화합니다. `DeinitializationCompleted`가
 
 ### 오류 처리
 
-현재 상태가 `Ready`가 아닌 경우 서비스는 `commandRejected`를 보냅니다.
+정리가 계속 실패하면 서비스는 `errorCode: "requires_deinitialize"` 및
+`recoveryAction: "Deinitialize"`를 포함한 `commandRejected`를 보냅니다. 클라이언트는
+Deinitialize를 다시 시도할 수 있도록 유지해야 하며, 다른 공개 상태에서는 명령을 거부합니다.
+
+`statusChanged`, `errorChanged`, `commandRejected`는 선택적 `recoveryStartedAt`,
+`recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails`를 유지할 수 있습니다.
+오류 및 거부 응답에는 안정적인 `errorCode`도 포함될 수 있습니다. `Faulted`와
+`RequiresDeinitialize`는 공개되지 않습니다.
 
 ## productInfo 명령
 

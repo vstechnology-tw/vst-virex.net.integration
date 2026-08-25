@@ -8,17 +8,17 @@
 
 ## GitHub Releases：預先建置的模擬器 EXE
 
-目前模擬器版本是 `v2.1.1`：
+目前模擬器版本是 `v2.2.2`：
 
-[下載 Virex.NET Simulator v2.1.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.1.1)
+[下載 Virex.NET Simulator v2.2.2](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.2.2)
 
 每個 ZIP 都包含 `Virex.NET.Simulator.WPF.exe`。請依照目標環境選擇套件：
 
 | 檔案 | Runtime | 使用時機 |
 | --- | --- | --- |
-| [`Virex.NET.Simulator-v2.1.1-net48-win-x64.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.1/Virex.NET.Simulator-v2.1.1-net48-win-x64.zip) | .NET Framework 4.8 | 目標 Windows 已安裝 .NET Framework 4.8 時使用。 |
-| [`Virex.NET.Simulator-v2.1.1-net8.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.1/Virex.NET.Simulator-v2.1.1-net8.0-windows-win-x64-self-contained.zip) | .NET 8 Windows | 需要內含 runtime 的目前 Windows 建置時使用。 |
-| [`Virex.NET.Simulator-v2.1.1-net10.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.1.1/Virex.NET.Simulator-v2.1.1-net10.0-windows-win-x64-self-contained.zip) | .NET 10 Windows | 需要驗證最新支援 Windows target 時使用。 |
+| [`Virex.NET.Simulator-v2.2.2-net48-win-x64.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.2.2/Virex.NET.Simulator-v2.2.2-net48-win-x64.zip) | .NET Framework 4.8 | 目標 Windows 已安裝 .NET Framework 4.8 時使用。 |
+| [`Virex.NET.Simulator-v2.2.2-net8.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.2.2/Virex.NET.Simulator-v2.2.2-net8.0-windows-win-x64-self-contained.zip) | .NET 8 Windows | 需要內含 runtime 的目前 Windows 建置時使用。 |
+| [`Virex.NET.Simulator-v2.2.2-net10.0-windows-win-x64-self-contained.zip`](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/download/v2.2.2/Virex.NET.Simulator-v2.2.2-net10.0-windows-win-x64-self-contained.zip) | .NET 10 Windows | 需要驗證最新支援 Windows target 時使用。 |
 
 下載後：
 
@@ -33,19 +33,19 @@
 
 | 套件 | 用途 |
 | --- | --- |
-| [Virex.NET.Contracts 2.1.1](https://www.nuget.org/packages/Virex.NET.Contracts/2.1.1) | 以 C# 模型提供公開資料模型、RESTful API 路由、MQTT 主題名稱、TCP/NDJSON 格式化與解析工具。 |
-| [Virex.NET.Client 2.1.1](https://www.nuget.org/packages/Virex.NET.Client/2.1.1) | RESTful API、TCP、MQTT 的 C# SDK 包裝層。 |
+| [Virex.NET.Contracts 2.2.2](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.2) | 以 C# 模型提供公開資料模型、RESTful API 路由、MQTT 主題名稱、TCP/NDJSON 格式化與解析工具。 |
+| [Virex.NET.Client 2.2.2](https://www.nuget.org/packages/Virex.NET.Client/2.2.2) | RESTful API、TCP、MQTT 的 C# SDK 包裝層。 |
 
 安裝 SDK：
 
 ```powershell
-dotnet add package Virex.NET.Client --version 2.1.1
+dotnet add package Virex.NET.Client --version 2.2.2
 ```
 
 只需要共用合約：
 
 ```powershell
-dotnet add package Virex.NET.Contracts --version 2.1.1
+dotnet add package Virex.NET.Contracts --version 2.2.2
 ```
 
 `Virex.NET.Client` 與 `Virex.NET.Contracts` 目標框架為 `netstandard2.0`。

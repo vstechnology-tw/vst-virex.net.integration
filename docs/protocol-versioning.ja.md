@@ -20,6 +20,12 @@
 
 以下はお客様向けに公開されたバージョンの一覧です。各見出しは対応する GitHub Release にリンクしています。
 
+### [v2.2.2](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.2.2) — 2026-08-25
+
+- 公開バージョンが 2.1.1 のままだったため、未公開の 2.2.1 候補で準備した復旧機能を 2.2.2 として公開します。
+- `statusChanged`、`errorChanged`、`commandRejected` に、再試行可能な Deinitialize ガイダンス、安定したエラーコード、時刻、発生元、フェーズ、サニタイズ済み詳細を含む共通の追加型復旧エンベロープを追加します。
+- 同時に発生するシミュレーター復旧遷移を直列化し、`imageGrabbed`、`captureId`、永続化されたシミュレーター成果物を維持します。
+- 現行のシミュレーター ZIP、4 言語のドキュメント PDF、Mermaid 描画修正を含みます。
 ### [v2.1.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.1.1) — 2026-08-17
 
 - イベントモデル、TCP、MQTT、C# SDK、シミュレーターに公開 `imageGrabbed` イベントを追加しました。

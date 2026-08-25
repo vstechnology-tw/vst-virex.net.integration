@@ -25,6 +25,23 @@
 }
 ```
 
+When operator recovery is required, the response remains in the public `Deinitializing` state and carries a structured action:
+
+```json
+{
+  "accepted": false,
+  "state": "Deinitializing",
+  "command": "Stop",
+  "errorCode": "requires_deinitialize",
+  "recoveryAction": "Deinitialize",
+  "recoveryStartedAt": "2026-08-07T10:00:00.000+00:00",
+  "recoverySource": "Acquisition",
+  "recoveryPhase": "Deinitializing",
+  "recoveryDetails": "Camera acquisition failed.",
+  "message": "Deinitialize is required before another command can be accepted."
+}
+```
+
 ## Field
 
 | Field | Type | Required | Description |
@@ -33,6 +50,11 @@
 | `state` | string | Yes | Current state after command processing. |
 | `command` | string | Yes | The public command name. |
 | `errorCode` | string | No | Omitted for accepted commands. `invalid_state` means the command is invalid in the current state. |
+| `recoveryAction` | string | No | Operator recovery action required by the current state. The public protocol currently defines `Deinitialize`; application restart remains a UI-only last resort. |
+| `recoveryStartedAt` | string (date-time) | No | UTC timestamp at which the current recovery attempt began. |
+| `recoverySource` | string | No | Subsystem that reported the failure. |
+| `recoveryPhase` | string | No | Recovery phase currently in progress. |
+| `recoveryDetails` | string | No | Human-readable recovery context. |
 | `message` | string | Yes | Response message. |
 
 ## Use location

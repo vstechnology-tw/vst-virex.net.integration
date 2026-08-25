@@ -11,7 +11,8 @@
 | ProductInfo 업데이트 | `POST /api/product-info`는 `Ready`에서 허용되며 `Ready`를 반환합니다. |
 | 시작 | `POST /api/system/start`는 `Ready`에서 허용되며 `Running`를 반환합니다. |
 | 중지 | `POST /api/system/stop`는 `Running`에서 허용되며 `Ready`를 반환합니다. |
-| Deinitialize | `POST /api/system/deinitialize`는 `Ready`에서 허용되며 `Uninitialized`를 반환합니다. |
+| Deinitialize | `POST /api/system/deinitialize`는 `Ready`에서 허용되며, 정리 실패를 주입한 후에도 `Deinitializing`에서 재시도할 수 있고 성공하면 `Uninitialized`를 반환합니다. |
+| 복구 투영 | 복구 중 `/api/status`, `/api/error` 및 명령 응답은 `state: Deinitializing`, `recoveryAction: Deinitialize`, 선택적 시작 시각/소스/단계/정리된 세부 정보와 해당되는 안정적인 오류 코드를 제공하며 내부 `Faulted` 또는 `RequiresDeinitialize` 상태는 노출하지 않습니다. |
 | 잘못된 명령 | 잘못된 명령은 `accepted=false`, `errorCode=invalid_state` 및 현재 `state`를 반환합니다. |
 | 결과 | `GET /api/results`는 ProductInfo 스냅샷 필드와 일치하는 요약을 반환합니다. |
 
@@ -24,6 +25,7 @@
 | ProductInfo 명령 | `type: "productInfo"`는 `Ready`의 ProductInfo를 업데이트합니다. |
 | 시작/stop 명령 | `type: "start"` 및 `type: "stop"`는 REST와 동일한 상태 규칙을 따릅니다. |
 | 이벤트 분석 | 클라이언트는 `statusChanged`, `productInfoChanged`, `imageGrabbed`, `runStarted`, `runCompleted`, `resultCreated`, `errorChanged` 및 `commandRejected`를 처리할 수 있습니다. |
+| 복구 이벤트 필드 | `statusChanged`, `errorChanged` 및 `commandRejected`는 Deinitialize를 계속 사용할 수 있도록 복구 작업, 선택적 컨텍스트, 안정적인 오류 코드와 정리된 세부 정보를 보존합니다. |
 
 ## MQTT
 
@@ -35,6 +37,7 @@
 | 이미지 이벤트 | 클라이언트는 `resultCreated` 전에 `imageGrabbed`를 받으며 취득 이벤트에는 경로가 없습니다. |
 | 결과 이벤트 | 클라이언트는 `resultCreated`를 받습니다. |
 | 거절 이벤트 | 명령이 거부되면 클라이언트는 `commandRejected`를 수신합니다. |
+| 복구 이벤트 필드 | `statusChanged`, `errorChanged` 및 `commandRejected`는 Deinitialize를 계속 사용할 수 있도록 복구 작업, 선택적 컨텍스트, 안정적인 오류 코드와 정리된 세부 정보를 보존합니다. |
 
 ## 이식성
 

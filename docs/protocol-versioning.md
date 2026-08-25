@@ -20,6 +20,12 @@ Use semantic versioning for public package and protocol changes.
 
 These entries summarize the releases published for customers. Each heading links to the corresponding GitHub Release.
 
+### [v2.2.2](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.2.2) — 2026-08-25
+
+- Publishes the recovery work prepared under the unpublished 2.2.1 candidate as 2.2.2 after the public version remained at 2.1.1.
+- Adds one additive recovery envelope for `statusChanged`, `errorChanged`, and `commandRejected`, including retryable Deinitialize guidance, stable error codes, timestamps, source, phase, and sanitized details.
+- Serializes concurrent simulator recovery transitions and preserves `imageGrabbed`, `captureId`, and persisted simulator artifacts.
+- Includes the current simulator ZIP builds, four localized documentation PDFs, and Mermaid rendering fixes.
 ### [v2.1.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.1.1) — 2026-08-17
 
 - Adds the public `imageGrabbed` event across REST-compatible event models, TCP, MQTT, the C# SDK, and the simulator.

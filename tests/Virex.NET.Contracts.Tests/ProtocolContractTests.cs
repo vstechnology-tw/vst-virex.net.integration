@@ -16,6 +16,84 @@ public sealed class ProtocolContractTests
     }
 
     [Fact]
+    public void RecoveryActionIsAnOptionalPublicContractField()
+    {
+        var statusJson = ProtocolJson.Serialize(new SystemStatus
+        {
+            State = SystemStates.Deinitializing,
+            RecoveryAction = RecoveryActions.Deinitialize,
+        });
+        var responseJson = ProtocolJson.Serialize(new CommandResponse
+        {
+            Accepted = false,
+            State = SystemStates.Deinitializing,
+            Command = "Stop",
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            Message = "Deinitialize is required.",
+        });
+
+        using var status = JsonDocument.Parse(statusJson);
+        using var response = JsonDocument.Parse(responseJson);
+        Assert.Equal(RecoveryActions.Deinitialize, status.RootElement.GetProperty("recoveryAction").GetString());
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, response.RootElement.GetProperty("errorCode").GetString());
+        Assert.Equal(RecoveryActions.Deinitialize, response.RootElement.GetProperty("recoveryAction").GetString());
+    }
+
+    [Fact]
+    public void RecoveryProjectionFieldsAreSharedByStatusErrorAndCommands()
+    {
+        var startedAt = new DateTimeOffset(2026, 8, 7, 1, 2, 3, TimeSpan.Zero);
+        var statusJson = ProtocolJson.Serialize(new SystemStatus
+        {
+            State = SystemStates.Deinitializing,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
+            RecoveryStartedAt = startedAt,
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+        var errorJson = ProtocolJson.Serialize(new ErrorInfo
+        {
+            HasError = true,
+            State = SystemStates.Deinitializing,
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            RecoveryStartedAt = startedAt,
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+        var responseJson = ProtocolJson.Serialize(new CommandResponse
+        {
+            Accepted = false,
+            State = SystemStates.Deinitializing,
+            Command = "Deinitialize",
+            ErrorCode = CommandErrorCodes.RequiresDeinitialize,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            RecoveryStartedAt = startedAt,
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+
+        using var status = JsonDocument.Parse(statusJson);
+        using var error = JsonDocument.Parse(errorJson);
+        using var response = JsonDocument.Parse(responseJson);
+        foreach (var document in new[] { status, error, response })
+        {
+            Assert.Equal("Cam01", document.RootElement.GetProperty("recoverySource").GetString());
+            Assert.Equal("Deinitializing", document.RootElement.GetProperty("recoveryPhase").GetString());
+            Assert.Equal("native close failed", document.RootElement.GetProperty("recoveryDetails").GetString());
+            Assert.NotEqual(JsonValueKind.Null, document.RootElement.GetProperty("recoveryStartedAt").ValueKind);
+        }
+
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, error.RootElement.GetProperty("errorCode").GetString());
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, status.RootElement.GetProperty("errorCode").GetString());
+    }
+
+    [Fact]
     public void ProductInfoParserAcceptsNumberOrStringSlot()
     {
         Assert.True(ProductInfoJsonParser.TryParse(
@@ -131,6 +209,45 @@ public sealed class ProtocolContractTests
         Assert.Equal("resultCreated", doc.RootElement.GetProperty("type").GetString());
         Assert.Equal("golden-sample", doc.RootElement.GetProperty("condition").GetString());
     }
+    [Fact]
+    public void RecoverySanitizerUsesOneBoundedPublicPolicy()
+    {
+        var sanitized = RecoveryMessageSanitizer.Sanitize(
+            "native cleanup failed\npassword=secret C:\\recipes\\private.json /var/log/virex\u0001 at Driver.Close()");
+        var bounded = RecoveryMessageSanitizer.Sanitize(new string('x', 600));
+
+        Assert.Equal(
+            "native cleanup failed password=[redacted] [path] [path]",
+            sanitized);
+        Assert.NotNull(bounded);
+        Assert.Equal(512, bounded.Length);
+        Assert.EndsWith("...", bounded, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OlderClientShapeIgnoresAdditiveRecoveryFields()
+    {
+        var json = ProtocolJson.Serialize(new SystemStatus
+        {
+            State = SystemStates.Deinitializing,
+            RecoveryAction = RecoveryActions.Deinitialize,
+            RecoveryStartedAt = DateTimeOffset.Parse("2026-08-07T00:00:00Z"),
+            RecoverySource = "Cam01",
+            RecoveryPhase = "Deinitializing",
+            RecoveryDetails = "native close failed",
+        });
+
+        var legacy = JsonSerializer.Deserialize<LegacySystemStatus>(json, ProtocolJson.Options);
+
+        Assert.NotNull(legacy);
+        Assert.Equal(SystemStates.Deinitializing, legacy.State);
+    }
+
+    private sealed class LegacySystemStatus
+    {
+        public string State { get; set; } = string.Empty;
+    }
+
     [Fact]
     public void ImageGrabbedFrameIncludesMetadataWithoutPath()
     {

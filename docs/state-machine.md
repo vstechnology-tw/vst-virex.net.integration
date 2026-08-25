@@ -11,7 +11,7 @@ The state machine defines which commands are valid in each system lifecycle stat
 | `Ready` | Idle. ProductInfo update, start, and deinitialize commands are valid. |
 | `UpdatingProductInfo` | ProductInfo update has been accepted and the system is waiting for the completion event. |
 | `Running` | A run is active. Internal run phases are not public states. |
-| `Deinitializing` | Deinitialize has been accepted and the system is waiting for the completion event. |
+| `Deinitializing` | Deinitialize is running or is a retryable recovery action; the client must keep Deinitialize available until cleanup completes. |
 
 ## Commands and events
 
@@ -33,13 +33,24 @@ Solid transitions represent commands. Dashed transitions represent events.
 | `SetProductInfo` | `Ready` | Enters `UpdatingProductInfo`; `ProductInfoUpdateCompleted` returns the state to `Ready`. |
 | `Start` | `Ready` | Captures the current ProductInfo snapshot and enters `Running`. |
 | `Stop` | `Running` | Stops the active run and returns the state to `Ready`. |
-| `Deinitialize` | `Ready` | Enters `Deinitializing`; `DeinitializationCompleted` changes the state to `Uninitialized`. |
+| `Deinitialize` | `Ready` or `Deinitializing` (recovery retry) | Enters or remains in `Deinitializing`; successful completion changes the state to `Uninitialized`. |
 
 ## Rejected Commands
 
 Any command sent from a state not listed in the table above is invalid. Invalid commands must be rejected consistently and must not change the current state.
 
 For example, sending `SetProductInfo` while the state is `Running` is invalid because ProductInfo can only be changed while the state is `Ready`.
+
+## Recovery contract
+
+When an internal acquisition fault makes the current sources untrusted, `Faulted` must not be exposed to clients.
+The public projection remains `Deinitializing` and `CommandResponse`, `SystemStatus`, or `ErrorInfo` carries
+`recoveryAction: "Deinitialize"`. Clients must keep Deinitialize actionable and may retry it when the first automatic
+deinitialization attempt fails. Restarting the app is the last resort only after Deinitialize retries cannot complete.
+
+Recovery payloads may also contain optional `recoveryStartedAt`, `recoverySource`,
+`recoveryPhase`, sanitized `recoveryDetails`, and (for errors/commands) a stable
+`errorCode`. These fields are additive; clients must ignore unknown fields.
 
 ## Result snapshot
 

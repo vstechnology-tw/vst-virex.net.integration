@@ -61,7 +61,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
 | --- | --- |
 | **Start Servers** | 啟動 RESTful API、TCP、MQTT 端點。不改變系統狀態。 |
 | **Initialize** | 送出初始化命令。只在 `Uninitialized` 合法。 |
-| **Deinitialize** | 送出反初始化命令。只在 `Ready` 合法。 |
+| **Deinitialize** | 送出反初始化命令。在 `Ready` 合法；公開復原狀態 `Deinitializing` 也可重試清理。 |
 | **Apply ProductInfo** | 更新目前 ProductInfo。只在 `Ready` 合法。 |
 | **Start Single** | 以 `runMode=single` 啟動單次執行。只在 `Ready` 合法；回應狀態是 `Running`。模擬器會產生結果，並在 run-completed event 後回到 `Ready`。 |
 | **Start Continue** | 以 `runMode=continue` 啟動連續執行。只在 `Ready` 合法；回應狀態是 `Running`。模擬器會持續產生結果，直到按 **Stop**。 |

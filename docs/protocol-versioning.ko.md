@@ -20,6 +20,12 @@
 
 다음은 고객에게 공개된 버전의 목록입니다. 각 제목은 해당 GitHub Release로 연결됩니다.
 
+### [v2.2.2](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.2.2) — 2026-08-25
+
+- 공개 버전이 2.1.1에 머문 뒤, 미공개 2.2.1 후보에서 준비한 복구 기능을 2.2.2로 게시합니다.
+- `statusChanged`, `errorChanged`, `commandRejected`에 재시도 가능한 Deinitialize 안내, 안정적인 오류 코드, 시각, 원본, 단계 및 정리된 세부 정보를 포함하는 공통 추가형 복구 엔벌로프를 추가합니다.
+- 동시에 발생하는 시뮬레이터 복구 전환을 직렬화하고 `imageGrabbed`, `captureId`, 영구 저장된 시뮬레이터 산출물을 유지합니다.
+- 현재 시뮬레이터 ZIP, 4개 언어 문서 PDF 및 Mermaid 렌더링 수정 사항을 포함합니다.
 ### [v2.1.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.1.1) — 2026-08-17
 
 - 이벤트 모델, TCP, MQTT, C# SDK 및 시뮬레이터에 공개 `imageGrabbed` 이벤트를 추가했습니다.

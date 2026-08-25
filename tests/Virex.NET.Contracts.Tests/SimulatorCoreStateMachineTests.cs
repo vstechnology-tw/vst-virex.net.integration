@@ -109,6 +109,113 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.Equal(SystemStates.Uninitialized, response.State);
         Assert.Equal(SystemStates.Uninitialized, session.Status.State);
     }
+
+    [Fact]
+    public async Task ConcurrentFaultAndStartShareOneSerializedRecoveryTransition()
+    {
+        var session = new SimulatorSession();
+        Assert.True((await session.InitializeAsync()).Accepted);
+        Assert.True((await session.StartAsync(new SystemStartRequest
+        {
+            RunMode = ControlRunModes.Continue,
+        })).Accepted);
+        session.ConfigureDeinitializeFailures(1, "Camera close failed.");
+
+        var firstFault = session.SimulateAcquisitionFaultAsync("Camera acquisition failed.");
+        var joinedFault = session.SimulateAcquisitionFaultAsync("A later fault must not overwrite recovery.");
+        var concurrentStart = session.StartAsync(new SystemStartRequest
+        {
+            RunMode = ControlRunModes.Continue,
+        });
+
+        Assert.Same(firstFault, joinedFault);
+        Assert.False((await firstFault).Accepted);
+        Assert.False((await concurrentStart).Accepted);
+        Assert.Equal(SimulatorState.Deinitializing, session.State);
+        Assert.Equal("Camera acquisition failed.", session.Status.RecoveryDetails);
+    }
+    [Fact]
+    public async Task AcquisitionFaultMakesDeinitializeRetryableUntilCleanupSucceeds()
+    {
+        var session = new SimulatorSession();
+        await session.InitializeAsync();
+        await session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue });
+        session.ConfigureDeinitializeFailures(1);
+
+        var firstAttempt = await session.SimulateAcquisitionFaultAsync("camera disconnected");
+
+        Assert.False(firstAttempt.Accepted);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, firstAttempt.ErrorCode);
+        Assert.Equal(RecoveryActions.Deinitialize, firstAttempt.RecoveryAction);
+        Assert.Equal("Acquisition", firstAttempt.RecoverySource);
+        Assert.Equal("Deinitializing", firstAttempt.RecoveryPhase);
+        Assert.Equal("camera disconnected", firstAttempt.RecoveryDetails);
+        Assert.NotNull(firstAttempt.RecoveryStartedAt);
+        Assert.Equal(SystemStates.Deinitializing, firstAttempt.State);
+        Assert.Equal(SystemStates.Deinitializing, session.Status.State);
+        Assert.Equal(RecoveryActions.Deinitialize, session.Status.RecoveryAction);
+        Assert.Equal("Acquisition", session.Status.RecoverySource);
+        Assert.Equal("Deinitializing", session.Status.RecoveryPhase);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, session.Status.ErrorCode);
+        Assert.True(session.Error.HasError);
+        Assert.Equal("camera disconnected", session.Error.Message);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, session.Error.ErrorCode);
+        Assert.Equal(RecoveryActions.Deinitialize, session.Error.RecoveryAction);
+
+        var retry = await session.DeinitializeAsync();
+
+        Assert.True(retry.Accepted);
+        Assert.Equal(SystemStates.Uninitialized, retry.State);
+        Assert.Equal(SystemStates.Uninitialized, session.Status.State);
+        Assert.False(session.Error.HasError);
+        Assert.Null(session.Error.RecoveryAction);
+    }
+
+    [Fact]
+    public void RecoveryDetailsAreSanitizedBeforeTheyReachThePublicContract()
+    {
+        var session = new SimulatorSession();
+
+        session.EmitError("native cleanup failed\npassword=secret C:\\recipes\\private.json");
+
+        Assert.Equal("native cleanup failed password=[redacted] [path]", session.Error.Message);
+        Assert.Equal("simulated_error", session.Error.ErrorCode);
+        Assert.Null(session.Error.RecoveryAction);
+        Assert.Null(session.Error.RecoveryDetails);
+    }
+
+    [Fact]
+    public async Task ConcurrentDeinitializeCallsJoinOneRecoveryAttemptAndACompletedFailureCanRetry()
+    {
+        var session = new SimulatorSession();
+        await session.InitializeAsync();
+        session.ConfigureDeinitializeFailures(1, "native cleanup failed");
+        var deinitializing = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        session.StatusChanged += (_, status) =>
+        {
+            if (status.State == SystemStates.Deinitializing)
+                deinitializing.TrySetResult(null);
+        };
+
+        var first = session.DeinitializeAsync();
+        await deinitializing.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var second = session.DeinitializeAsync();
+
+        Assert.Same(first, second);
+        var failed = await first;
+        Assert.False(failed.Accepted);
+        Assert.NotNull(failed.RecoveryStartedAt);
+        Assert.Equal("native cleanup failed", failed.RecoveryDetails);
+        Assert.Equal(SystemStates.Deinitializing, session.Status.State);
+
+        var retry = await session.DeinitializeAsync();
+
+        Assert.True(retry.Accepted);
+        Assert.Equal(SystemStates.Uninitialized, retry.State);
+        Assert.Null(retry.RecoveryAction);
+        Assert.Null(retry.RecoveryStartedAt);
+    }
+
     [Fact]
     public async Task SingleRunPublishesImageGrabbedBeforeResultAndPersistsArtifacts()
     {

@@ -19,9 +19,14 @@
 - `Stop`는 `Running`에서만 유효합니다.
 - `SetProductInfo`는 `Ready`에서만 유효합니다.
 - `Initialize`는 `Uninitialized`에서만 유효합니다.
-- `Deinitialize`는 `Ready`에서만 유효합니다.
+- `Deinitialize`는 `Ready`에서 유효하며 공개 복구 상태 `Deinitializing`에서도 정리 재시도를 위해 사용할 수 있어야 합니다.
 
 먼저 `GET /api/status`를 읽은 후 상태가 허용할 때 명령을 보냅니다.
+
+응답 상태가 `Deinitializing`이면 제공되는 `recoveryAction`, `recoveryStartedAt`,
+`recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails`, `errorCode`를
+읽으십시오. Deinitialize를 계속 사용할 수 있게 하고 재시도하며 내부 상태 이름
+`Faulted` 또는 `RequiresDeinitialize`를 기다리지 마십시오.
 
 ## 결과가 반환되지 않았습니다.
 

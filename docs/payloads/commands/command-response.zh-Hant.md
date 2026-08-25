@@ -25,6 +25,23 @@
 }
 ```
 
+需要客戶採取復原動作時，回應會維持公開 `Deinitializing` 狀態，並帶有結構化的動作：
+
+```json
+{
+  "accepted": false,
+  "state": "Deinitializing",
+  "command": "Stop",
+  "errorCode": "requires_deinitialize",
+  "recoveryAction": "Deinitialize",
+  "recoveryStartedAt": "2026-08-07T10:00:00.000+00:00",
+  "recoverySource": "Acquisition",
+  "recoveryPhase": "Deinitializing",
+  "recoveryDetails": "Camera acquisition failed.",
+  "message": "Deinitialize is required before another command can be accepted."
+}
+```
+
 ## 欄位
 
 | 欄位 | 型別 | 必填 | 說明 |
@@ -33,6 +50,11 @@
 | `state` | string | 是 | 命令處理後的目前狀態。 |
 | `command` | string | 是 | 公開命令名稱。 |
 | `errorCode` | string | 否 | 接受的命令會省略。`invalid_state` 代表命令在目前狀態不合法。 |
+| `recoveryAction` | string | 否 | 目前狀態需要操作人員採取的復原動作；公開協定目前定義 `Deinitialize`，App 重啟僅是 UI 層的最後手段。 |
+| `recoveryStartedAt` | string (date-time) | 否 | 目前復原嘗試開始的 UTC 時間。 |
+| `recoverySource` | string | 否 | 回報失敗的子系統。 |
+| `recoveryPhase` | string | 否 | 目前進行中的復原階段。 |
+| `recoveryDetails` | string | 否 | 提供給操作人員的人類可讀復原資訊。 |
 | `message` | string | 是 | 公開回應訊息。 |
 
 ## 使用位置

@@ -7,6 +7,7 @@ public sealed class SimulatorSession
 {
     private static readonly TimeSpan StatePreviewDelay = TimeSpan.FromSeconds(1);
     private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
+    private readonly object _deinitializationGate = new object();
     private readonly List<ResultSummary> _results = new List<ResultSummary>();
     private readonly StateMachine<SimulatorState, SimulatorTrigger> _machine;
     private int _resultSequence;
@@ -15,6 +16,15 @@ public sealed class SimulatorSession
     private readonly string _resultRootDirectory;
     private CancellationTokenSource? _singleRunCompletion;
     private CancellationTokenSource? _continuousRun;
+    private int _deinitializeFailuresRemaining;
+    private string? _deinitializeFailureMessage;
+    private string? _pendingDeinitializationError;
+    private Task<CommandResponse>? _activeDeinitialization;
+    private DateTimeOffset? _recoveryStartedAt;
+    private string? _recoverySource;
+    private string? _recoveryPhase;
+    private string? _recoveryDetails;
+    private string? _recoveryErrorCode;
 
     public SimulatorSession(string? resultRootDirectory = null)
     {
@@ -50,12 +60,22 @@ public sealed class SimulatorSession
 
     public SimulatorState State { get; private set; }
 
-    public SystemStatus Status => new SystemStatus { State = SimulatorStateNames.ToDto(State) };
+    public SystemStatus Status => new SystemStatus
+    {
+        State = SimulatorStateNames.ToDto(State),
+        RecoveryAction = RecoveryActionFor(State),
+        ErrorCode = RecoveryActionFor(State) is null ? null : _recoveryErrorCode,
+        RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+        RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+        RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+        RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
+    };
 
     public ErrorInfo Error { get; private set; } = new ErrorInfo
     {
         HasError = false,
         State = SystemStates.Uninitialized,
+        RecoveryAction = null,
     };
 
     public ProductInfo ProductInfo { get; private set; }
@@ -74,9 +94,77 @@ public sealed class SimulatorSession
     public Task<CommandResponse> InitializeAsync(CancellationToken cancellationToken = default) =>
         new InitializeSystemCommandHandler(this).Handle(new InitializeSystemCommand(), cancellationToken).AsTask();
 
-    public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default) =>
-        new DeinitializeSystemCommandHandler(this).Handle(new DeinitializeSystemCommand(), cancellationToken).AsTask();
+    public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default)
+    {
+        lock (_deinitializationGate)
+        {
+            if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization)
+                return activeDeinitialization;
 
+            _activeDeinitialization = new DeinitializeSystemCommandHandler(this)
+                .Handle(new DeinitializeSystemCommand(), CancellationToken.None)
+                .AsTask();
+            return _activeDeinitialization;
+        }
+    }
+
+    public void ConfigureDeinitializeFailures(int attempts, string? message = null)
+    {
+        if (attempts < 0)
+            throw new ArgumentOutOfRangeException(nameof(attempts));
+
+        Volatile.Write(ref _deinitializeFailuresRemaining, attempts);
+        _deinitializeFailureMessage = message;
+    }
+
+    public Task<CommandResponse> SimulateAcquisitionFaultAsync(
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            throw new ArgumentException("A fault message is required.", nameof(message));
+
+        lock (_deinitializationGate)
+        {
+            if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization)
+                return activeDeinitialization;
+
+            _activeDeinitialization = SimulateAcquisitionFaultCoreAsync(message, cancellationToken);
+            return _activeDeinitialization;
+        }
+    }
+
+    private async Task<CommandResponse> SimulateAcquisitionFaultCoreAsync(
+        string message,
+        CancellationToken cancellationToken)
+    {
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (State == SimulatorState.Running)
+            {
+                StopActiveRunTimers();
+                await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
+                LogMessage("Stopped. reason=Simulated acquisition fault");
+            }
+
+            if (State != SimulatorState.Ready)
+                return Reject("SimulateAcquisitionFault");
+
+            _pendingDeinitializationError = message;
+            BeginRecovery(
+                message,
+                "Acquisition",
+                "Deinitializing",
+                CommandErrorCodes.RequiresDeinitialize);
+            LogMessage("Acquisition fault simulated: " + message);
+            return await HandleDeinitializeUnderGateAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
     public Task<CommandResponse> SetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken = default) =>
         new SetProductInfoCommandHandler(this).Handle(new SetProductInfoCommand(productInfo), cancellationToken).AsTask();
 
@@ -91,13 +179,24 @@ public sealed class SimulatorSession
 
     public void EmitError(string message)
     {
+        var safeMessage = RecoveryMessageSanitizer.Sanitize(message) ?? "Simulated error.";
+        if (State == SimulatorState.Deinitializing)
+            BeginRecovery(safeMessage, "Simulator", "Error", "simulated_error");
+        else
+            ClearRecovery();
         Error = new ErrorInfo
         {
             HasError = true,
-            Message = message,
+            Message = safeMessage,
             State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
+            ErrorCode = "simulated_error",
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
         };
-        LogMessage("Error emitted: " + message);
+        LogMessage("Error emitted: " + safeMessage);
         LogEvent("errorChanged", Error);
         ErrorChanged?.Invoke(this, Error);
     }
@@ -134,13 +233,7 @@ public sealed class SimulatorSession
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (!CanFire(SimulatorTrigger.Deinitialize))
-                return Reject("Deinitialize");
-
-            await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
-            await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
-            await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
-            return Accept("Deinitialize", "Deinitialized.");
+            return await HandleDeinitializeUnderGateAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -148,6 +241,47 @@ public sealed class SimulatorSession
         }
     }
 
+    private async Task<CommandResponse> HandleDeinitializeUnderGateAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!CanFire(SimulatorTrigger.Deinitialize))
+            return Reject("Deinitialize");
+
+        var failureMessage = RecoveryMessageSanitizer.Sanitize(
+            _pendingDeinitializationError
+            ?? _deinitializeFailureMessage
+            ?? "Simulated deinitialization failed.")
+            ?? "Simulated deinitialization failed.";
+        var hasPendingFailure = HasPendingDeinitializeFailure();
+        if (hasPendingFailure)
+        {
+            BeginRecovery(
+                failureMessage,
+                string.IsNullOrWhiteSpace(_pendingDeinitializationError) ? "Simulator" : "Acquisition",
+                "Deinitializing",
+                CommandErrorCodes.RequiresDeinitialize);
+        }
+
+        await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
+        if (hasPendingFailure)
+            SetError(failureMessage);
+        await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
+
+        if (TryConsumeDeinitializeFailure())
+        {
+            SetError(failureMessage);
+            return Reject(
+                "Deinitialize",
+                CommandErrorCodes.RequiresDeinitialize,
+                failureMessage);
+        }
+
+        ClearRecovery();
+        await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
+        _pendingDeinitializationError = null;
+        SetError(null);
+        return Accept("Deinitialize", "Deinitialized.");
+    }
     internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -276,6 +410,7 @@ public sealed class SimulatorSession
             .Permit(SimulatorTrigger.RunCompleted, SimulatorState.Ready);
 
         _machine.Configure(SimulatorState.Deinitializing)
+            .PermitReentry(SimulatorTrigger.Deinitialize)
             .Permit(SimulatorTrigger.DeinitializationCompleted, SimulatorState.Uninitialized);
 
         _machine.OnTransitionCompleted(t =>
@@ -288,6 +423,12 @@ public sealed class SimulatorSession
             if (t.Source == SimulatorState.Running && t.Destination == SimulatorState.Ready)
                 LogEvent("runCompleted", status);
             Error.State = SimulatorStateNames.ToDto(t.Destination);
+            Error.RecoveryAction = RecoveryActionFor(t.Destination);
+            Error.ErrorCode = Error.HasError ? _recoveryErrorCode : null;
+            Error.RecoveryStartedAt = RecoveryActionFor(t.Destination) is null ? null : _recoveryStartedAt;
+            Error.RecoverySource = RecoveryActionFor(t.Destination) is null ? null : _recoverySource;
+            Error.RecoveryPhase = RecoveryActionFor(t.Destination) is null ? null : _recoveryPhase;
+            Error.RecoveryDetails = RecoveryActionFor(t.Destination) is null ? null : _recoveryDetails;
             StatusChanged?.Invoke(this, status);
         });
     }
@@ -305,6 +446,11 @@ public sealed class SimulatorSession
             Accepted = true,
             Command = command,
             State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
             Message = message,
         };
 
@@ -315,12 +461,83 @@ public sealed class SimulatorSession
             Accepted = false,
             Command = command,
             State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
             ErrorCode = errorCode,
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
             Message = message ?? "Command is not valid in the current state.",
         };
         LogEvent("commandRejected", response);
         CommandRejected?.Invoke(this, response);
         return response;
+    }
+
+    private static string? RecoveryActionFor(SimulatorState state) =>
+        state == SimulatorState.Deinitializing ? RecoveryActions.Deinitialize : null;
+
+    private void SetError(string? message)
+    {
+        var hasError = !string.IsNullOrWhiteSpace(message);
+        Error = new ErrorInfo
+        {
+            HasError = hasError,
+            Message = hasError ? message : null,
+            State = SimulatorStateNames.ToDto(State),
+            RecoveryAction = RecoveryActionFor(State),
+            ErrorCode = hasError ? _recoveryErrorCode : null,
+            RecoveryStartedAt = RecoveryActionFor(State) is null ? null : _recoveryStartedAt,
+            RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
+            RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
+            RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
+        };
+        ErrorChanged?.Invoke(this, Error);
+    }
+
+    private void BeginRecovery(
+        string? details,
+        string source,
+        string phase,
+        string errorCode)
+    {
+        _recoveryStartedAt ??= DateTimeOffset.UtcNow;
+        _recoverySource = source;
+        _recoveryPhase = phase;
+        _recoveryDetails = RecoveryMessageSanitizer.Sanitize(details);
+        _recoveryErrorCode = errorCode;
+    }
+
+    private void ClearRecovery()
+    {
+        _recoveryStartedAt = null;
+        _recoverySource = null;
+        _recoveryPhase = null;
+        _recoveryDetails = null;
+        _recoveryErrorCode = null;
+    }
+
+
+    private bool HasPendingDeinitializeFailure() =>
+        !string.IsNullOrWhiteSpace(_pendingDeinitializationError)
+        || Volatile.Read(ref _deinitializeFailuresRemaining) > 0;
+
+    private bool TryConsumeDeinitializeFailure()
+    {
+        while (true)
+        {
+            var remaining = Volatile.Read(ref _deinitializeFailuresRemaining);
+            if (remaining <= 0)
+                return false;
+
+            if (Interlocked.CompareExchange(
+                    ref _deinitializeFailuresRemaining,
+                    remaining - 1,
+                    remaining) == remaining)
+            {
+                return true;
+            }
+        }
     }
 
     private ResultSummary? EmitResult()

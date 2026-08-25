@@ -20,6 +20,12 @@
 
 以下整理提供給客戶的已發布版本。每個標題都連到對應的 GitHub Release。
 
+### [v2.2.2](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.2.2) — 2026-08-25
+
+- 公開版本仍停在 2.1.1 後，將未發布的 2.2.1 候選版復原功能正式發布為 2.2.2。
+- 為 `statusChanged`、`errorChanged` 與 `commandRejected` 新增一致且可加性的復原封套，包含可重試 Deinitialize 指引、穩定錯誤代碼、時間戳記、來源、階段與已清理細節。
+- 將同時發生的模擬器復原轉換序列化，並保留 `imageGrabbed`、`captureId` 與已持久化的模擬器產物。
+- 包含目前的模擬器 ZIP、四種語系文件 PDF 與 Mermaid 顯示修正。
 ### [v2.1.1](https://github.com/vstechnology-tw/vst-virex.net.integration/releases/tag/v2.1.1) — 2026-08-17
 
 - 新增公開 `imageGrabbed` 事件，涵蓋事件模型、TCP、MQTT、C# SDK 與模擬器。

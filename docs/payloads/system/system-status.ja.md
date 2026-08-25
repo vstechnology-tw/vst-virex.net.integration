@@ -6,7 +6,13 @@
 
 ```json
 {
-  "state": "Ready"
+  "state": "Deinitializing",
+  "errorCode": "requires_deinitialize",
+  "recoveryAction": "Deinitialize",
+  "recoveryStartedAt": "2026-08-07T10:00:00.000+00:00",
+  "recoverySource": "Acquisition",
+  "recoveryPhase": "Deinitializing",
+  "recoveryDetails": "Camera acquisition failed."
 }
 ```
 
@@ -15,6 +21,12 @@
 |フィールド |タイプ |必須 |説明 |
 | --- | --- | --- | --- |
 | `state` |文字列 |はい |現在のライフサイクル状態。 |
+| `errorCode` |文字列 |いいえ |機械判読可能な安定した復旧または失敗コード。 |
+| `recoveryAction` |文字列 |いいえ |復旧が必要な場合のオペレーター操作。現在は `Deinitialize`。操作が不要な場合は省略します。 |
+| `recoveryStartedAt` |文字列 (date-time) |いいえ |現在の復旧試行が開始された UTC 時刻。 |
+| `recoverySource` |文字列 |いいえ |失敗を報告したサブシステム。例: `Acquisition`。 |
+| `recoveryPhase` |文字列 |いいえ |現在進行中の復旧フェーズ。例: `Deinitializing`。 |
+| `recoveryDetails` |文字列 |いいえ |人間が読める復旧コンテキスト。 |
 
 ## 状態値
 

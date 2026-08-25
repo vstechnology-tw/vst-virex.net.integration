@@ -11,7 +11,7 @@
 | `Ready` | 閒置中，可接受 ProductInfo、啟動、反初始化命令。 |
 | `UpdatingProductInfo` | ProductInfo 更新已接受，等待完成事件。 |
 | `Running` | 執行中。內部執行階段不對外公開。 |
-| `Deinitializing` | 反初始化命令已接受，等待完成事件。 |
+| `Deinitializing` | 反初始化執行中，或是可重試的復原狀態；在完成前用戶端必須保持反初始化可操作。 |
 
 ## 命令與事件
 
@@ -33,13 +33,22 @@
 | `SetProductInfo` | `Ready` | 進入 `UpdatingProductInfo`；`ProductInfoUpdateCompleted` 讓狀態回到 `Ready`。 |
 | `Start` | `Ready` | 保存目前 ProductInfo 快照，並進入 `Running`。 |
 | `Stop` | `Running` | 停止目前執行，並讓狀態回到 `Ready`。 |
-| `Deinitialize` | `Ready` | 進入 `Deinitializing`；`DeinitializationCompleted` 讓狀態變成 `Uninitialized`。 |
+| `Deinitialize` | `Ready` 或 `Deinitializing`（復原重試） | 進入或維持 `Deinitializing`；成功完成後狀態變成 `Uninitialized`。 |
 
 ## 拒絕的命令
 
 任何不在上表合法狀態內送出的命令都屬於非法命令。非法命令必須被一致地拒絕，而且不能改變目前狀態。
 
 例如，`Running` 狀態下送出 `SetProductInfo` 是非法的，因為 ProductInfo 只能在 `Ready` 狀態改變。
+
+## 復原契約
+
+若內部 acquisition fault 使目前來源不再可信，對外不得公開 `Faulted`。系統會先投影為
+`Deinitializing`，並在 `CommandResponse`、`SystemStatus` 或 `ErrorInfo` 帶上
+`recoveryAction: "Deinitialize"`。客戶應保持 Deinitialize 可操作；第一次自動反初始化失敗時，
+客戶仍可重試相同命令。只有 Deinitialize 重試仍無法完成時，重新啟動 App 才是最後手段。
+
+復原 payload 也可能包含選填的 `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的 `recoveryDetails`，以及錯誤/命令使用的穩定 `errorCode`。這些都是 additive 欄位；用戶端應忽略未知欄位。
 
 ## 結果快照
 
