@@ -3,19 +3,23 @@ name: Verify documentation
 on:
   pull_request:
     paths:
+      - README.md
       - docs/**
       - mkdocs.yml
       - requirements-docs.txt
       - scripts/verify-doc-assets.ps1
+      - tests/test_readme_links.py
       - .github/workflows/verify-docs.yml
   push:
     branches:
       - main
     paths:
+      - README.md
       - docs/**
       - mkdocs.yml
       - requirements-docs.txt
       - scripts/verify-doc-assets.ps1
+      - tests/test_readme_links.py
       - .github/workflows/verify-docs.yml
   workflow_dispatch:
 
@@ -38,6 +42,9 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+
+      - name: Verify README package links
+        run: python -m unittest tests/test_readme_links.py
 
       - name: Install documentation dependencies
         run: python -m pip install -r requirements-docs.txt
