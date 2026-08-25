@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Virex.NET.Contracts;
 using Virex.NET.Simulator.Core;
 
@@ -213,5 +214,109 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.Equal(SystemStates.Uninitialized, retry.State);
         Assert.Null(retry.RecoveryAction);
         Assert.Null(retry.RecoveryStartedAt);
+    }
+
+    [Fact]
+    public async Task SingleRunPublishesImageGrabbedBeforeResultAndPersistsArtifacts()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "virex-image-grabbed-" + Guid.NewGuid().ToString("N"));
+
+        try
+        {
+            var session = new SimulatorSession(root);
+            var notifications = new List<string>();
+            ImageGrabbedInfo? imageGrabbed = null;
+            ResultSummary? result = null;
+
+            session.ImageGrabbed += (_, value) =>
+            {
+                notifications.Add("imageGrabbed");
+                imageGrabbed = value;
+            };
+            session.ResultCreated += (_, value) =>
+            {
+                notifications.Add("resultCreated");
+                result = value;
+            };
+
+            await session.InitializeAsync();
+            await session.SetProductInfoAsync(new ProductInfo
+            {
+                WaferID = "W01",
+                LotID = "LOT-1",
+                Recipe = "RCP-A",
+                Slot = "1",
+            });
+            await session.StartAsync(new SystemStartRequest
+            {
+                Condition = "golden-sample",
+                RunMode = ControlRunModes.SingleRun,
+            });
+
+            var completed = await session.RunCompletedAsync();
+
+            Assert.True(completed.Accepted);
+            Assert.Equal(SystemStates.Ready, session.Status.State);
+            Assert.Equal(2, notifications.Count);
+            Assert.Equal("imageGrabbed", notifications[0]);
+            Assert.Equal("resultCreated", notifications[1]);
+            Assert.NotNull(imageGrabbed);
+            Assert.NotNull(result);
+            Assert.Equal(result!.CaptureId, imageGrabbed!.CaptureId);
+            Assert.False(string.IsNullOrWhiteSpace(imageGrabbed.Timestamp));
+            Assert.True(Path.IsPathFullyQualified(result.ImagePath));
+            Assert.True(File.Exists(result.ImagePath));
+            Assert.True(File.Exists(result.PreviewImagePath));
+            Assert.True(File.Exists(result.ResultPath));
+            var imageBytes = File.ReadAllBytes(result.ImagePath);
+            var previewBytes = File.ReadAllBytes(result.PreviewImagePath);
+            Assert.Equal((byte)0x42, imageBytes[0]);
+            Assert.Equal((byte)0x4D, imageBytes[1]);
+            Assert.Equal((byte)0xFF, previewBytes[0]);
+            Assert.Equal((byte)0xD8, previewBytes[1]);
+
+            using var resultDocument = JsonDocument.Parse(File.ReadAllText(result.ResultPath));
+            Assert.Equal(result.CaptureId, resultDocument.RootElement.GetProperty("captureId").GetString());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task ArtifactPersistenceFailureKeepsImageGrabbedAndSuppressesResult()
+    {
+        var root = Path.GetTempFileName();
+
+        try
+        {
+            var session = new SimulatorSession(root);
+            var imageGrabbedCount = 0;
+            var resultCreatedCount = 0;
+            ErrorInfo? error = null;
+
+            session.ImageGrabbed += (_, _) => imageGrabbedCount++;
+            session.ResultCreated += (_, _) => resultCreatedCount++;
+            session.ErrorChanged += (_, value) => error = value;
+
+            await session.InitializeAsync();
+            await session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.SingleRun });
+
+            var completed = await session.RunCompletedAsync();
+
+            Assert.True(completed.Accepted);
+            Assert.Equal(SystemStates.Ready, session.Status.State);
+            Assert.Equal(1, imageGrabbedCount);
+            Assert.Equal(0, resultCreatedCount);
+            Assert.NotNull(error);
+            Assert.True(error!.HasError);
+        }
+        finally
+        {
+            if (File.Exists(root))
+                File.Delete(root);
+        }
     }
 }

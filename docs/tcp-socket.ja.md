@@ -1,6 +1,11 @@
 # TCP ソケットプロトコル
 
+
 TCP ソケットは、同じ単純なストリーミング プロトコルを介してコマンドを送信し、イベントを受信する必要があるクライアント用の双方向統合チャネルです。
+
+## 完全なサンプル
+
+このページの language tabs は各操作を説明するリクエスト断片です。すべての `using`、`import`、`#include` を含む実行可能なソースは[完全なサンプル](samples.ja.md)を使用してください。完全な C++ TCP サンプルで定義されているヘルパーは `SendAll` であり、`SendTcpFrame` はライブラリにもサンプルにも存在しません。
 
 ## 基本情報
 
@@ -42,6 +47,7 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 | --- | --- | --- |
 | `statusChanged` | [SystemStatus](payloads/system/system-status.ja.md) と `type` |公開状態が変化します。 |
 | `productInfoChanged` | [ProductInfo](payloads/product/product-info.ja.md) と `type` | ProductInfo のアップデートが完了しました。 |
+| `imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.ja.md) と `type` | 画像取得が完了しました。パスは後続の `resultCreated` で提供されます。 |
 | `runStarted` | [SystemStatus](payloads/system/system-status.ja.md) と `type` |状態は `Running` になります。 |
 | `runCompleted` | [SystemStatus](payloads/system/system-status.ja.md) と `type` |実行は `Running` を出て、`Ready` に戻ります。 |
 | `resultCreated` | [ResultSummary](payloads/results/result-summary.ja.md) と `type` |結果の概要が作成されます。 |
@@ -53,6 +59,12 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var tcp = new VirexTcpEventClient(new VirexClientOptions
     {
         TcpHost = "127.0.0.1",
@@ -65,12 +77,17 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
     };
 
     await tcp.SendStartAsync("golden-sample", ControlRunModes.Continue);
-    await tcp.RunAsync(cancellationToken);
+    await tcp.RunAsync(CancellationToken.None);
     ```
 
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
     using var client = new TcpClient();
     await client.ConnectAsync("127.0.0.1", 5089);
     await using var stream = client.GetStream();
@@ -83,6 +100,9 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 === "Python"
 
     ```python
+    import json
+    import urllib.parse
+    import urllib.request
     import socket
 
     with socket.create_connection(("127.0.0.1", 5089)) as sock:
@@ -93,10 +113,66 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 === "C++"
 
     ```cpp
-    const std::string frame =
-        R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
-        "\n";
-    SendTcpFrame("127.0.0.1", 5089, frame);
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <cstddef>
+    #include <iostream>
+    #include <stdexcept>
+    #include <string>
+
+    #pragma comment(lib, "ws2_32.lib")
+
+    void SendAll(SOCKET socket, const std::string& value)
+    {
+        std::size_t sent = 0;
+        while (sent < value.size())
+        {
+            const int chunk = send(socket, value.data() + sent, static_cast<int>(value.size() - sent), 0);
+            if (chunk <= 0)
+            {
+                throw std::runtime_error("send failed.");
+            }
+
+            sent += static_cast<std::size_t>(chunk);
+        }
+    }
+
+    int main()
+    {
+        WSADATA wsaData{};
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            return 1;
+        }
+
+        SOCKET client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (client == INVALID_SOCKET)
+        {
+            WSACleanup();
+            return 1;
+        }
+
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_port = htons(5089);
+        if (InetPtonA(AF_INET, "127.0.0.1", &address.sin_addr) != 1 ||
+            connect(client, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == SOCKET_ERROR)
+        {
+            closesocket(client);
+            WSACleanup();
+            return 1;
+        }
+
+        const std::string frame =
+            R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
+            "\n";
+        SendAll(client, frame);
+
+        closesocket(client);
+        WSACleanup();
+        return 0;
+    }
     ```
 
 ## initialize コマンド
@@ -437,6 +513,21 @@ ProductInfo 更新が完了したことをクライアントに通知します�
 
 このイベントには ProductInfo のみが含まれます。
 
+## imageGrabbed イベント
+
+### 目的
+
+1 回の画像取得が完了したことをクライアントに通知します。フレームには取得メタデータのみが含まれ、関連する画像と結果のパスは後続の `resultCreated` で提供されます。
+
+### Frame
+
+```json
+{"type":"imageGrabbed","captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### Notes
+
+後続の `resultCreated` フレームは同じ `captureId` を使用し、保存された画像と結果のパスを含みます。
 ## runStarted イベント
 
 ### 目的

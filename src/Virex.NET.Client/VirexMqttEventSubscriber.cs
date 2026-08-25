@@ -68,6 +68,7 @@ public sealed class VirexMqttEventSubscriber
         {
             "statusChanged" => "statusChanged",
             "productInfoChanged" => "productInfoChanged",
+            "imageGrabbed" => "imageGrabbed",
             "runStarted" => "runStarted",
             "runCompleted" => "runCompleted",
             "resultCreated" => "resultCreated",

@@ -1,6 +1,11 @@
 # TCP 소켓 프로토콜
 
+
 TCP 소켓은 동일한 단순 스트리밍 프로토콜을 통해 명령을 보내고 이벤트를 수신해야 하는 클라이언트를 위한 양방향 통합 채널입니다.
+
+## 전체 예제
+
+이 페이지의 language tabs는 각 작업을 설명하는 요청 조각입니다. 모든 `using`, `import`, `#include` 지시문이 포함된 실행 가능한 소스는[전체 예제](samples.ko.md)를 사용하세요. 전체 C++ TCP 샘플에 정의된 helper는 `SendAll`이며 `SendTcpFrame`은 library나 sample function이 아닙니다.
 
 ## 기본 정보
 
@@ -42,6 +47,7 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
 | --- | --- | --- |
 | `statusChanged` | `type`가 포함된 [SystemStatus](payloads/system/system-status.ko.md) | 공개 상태가 변경됩니다. |
 | `productInfoChanged` | `type`가 포함된 [ProductInfo](payloads/product/product-info.ko.md) | ProductInfo 업데이트가 완료되었습니다. |
+| `imageGrabbed` | `type`가 포함된 [ImageGrabbedInfo](payloads/events/image-grabbed.ko.md) | 이미지 취득 완료를 알리며 경로는 이후 `resultCreated`에서 제공합니다. |
 | `runStarted` | `type`가 포함된 [SystemStatus](payloads/system/system-status.ko.md) | `Running` 상태로 전환됩니다. |
 | `runCompleted` | `type`가 포함된 [SystemStatus](payloads/system/system-status.ko.md) | 실행이 `Running` 상태를 벗어나 `Ready`로 돌아갑니다. |
 | `resultCreated` | `type`가 포함된 [ResultSummary](payloads/results/result-summary.ko.md) | 결과 요약이 생성됩니다. |
@@ -53,6 +59,12 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var tcp = new VirexTcpEventClient(new VirexClientOptions
     {
         TcpHost = "127.0.0.1",
@@ -65,12 +77,17 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
     };
 
     await tcp.SendStartAsync("golden-sample", ControlRunModes.Continue);
-    await tcp.RunAsync(cancellationToken);
+    await tcp.RunAsync(CancellationToken.None);
     ```
 
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
     using var client = new TcpClient();
     await client.ConnectAsync("127.0.0.1", 5089);
     await using var stream = client.GetStream();
@@ -83,6 +100,9 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
 === "Python"
 
     ```python
+    import json
+    import urllib.parse
+    import urllib.request
     import socket
 
     with socket.create_connection(("127.0.0.1", 5089)) as sock:
@@ -93,10 +113,66 @@ TCP/NDJSON를 읽을 때 C# SDK는 프레임당 유휴 시간 제한을 적용�
 === "C++"
 
     ```cpp
-    const std::string frame =
-        R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
-        "\n";
-    SendTcpFrame("127.0.0.1", 5089, frame);
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <cstddef>
+    #include <iostream>
+    #include <stdexcept>
+    #include <string>
+
+    #pragma comment(lib, "ws2_32.lib")
+
+    void SendAll(SOCKET socket, const std::string& value)
+    {
+        std::size_t sent = 0;
+        while (sent < value.size())
+        {
+            const int chunk = send(socket, value.data() + sent, static_cast<int>(value.size() - sent), 0);
+            if (chunk <= 0)
+            {
+                throw std::runtime_error("send failed.");
+            }
+
+            sent += static_cast<std::size_t>(chunk);
+        }
+    }
+
+    int main()
+    {
+        WSADATA wsaData{};
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            return 1;
+        }
+
+        SOCKET client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (client == INVALID_SOCKET)
+        {
+            WSACleanup();
+            return 1;
+        }
+
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_port = htons(5089);
+        if (InetPtonA(AF_INET, "127.0.0.1", &address.sin_addr) != 1 ||
+            connect(client, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == SOCKET_ERROR)
+        {
+            closesocket(client);
+            WSACleanup();
+            return 1;
+        }
+
+        const std::string frame =
+            R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
+            "\n";
+        SendAll(client, frame);
+
+        closesocket(client);
+        WSACleanup();
+        return 0;
+    }
     ```
 
 ## initialize 명령
@@ -437,6 +513,21 @@ ProductInfo 업데이트가 완료되었음을 클라이언트에 알립니다.
 
 이 이벤트에는 ProductInfo만 포함되어 있습니다.
 
+## imageGrabbed 이벤트
+
+### 목적
+
+하나의 이미지 취득이 완료되었음을 클라이언트에 알립니다. 프레임에는 취득 메타데이터만 포함되며 관련 이미지와 결과 경로는 이후 `resultCreated`에서 제공됩니다.
+
+### 프레임
+
+```json
+{"type":"imageGrabbed","captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### 설명
+
+이후의 `resultCreated` 프레임은 같은 `captureId`를 사용하고 저장된 이미지 및 결과 경로를 포함합니다.
 ## runStarted 이벤트
 
 ### 목적

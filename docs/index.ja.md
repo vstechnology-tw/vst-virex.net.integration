@@ -38,6 +38,7 @@ RESTful API、TCP Socket、MQTT は同じ公開ビジネス機能を提供しま
 | --- | --- |
 | `statusChanged` | 公開ライフサイクル状態が変化した。 |
 | `productInfoChanged` | ProductInfo 更新が完了した。 |
+| `imageGrabbed` | 画像の取得が完了しました。パスは後続の `resultCreated` で提供されます。 |
 | `runStarted` | run が `Running` に入った。 |
 | `runCompleted` | run が `Ready` に戻った。 |
 | `resultCreated` | 公開 result summary が作成された。 |
@@ -63,7 +64,6 @@ RESTful API は commands を HTTP route として表現し、event stream は提
 | --- | --- |
 | `Virex.NET.Contracts` | 公開データモデル、RESTful API ルート、MQTT topic 名、TCP/NDJSON フォーマットおよび解析ツール。 |
 | `Virex.NET.Client` | RESTful API commands/queries、TCP socket communication、MQTT command/event communication の C# SDK ラッパー。 |
-| `Virex.NET.Simulator.Core` | ローカルシミュレーターで使用されるシミュレーター固有のステートマシンとセッション動作。 |
 | `Virex.NET.Simulator.WPF` | 公開 RESTful API/TCP/MQTT コントラクトを提供するローカルシミュレーター。 |
 | `samples` | C#、Python、C++ の統合例。 |
 | `docs` | 公開プロトコルとシミュレーターのドキュメント。 |

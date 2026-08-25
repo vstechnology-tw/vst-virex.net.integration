@@ -20,6 +20,7 @@
 | 시스템 | [SystemStatus](payloads/system/system-status.ko.md), [ErrorInfo](payloads/system/error-info.ko.md) | 현재 시스템 상태 및 활성 오류 정보. |
 | 제품 | [ProductInfo](payloads/product/product-info.ko.md) | 실행 및 결과와 관련된 제품 정보입니다. |
 | 명령 | [CommandResponse](payloads/commands/command-response.ko.md), [SystemInitializeRequest](payloads/commands/system-initialize-request.ko.md), [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ko.md), [SystemStartRequest](payloads/commands/system-start-request.ko.md), [SystemStopRequest](payloads/commands/system-stop-request.ko.md), [ControlRunModes](payloads/commands/control-run-modes.ko.md) | 명령 요청 및 명령 응답. |
+| 이벤트 | [ImageGrabbedInfo](payloads/events/image-grabbed.ko.md) | 이미지 취득 이벤트 metadata. |
 | 결과 | [ResultSummary](payloads/results/result-summary.ko.md), [ResultList](payloads/results/result-list.ko.md) | 결과 요약 및 RESTful API, TCP, MQTT 쿼리 응답에서 사용하는 결과 목록 래퍼. |
 
 ## 관계 요약

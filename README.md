@@ -1,7 +1,7 @@
 # Virex.NET Integration Kit
 
-[![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.1)
-[![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client/2.2.1)
+[![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts/2.2.2)
+[![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client/2.2.2)
 
 This repository contains the public Virex.NET integration contract, C# client SDK, local simulator, samples, and documentation. It does not include private Virex.NET production internals.
 
@@ -13,7 +13,6 @@ The simulator and production-compatible services are expected to expose the same
 | --- | --- |
 | `Virex.NET.Contracts` | Public payload schemas as C# models, RESTful API routes, MQTT topic names, and TCP/NDJSON helpers. |
 | `Virex.NET.Client` | C# SDK wrappers for RESTful API, TCP, and MQTT integration. |
-| `Virex.NET.Simulator.Core` | Simulator-specific state/session behavior. |
 | `Virex.NET.Simulator.WPF` | Local Windows simulator exposing RESTful API, TCP, and MQTT endpoints. |
 | `samples` | C#, Python, and C++ integration examples. |
 | `docs` | Public protocol and simulator documentation. |
@@ -58,6 +57,7 @@ GET  /api/results
 ```text
 statusChanged
 productInfoChanged
+imageGrabbed
 runStarted
 runCompleted
 resultCreated

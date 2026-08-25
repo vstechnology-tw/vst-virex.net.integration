@@ -17,7 +17,7 @@ flowchart LR
 
     subgraph CompatibleEndpoint["Virex.NET 相容端點"]
         Simulator["模擬器\nVirex.NET.Simulator.WPF"]
-        Production["正式產品\nVirex.NET WPF"]
+        Production["正式相容端點\nVirex.NET"]
     end
 
     Vendor --> Raw
@@ -38,7 +38,6 @@ SDK 是選用工具。廠商可以直接使用 RESTful API/MQTT/TCP 整合，也
 | --- | --- |
 | `Virex.NET.Contracts` | 以 C# 模型提供共用公開資料模型、RESTful API 路由常數、MQTT 主題名稱、TCP/NDJSON 解析器與事件格式化工具。 |
 | `Virex.NET.Client` | 選用的 C# SDK 封裝，供需要強型別輔助 API 的廠商使用。它本身不是整合邊界。 |
-| `Virex.NET.Simulator.Core` | 模擬器專用的狀態機與工作階段實作。正式服務應共用公開合約，不應依賴這個模擬器核心。 |
 | `Virex.NET.Simulator.WPF` | 本機端點，用來模擬外部可觀察到的狀態轉移與事件行為。 |
 | 正式 Virex.NET 產品 | 正式端點，應該實作與模擬器相同的公開合約。 |
 

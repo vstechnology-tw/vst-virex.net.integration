@@ -20,6 +20,7 @@
 |システム | [SystemStatus](payloads/system/system-status.ja.md)、[ErrorInfo](payloads/system/error-info.ja.md) |現在のシステム状態とアクティブなエラー情報。 |
 |製品 | [ProductInfo](payloads/product/product-info.ja.md) |実行と結果に関連する製品情報。 |
 |コマンド | [CommandResponse](payloads/commands/command-response.ja.md)、[SystemInitializeRequest](payloads/commands/system-initialize-request.ja.md)、[SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md)、[SystemStartRequest](payloads/commands/system-start-request.ja.md)、[SystemStopRequest](payloads/commands/system-stop-request.ja.md)、[ControlRunModes](payloads/commands/control-run-modes.ja.md) |コマンド要求とコマンド応答。 |
+|イベント | [ImageGrabbedInfo](payloads/events/image-grabbed.ja.md) | 画像取得イベントの metadata。 |
 |結果 | [ResultSummary](payloads/results/result-summary.ja.md)、[ResultList](payloads/results/result-list.ja.md) |結果の概要と、RESTful API、TCP、MQTT のクエリ応答で使用される結果リスト ラッパー。 |
 
 ## 関係の概要

@@ -38,6 +38,7 @@ RESTful API, TCP Socket, MQTT는 동일한 공개 비즈니스 기능을 제공�
 | --- | --- |
 | `statusChanged` | 공개 lifecycle state가 변경됨. |
 | `productInfoChanged` | ProductInfo 업데이트 완료. |
+| `imageGrabbed` | 이미지 취득 완료를 알리며 경로는 이후 `resultCreated`에서 제공합니다. |
 | `runStarted` | run이 `Running`에 진입함. |
 | `runCompleted` | run이 `Ready`로 돌아옴. |
 | `resultCreated` | 공개 result summary가 생성됨. |
@@ -63,7 +64,6 @@ RESTful API는 commands를 HTTP route로 표현하며 event stream은 제공하�
 | --- | --- |
 | `Virex.NET.Contracts` | 공개 데이터 모델, RESTful API 경로, MQTT topic 이름, TCP/NDJSON 형식 지정 및 구문 분석 도구. |
 | `Virex.NET.Client` | RESTful API commands/queries, TCP socket communication, MQTT command/event communication용 C# SDK 래퍼. |
-| `Virex.NET.Simulator.Core` | 로컬 시뮬레이터에서 사용하는 시뮬레이터별 상태 머신 및 세션 동작. |
 | `Virex.NET.Simulator.WPF` | 공개 RESTful API/TCP/MQTT 계약을 제공하는 로컬 시뮬레이터. |
 | `samples` | C#, Python, C++ 통합 예시. |
 | `docs` | 공개 프로토콜 및 시뮬레이터 문서. |

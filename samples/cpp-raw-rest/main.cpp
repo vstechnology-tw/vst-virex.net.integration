@@ -2,12 +2,15 @@
 #include <winhttp.h>
 
 #include <chrono>
+#include <cstddef>
 #include <future>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
+
+#pragma comment(lib, "winhttp.lib")
 
 namespace
 {
@@ -24,8 +27,9 @@ namespace
             throw std::runtime_error("Failed to convert UTF-8 string.");
         }
 
-        std::wstring result(static_cast<size_t>(length - 1), L'\0');
+        std::wstring result(static_cast<size_t>(length), L'\0');
         MultiByteToWideChar(CP_UTF8, 0, value.c_str(), -1, result.data(), length);
+        result.resize(static_cast<size_t>(length - 1));
         return result;
     }
 
@@ -42,8 +46,9 @@ namespace
             throw std::runtime_error("Failed to convert UTF-16 string.");
         }
 
-        std::string result(static_cast<size_t>(length - 1), '\0');
+        std::string result(static_cast<size_t>(length), '\0');
         WideCharToMultiByte(CP_UTF8, 0, value.c_str(), -1, result.data(), length, nullptr, nullptr);
+        result.resize(static_cast<size_t>(length - 1));
         return result;
     }
 

@@ -55,6 +55,20 @@ public static class TcpSocketEventFormatter
             info.ChamberID,
         });
 
+    public static string FormatImageGrabbed(ImageGrabbedInfo image) =>
+        Format(new
+        {
+            type = "imageGrabbed",
+            image.CaptureId,
+            image.Timestamp,
+            image.LotID,
+            image.WaferID,
+            image.Recipe,
+            image.Slot,
+            image.FoupID,
+            image.ChamberID,
+        });
+
     public static string FormatProductInfoResponse(ProductInfo info) =>
         Format(new
         {
@@ -106,6 +120,7 @@ public static class TcpSocketEventFormatter
         {
             type = "resultCreated",
             summary.ResultId,
+            summary.CaptureId,
             summary.Timestamp,
             summary.LotID,
             summary.WaferID,

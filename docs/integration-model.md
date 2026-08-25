@@ -17,7 +17,7 @@ flowchart LR
 
     subgraph CompatibleEndpoint["Virex.NET Compatible Endpoint"]
         Simulator["Simulator\nVirex.NET.Simulator.WPF"]
-        Production["Production Product\nVirex.NET WPF"]
+        Production["Production Compatible Endpoint\nVirex.NET"]
     end
 
     Vendor --> Raw
@@ -38,7 +38,6 @@ During development, vendors usually connect to the simulator. When deploying, th
 | --- | --- |
 | `Virex.NET.Contracts` | Provides public C# data models, RESTful API route constants, MQTT topic names, TCP/NDJSON parsers, and event formatting helpers. |
 | `Virex.NET.Client` | Optional C# SDK wrapper for vendors who want strongly typed helper APIs. It is not the integration boundary. |
-| `Virex.NET.Simulator.Core` | Simulator-specific state machine and session implementation. Production services should share the public contract, not depend on this simulator core. |
 | `Virex.NET.Simulator.WPF` | Local endpoint used to simulate externally observable state transitions and event behavior. |
 | Production Virex.NET Product | Production endpoint that should implement the same public contract as the simulator. |
 

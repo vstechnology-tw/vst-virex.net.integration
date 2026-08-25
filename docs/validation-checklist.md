@@ -24,7 +24,7 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 | Framing | Each frame is one UTF-8 JSON object ending with `\n`. |
 | ProductInfo command | `type: "productInfo"` updates ProductInfo in `Ready`. |
 | Start/stop commands | `type: "start"` and `type: "stop"` follow the same state rules as RESTful API. |
-| Event parsing | Client can handle `statusChanged`, `productInfoChanged`, `runStarted`, `runCompleted`, `resultCreated`, `errorChanged`, and `commandRejected`. |
+| Event parsing | Client can handle `statusChanged`, `productInfoChanged`, `imageGrabbed`, `runStarted`, `runCompleted`, `resultCreated`, `errorChanged`, and `commandRejected`. |
 | Recovery event fields | `statusChanged`, `errorChanged`, and `commandRejected` preserve the recovery action, optional context, stable error code, and sanitized details needed to keep Deinitialize actionable. |
 
 ## MQTT
@@ -34,6 +34,7 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 | Subscription | Client can subscribe to `virex/#` or the configured root topic. |
 | State events | Client receives `statusChanged`, `runStarted`, and `runCompleted`. |
 | ProductInfo event | Client receives `productInfoChanged`. |
+| Image event | Client receives `imageGrabbed` before `resultCreated`; the capture event has no paths. |
 | Result event | Client receives `resultCreated`. |
 | Rejection event | Client receives `commandRejected` when a command is rejected. |
 | Recovery event fields | `statusChanged`, `errorChanged`, and `commandRejected` preserve the recovery action, optional context, stable error code, and sanitized details needed to keep Deinitialize actionable. |

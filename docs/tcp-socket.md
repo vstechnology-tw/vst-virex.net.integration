@@ -1,6 +1,11 @@
 # TCP Socket Protocol
 
+
 TCP Socket is a bidirectional integration channel for clients that need to send commands and receive events over the same simple streaming protocol.
+
+## Complete samples
+
+The language tabs in this reference are request fragments. For directly runnable source with all `using`, `import`, and `#include` directives, use the [complete samples](samples.md). The complete C++ TCP sample defines `SendAll`; `SendTcpFrame` is not a library or sample function.
 
 ## Basic Information
 
@@ -42,6 +47,7 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 | --- | --- | --- |
 | `statusChanged` | [SystemStatus](payloads/system/system-status.md) with `type` | Public state changes. |
 | `productInfoChanged` | [ProductInfo](payloads/product/product-info.md) with `type` | ProductInfo update completes. |
+| `imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.md) with `type` | Image acquisition completes; paths are supplied later by `resultCreated`. |
 | `runStarted` | [SystemStatus](payloads/system/system-status.md) with `type` | State enters `Running`. |
 | `runCompleted` | [SystemStatus](payloads/system/system-status.md) with `type` | A run leaves `Running` and returns to `Ready`. |
 | `resultCreated` | [ResultSummary](payloads/results/result-summary.md) with `type` | A result summary is created. |
@@ -53,6 +59,12 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var tcp = new VirexTcpEventClient(new VirexClientOptions
     {
         TcpHost = "127.0.0.1",
@@ -65,12 +77,17 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
     };
 
     await tcp.SendStartAsync("golden-sample", ControlRunModes.Continue);
-    await tcp.RunAsync(cancellationToken);
+    await tcp.RunAsync(CancellationToken.None);
     ```
 
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Sockets;
+    using System.Text;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
     using var client = new TcpClient();
     await client.ConnectAsync("127.0.0.1", 5089);
     await using var stream = client.GetStream();
@@ -83,6 +100,9 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 === "Python"
 
     ```python
+    import json
+    import urllib.parse
+    import urllib.request
     import socket
 
     with socket.create_connection(("127.0.0.1", 5089)) as sock:
@@ -93,10 +113,66 @@ When reading TCP/NDJSON, the C# SDK applies an idle timeout per frame. There may
 === "C++"
 
     ```cpp
-    const std::string frame =
-        R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
-        "\n";
-    SendTcpFrame("127.0.0.1", 5089, frame);
+    #define WIN32_LEAN_AND_MEAN
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <cstddef>
+    #include <iostream>
+    #include <stdexcept>
+    #include <string>
+
+    #pragma comment(lib, "ws2_32.lib")
+
+    void SendAll(SOCKET socket, const std::string& value)
+    {
+        std::size_t sent = 0;
+        while (sent < value.size())
+        {
+            const int chunk = send(socket, value.data() + sent, static_cast<int>(value.size() - sent), 0);
+            if (chunk <= 0)
+            {
+                throw std::runtime_error("send failed.");
+            }
+
+            sent += static_cast<std::size_t>(chunk);
+        }
+    }
+
+    int main()
+    {
+        WSADATA wsaData{};
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {
+            return 1;
+        }
+
+        SOCKET client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (client == INVALID_SOCKET)
+        {
+            WSACleanup();
+            return 1;
+        }
+
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_port = htons(5089);
+        if (InetPtonA(AF_INET, "127.0.0.1", &address.sin_addr) != 1 ||
+            connect(client, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == SOCKET_ERROR)
+        {
+            closesocket(client);
+            WSACleanup();
+            return 1;
+        }
+
+        const std::string frame =
+            R"({"type":"start","condition":"golden-sample","runMode":"continue"})"
+            "\n";
+        SendAll(client, frame);
+
+        closesocket(client);
+        WSACleanup();
+        return 0;
+    }
     ```
 
 ## initialize command
@@ -433,6 +509,21 @@ Notifies the client that the ProductInfo update is complete.
 
 This event contains ProductInfo only.
 
+## imageGrabbed event
+
+### Purpose
+
+Notifies the client that one image acquisition completed. The frame contains capture metadata only; related image and result paths are provided later by `resultCreated`.
+
+### Frame
+
+```json
+{"type":"imageGrabbed","captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+### Notes
+
+The later `resultCreated` frame uses the same `captureId` and includes the persisted image and result paths.
 ## runStarted event
 
 ### Purpose

@@ -126,4 +126,71 @@ public sealed class TcpSimulatorServerTests
         listener.Stop();
         return port;
     }
+    [Fact]
+    public async Task TcpPublishesRunAndImageEventsInOrder()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "virex-tcp-image-grabbed-" + Guid.NewGuid().ToString("N"));
+        var session = new SimulatorSession(root);
+        var port = GetFreeTcpPort();
+        var server = new TcpSimulatorServer(session, port);
+        await server.StartAsync();
+
+        try
+        {
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, port);
+            using var stream = client.GetStream();
+            using var reader = new StreamReader(stream, Encoding.UTF8, false, 4096, true);
+            using var writer = new StreamWriter(stream, new UTF8Encoding(false), 4096, true)
+            {
+                AutoFlush = true,
+                NewLine = "\n",
+            };
+
+            await writer.WriteLineAsync("""{"type":"initialize"}""");
+            Assert.Equal(SystemStates.Ready, await ReadStatusStateAsync(reader, SystemStates.Ready));
+
+            await writer.WriteLineAsync("""{"type":"start","runMode":"single"}""");
+            var observed = await ReadEventTypesUntilAsync(reader, "runCompleted");
+            var runEvents = observed
+                .Where(type => type is "statusChanged" or "runStarted" or "imageGrabbed" or "resultCreated" or "runCompleted")
+                .ToArray();
+
+            Assert.Equal(6, runEvents.Length);
+            Assert.Equal("statusChanged", runEvents[0]);
+            Assert.Equal("runStarted", runEvents[1]);
+            Assert.Equal("imageGrabbed", runEvents[2]);
+            Assert.Equal("resultCreated", runEvents[3]);
+            Assert.Equal("statusChanged", runEvents[4]);
+            Assert.Equal("runCompleted", runEvents[5]);
+        }
+        finally
+        {
+            await server.StopAsync();
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static async Task<string[]> ReadEventTypesUntilAsync(StreamReader reader, string terminalType)
+    {
+        var types = new List<string>();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        while (!timeout.IsCancellationRequested && !types.Contains(terminalType, StringComparer.Ordinal))
+        {
+            var line = await reader.ReadLineAsync(timeout.Token);
+            if (line is null)
+                throw new EndOfStreamException("TCP stream closed before the terminal event was received.");
+
+            using var document = JsonDocument.Parse(line);
+            if (document.RootElement.TryGetProperty("type", out var type))
+                types.Add(type.GetString() ?? string.Empty);
+        }
+
+        if (!types.Contains(terminalType, StringComparer.Ordinal))
+            throw new TimeoutException("Timed out waiting for the terminal TCP event.");
+
+        return types.ToArray();
+    }
 }

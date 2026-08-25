@@ -73,12 +73,29 @@ public sealed class TcpSimulatorServer
         using (var reader = new StreamReader(stream, Encoding.UTF8, false, 4096, true))
         using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 4096, true) { AutoFlush = true, NewLine = "\n" })
         {
-            void OnStatus(object? sender, SystemStatus status) => SafeWrite(writer, TcpSocketEventFormatter.FormatStatus(status));
+            var runActive = false;
+            void OnStatus(object? sender, SystemStatus status)
+            {
+                SafeWrite(writer, TcpSocketEventFormatter.FormatStatus(status));
+                if (string.Equals(status.State, SystemStates.Running, StringComparison.OrdinalIgnoreCase))
+                {
+                    runActive = true;
+                    SafeWrite(writer, TcpSocketEventFormatter.FormatRunStarted(status));
+                }
+                if (runActive && string.Equals(status.State, SystemStates.Ready, StringComparison.OrdinalIgnoreCase))
+                {
+                    runActive = false;
+                    SafeWrite(writer, TcpSocketEventFormatter.FormatRunCompleted(status));
+                }
+            }
             void OnProductInfo(object? sender, ProductInfo info) => SafeWrite(writer, TcpSocketEventFormatter.FormatProductInfo(info));
+            void OnImageGrabbed(object? sender, ImageGrabbedInfo image) => SafeWrite(writer, TcpSocketEventFormatter.FormatImageGrabbed(image));
+
             void OnResult(object? sender, ResultSummary result) => SafeWrite(writer, TcpSocketEventFormatter.FormatResult(result));
             void OnError(object? sender, ErrorInfo error) => SafeWrite(writer, TcpSocketEventFormatter.FormatError(error));
             void OnRejected(object? sender, CommandResponse response) => SafeWrite(writer, TcpSocketEventFormatter.FormatCommandRejected(response));
 
+            _session.ImageGrabbed += OnImageGrabbed;
             _session.StatusChanged += OnStatus;
             _session.ProductInfoChanged += OnProductInfo;
             _session.ResultCreated += OnResult;
@@ -143,6 +160,7 @@ public sealed class TcpSimulatorServer
             {
                 _session.StatusChanged -= OnStatus;
                 _session.ProductInfoChanged -= OnProductInfo;
+                _session.ImageGrabbed -= OnImageGrabbed;
                 _session.ResultCreated -= OnResult;
                 _session.ErrorChanged -= OnError;
                 _session.CommandRejected -= OnRejected;

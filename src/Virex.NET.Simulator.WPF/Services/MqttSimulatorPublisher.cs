@@ -49,6 +49,7 @@ public sealed class MqttSimulatorPublisher :
         await _client.SubscribeAsync(subscribeOptions, CancellationToken.None).ConfigureAwait(false);
         _session.StatusChanged += OnStatusChanged;
         _session.ProductInfoChanged += OnProductInfoChanged;
+        _session.ImageGrabbed += OnImageGrabbed;
         _session.ResultCreated += OnResultCreated;
         _session.ErrorChanged += OnErrorChanged;
         _session.CommandRejected += OnCommandRejected;
@@ -61,6 +62,7 @@ public sealed class MqttSimulatorPublisher :
     public async Task StopAsync()
     {
         _session.StatusChanged -= OnStatusChanged;
+        _session.ImageGrabbed -= OnImageGrabbed;
         _session.ProductInfoChanged -= OnProductInfoChanged;
         _session.ResultCreated -= OnResultCreated;
         _session.ErrorChanged -= OnErrorChanged;
@@ -112,6 +114,9 @@ public sealed class MqttSimulatorPublisher :
             _ = PublishAsync(MqttTopics.RunCompleted, ProtocolJson.Serialize(status));
         }
     }
+
+    private void OnImageGrabbed(object? sender, ImageGrabbedInfo image) =>
+        _ = PublishAsync(MqttTopics.ImageGrabbed, ProtocolJson.Serialize(image));
 
     private void OnProductInfoChanged(object? sender, ProductInfo info) =>
         _ = PublishAsync(MqttTopics.ProductInfoChanged, ProtocolJson.Serialize(info));
@@ -210,15 +215,27 @@ public sealed class MqttSimulatorPublisher :
 
     private async Task PublishAsync(string childTopic, string payload)
     {
+        var topic = MqttTopics.Combine(_topic, childTopic);
         if (_client is null || !_client.IsConnected)
+        {
+            _session.WriteLog($"MQTT event skipped: topic={topic}, reason=not_connected");
             return;
+        }
 
-        var message = new MqttApplicationMessageBuilder()
-            .WithTopic(MqttTopics.Combine(_topic, childTopic))
-            .WithPayload(Encoding.UTF8.GetBytes(payload))
-            .Build();
+        try
+        {
+            var message = new MqttApplicationMessageBuilder()
+                .WithTopic(topic)
+                .WithPayload(Encoding.UTF8.GetBytes(payload))
+                .Build();
 
-        await _client.PublishAsync(message, CancellationToken.None).ConfigureAwait(false);
+            await _client.PublishAsync(message, CancellationToken.None).ConfigureAwait(false);
+            _session.WriteLog($"MQTT event published: topic={topic}, payload={payload}");
+        }
+        catch (Exception ex)
+        {
+            _session.WriteLog($"MQTT event publish failed: topic={topic}, error={ex.Message}");
+        }
     }
 
     private Task PublishResponseAsync(string correlationId, MqttCommandResponse response) =>

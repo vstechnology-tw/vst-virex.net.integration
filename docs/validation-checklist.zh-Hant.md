@@ -24,7 +24,7 @@
 | 分幀 | 每個資料框是一個 UTF-8 JSON 物件，並以 `\n` 結尾。 |
 | ProductInfo 命令 | `type: "productInfo"` 在 `Ready` 更新 ProductInfo。 |
 | 啟動/停止命令 | `type: "start"` 與 `type: "stop"` 遵守 RESTful API 相同狀態規則。 |
-| 事件解析 | 用戶端可處理 `statusChanged`、`productInfoChanged`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、`commandRejected`。 |
+| 事件解析 | 用戶端可處理 `statusChanged`、`productInfoChanged`、`imageGrabbed`、`runStarted`、`runCompleted`、`resultCreated`、`errorChanged`、`commandRejected`。 |
 | 復原事件欄位 | `statusChanged`、`errorChanged` 與 `commandRejected` 保留復原動作、選填內容、穩定錯誤代碼與已清理細節，讓 Deinitialize 持續可操作。 |
 
 ## MQTT
@@ -34,6 +34,7 @@
 | 訂閱 | 用戶端可訂閱 `virex/#` 或設定的 topic 前綴。 |
 | 狀態事件 | 用戶端收到 `statusChanged`、`runStarted`、`runCompleted`。 |
 | ProductInfo 事件 | 用戶端收到 `productInfoChanged`。 |
+| 影像事件 | 用戶端在 `resultCreated` 前收到 `imageGrabbed`；取像事件不含路徑。 |
 | 結果事件 | 用戶端收到 `resultCreated`。 |
 | 拒絕事件 | 服務發布拒絕命令事件時，用戶端收到 `commandRejected`。 |
 | 復原事件欄位 | `statusChanged`、`errorChanged` 與 `commandRejected` 保留復原動作、選填內容、穩定錯誤代碼與已清理細節，讓 Deinitialize 持續可操作。 |

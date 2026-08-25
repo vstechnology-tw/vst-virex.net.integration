@@ -1,6 +1,11 @@
 # C# SDK Guide
 
+
 `Virex.NET.Client` provides typed wrappers for the public RESTful API, TCP, and MQTT integration APIs.
+
+## Complete sample
+
+For a directly runnable C# program with every `using` directive and project reference, use the [C# SDK sample](samples.md). The code blocks below show focused operations from that complete file.
 
 ## Install
 
@@ -17,6 +22,11 @@ dotnet add package Virex.NET.Contracts
 ## Create Client
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Contracts;
 using Virex.NET.Client;
 
 using var client = new VirexClient(new VirexClientOptions
@@ -35,8 +45,22 @@ using var client = new VirexClient(new VirexClientOptions
 ## RESTful API Command/Query Flow
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
 using Virex.NET.Contracts;
 
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var status = await client.GetStatusAsync();
 
 var initialize = await client.InitializeAsync();
@@ -77,6 +101,21 @@ if (status.RecoveryAction == RecoveryActions.Deinitialize)
 ## TCP events
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.TcpEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"TCP {value.Type}");
@@ -98,17 +137,49 @@ await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 TCP also supports RESTful API equivalent query frames:
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var tcpStatus = await client.TcpEvents.GetStatusAsync();
 var tcpError = await client.TcpEvents.GetErrorAsync();
 var tcpProductInfo = await client.TcpEvents.GetProductInfoAsync();
 var tcpResults = await client.TcpEvents.QueryResultsAsync(lotID: "LOT-001");
 ```
 
+When `value.Type` is `imageGrabbed`, read `value.ImageGrabbed`. Its `captureId` matches the later `resultCreated` event, where artifact paths are available.
+
 ## MQTT commands and events
 
 MQTT command calls publish to `virex/commands/...` and wait for a correlated response on `virex/responses/{correlationId}`:
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var mqttStatus = await client.MqttCommands.GetStatusAsync();
 var mqttInitialize = await client.MqttCommands.InitializeAsync();
 var mqttStart = await client.MqttCommands.StartAsync("mqtt-check", ControlRunModes.Continue);
@@ -116,6 +187,21 @@ var mqttResults = await client.MqttCommands.QueryResultsAsync(lotID: "LOT-001");
 ```
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.MqttEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"MQTT {value.Type}");
@@ -125,11 +211,28 @@ using var cts = new CancellationTokenSource();
 await client.MqttEvents.RunAsync(cts.Token);
 ```
 
+When `value.Type` is `imageGrabbed`, read `value.ImageGrabbed`. Its `captureId` matches the later `resultCreated` event, where artifact paths are available.
+
 ## Error handling
 
 RESTful API transport failures and non-success HTTP responses throw `VirexClientException`. Protocol-level command rejections are represented by `CommandResponse`:
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var response = await client.StartAsync();
 if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 {

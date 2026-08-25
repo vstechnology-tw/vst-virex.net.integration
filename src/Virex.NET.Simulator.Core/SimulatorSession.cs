@@ -13,6 +13,7 @@ public sealed class SimulatorSession
     private int _resultSequence;
     private ProductInfo? _activeRunProductInfo;
     private string _activeRunCondition = string.Empty;
+    private readonly string _resultRootDirectory;
     private CancellationTokenSource? _singleRunCompletion;
     private CancellationTokenSource? _continuousRun;
     private int _deinitializeFailuresRemaining;
@@ -25,8 +26,13 @@ public sealed class SimulatorSession
     private string? _recoveryDetails;
     private string? _recoveryErrorCode;
 
-    public SimulatorSession()
+    public SimulatorSession(string? resultRootDirectory = null)
     {
+        var root = string.IsNullOrWhiteSpace(resultRootDirectory)
+            ? Path.Combine(AppContext.BaseDirectory, "results")
+            : resultRootDirectory!;
+        _resultRootDirectory = Path.GetFullPath(root);
+
         State = SimulatorState.Uninitialized;
         ProductInfo = new ProductInfo
         {
@@ -46,6 +52,7 @@ public sealed class SimulatorSession
 
     public event EventHandler<SystemStatus>? StatusChanged;
     public event EventHandler<ProductInfo>? ProductInfoChanged;
+    public event EventHandler<ImageGrabbedInfo>? ImageGrabbed;
     public event EventHandler<ResultSummary>? ResultCreated;
     public event EventHandler<ErrorInfo>? ErrorChanged;
     public event EventHandler<CommandResponse>? CommandRejected;
@@ -190,6 +197,7 @@ public sealed class SimulatorSession
             RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
         };
         LogMessage("Error emitted: " + safeMessage);
+        LogEvent("errorChanged", Error);
         ErrorChanged?.Invoke(this, Error);
     }
 
@@ -284,6 +292,7 @@ public sealed class SimulatorSession
 
             await FireAsync(SimulatorTrigger.SetProductInfo).ConfigureAwait(false);
             ProductInfo = productInfo.Snapshot();
+            LogEvent("productInfoChanged", ProductInfo);
             ProductInfoChanged?.Invoke(this, ProductInfo);
             LogMessage("ProductInfo updated: " + FormatProductInfoForLog(ProductInfo));
             await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
@@ -364,7 +373,11 @@ public sealed class SimulatorSession
             if (trigger == SimulatorTrigger.RunCompleted)
             {
                 StopActiveRunTimers();
-                EmitResult(string.Empty);
+                if (EmitResult() is null)
+                {
+                    await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
+                    return Accept(command, "Run completed with errors.");
+                }
             }
 
             await FireAsync(trigger).ConfigureAwait(false);
@@ -402,7 +415,13 @@ public sealed class SimulatorSession
 
         _machine.OnTransitionCompleted(t =>
         {
+            var status = Status;
             LogMessage("Status: state=" + SimulatorStateNames.ToDto(t.Destination));
+            LogEvent("statusChanged", status);
+            if (t.Destination == SimulatorState.Running)
+                LogEvent("runStarted", status);
+            if (t.Source == SimulatorState.Running && t.Destination == SimulatorState.Ready)
+                LogEvent("runCompleted", status);
             Error.State = SimulatorStateNames.ToDto(t.Destination);
             Error.RecoveryAction = RecoveryActionFor(t.Destination);
             Error.ErrorCode = Error.HasError ? _recoveryErrorCode : null;
@@ -410,7 +429,7 @@ public sealed class SimulatorSession
             Error.RecoverySource = RecoveryActionFor(t.Destination) is null ? null : _recoverySource;
             Error.RecoveryPhase = RecoveryActionFor(t.Destination) is null ? null : _recoveryPhase;
             Error.RecoveryDetails = RecoveryActionFor(t.Destination) is null ? null : _recoveryDetails;
-            StatusChanged?.Invoke(this, Status);
+            StatusChanged?.Invoke(this, status);
         });
     }
 
@@ -450,6 +469,7 @@ public sealed class SimulatorSession
             RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
             Message = message ?? "Command is not valid in the current state.",
         };
+        LogEvent("commandRejected", response);
         CommandRejected?.Invoke(this, response);
         return response;
     }
@@ -520,21 +540,45 @@ public sealed class SimulatorSession
         }
     }
 
-    private ResultSummary EmitResult(string resultPathPrefix)
+    private ResultSummary? EmitResult()
     {
         var info = _activeRunProductInfo?.Snapshot() ?? ProductInfo.Snapshot();
         var condition = _activeRunCondition;
         var now = DateTime.Now;
-        var id = $"{info.LotIDOr}-{info.WaferIDOr}-{info.SlotOr}-{now:yyyyMMdd_HHmmss}_{Interlocked.Increment(ref _resultSequence):000}";
-        var relativeRoot = $"{now:yyyyMMdd}/{info.LotIDOr}";
-        var artifactName = $"{now:yyyyMMdd_HHmmss}_{info.WaferIDOr}";
-        var imageRelative = $"{relativeRoot}/{artifactName}.bmp";
-        var previewImageRelative = $"{relativeRoot}/{artifactName}.jpg";
-        var resultRelative = $"{relativeRoot}/{artifactName}.json";
+        var lotID = SanitizePathSegment(info.LotIDOr, "LOT-UNKNOWN");
+        var waferID = SanitizePathSegment(info.WaferIDOr, "WAFER-UNKNOWN");
+        var slot = SanitizePathSegment(info.SlotOr, "SLOT-UNKNOWN");
+        var sequence = Interlocked.Increment(ref _resultSequence);
+        var captureId = $"{lotID}-{waferID}-{slot}-{now:yyyyMMdd_HHmmss}_{sequence:000}";
+        var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz");
+        var imageGrabbed = new ImageGrabbedInfo
+        {
+            CaptureId = captureId,
+            Timestamp = timestamp,
+            LotID = info.LotIDOr,
+            WaferID = info.WaferIDOr,
+            Recipe = info.RecipeOr,
+            Slot = info.SlotOr,
+            FoupID = info.FoupIDOr,
+            ChamberID = info.ChamberIDOr,
+        };
+        LogEvent("imageGrabbed", imageGrabbed);
+
+        ImageGrabbed?.Invoke(this, imageGrabbed);
+
+        var relativeRoot = Path.Combine(now.ToString("yyyyMMdd"), lotID);
+        var artifactName = captureId;
+        var imageRelative = ToPortablePath(Path.Combine(relativeRoot, artifactName + ".bmp"));
+        var previewImageRelative = ToPortablePath(Path.Combine(relativeRoot, artifactName + ".jpg"));
+        var resultRelative = ToPortablePath(Path.Combine(relativeRoot, artifactName + ".json"));
+        var imagePath = Path.Combine(_resultRootDirectory, relativeRoot, artifactName + ".bmp");
+        var previewImagePath = Path.Combine(_resultRootDirectory, relativeRoot, artifactName + ".jpg");
+        var resultPath = Path.Combine(_resultRootDirectory, relativeRoot, artifactName + ".json");
         var result = new ResultSummary
         {
-            ResultId = id,
-            Timestamp = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz"),
+            ResultId = captureId,
+            CaptureId = captureId,
+            Timestamp = timestamp,
             LotID = info.LotIDOr,
             WaferID = info.WaferIDOr,
             Recipe = info.RecipeOr,
@@ -546,10 +590,20 @@ public sealed class SimulatorSession
             DefectCount = 0,
             ImageRelativePath = imageRelative,
             ResultRelativePath = resultRelative,
-            ImagePath = JoinExternalPath(resultPathPrefix, imageRelative),
-            PreviewImagePath = JoinExternalPath(resultPathPrefix, previewImageRelative),
-            ResultPath = JoinExternalPath(resultPathPrefix, resultRelative),
+            ImagePath = imagePath,
+            PreviewImagePath = previewImagePath,
+            ResultPath = resultPath,
         };
+
+        try
+        {
+            WriteArtifacts(result, imagePath, previewImagePath, resultPath);
+        }
+        catch (Exception ex)
+        {
+            EmitError("Failed to persist simulator artifacts for capture " + captureId + ": " + ex.Message);
+            return null;
+        }
 
         lock (_results)
         {
@@ -557,10 +611,52 @@ public sealed class SimulatorSession
             if (_results.Count > 100)
                 _results.RemoveAt(_results.Count - 1);
         }
+        LogEvent("resultCreated", result);
 
-        LogMessage("Result emitted: " + id);
+        LogMessage("Result emitted: " + captureId);
         ResultCreated?.Invoke(this, result);
         return result;
+    }
+
+    private static void WriteArtifacts(ResultSummary result, string imagePath, string previewImagePath, string resultPath)
+    {
+        var directory = Path.GetDirectoryName(imagePath);
+        if (string.IsNullOrWhiteSpace(directory))
+            throw new IOException("Simulator result directory could not be resolved.");
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllBytes(imagePath, CreateDummyBmp());
+        File.WriteAllBytes(previewImagePath, CreateDummyJpeg());
+        File.WriteAllText(resultPath, ProtocolJson.Serialize(result));
+    }
+
+    private static byte[] CreateDummyBmp() =>
+        new byte[]
+        {
+            0x42, 0x4D, 0x3A, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00,
+            0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00,
+            0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x13, 0x0B,
+            0x00, 0x00, 0x13, 0x0B, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF,
+            0xFF, 0x00,
+        };
+
+    private static byte[] CreateDummyJpeg() =>
+        Convert.FromBase64String("/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAH/AP/EABQQAQAAAAAAAAAAAAAAAAAAABD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQMBAT8Bf//EABQRAQAAAAAAAAAAAAAAAAAAABD/2gAIAQIBAT8Bf//EABQQAQAAAAAAAAAAAAAAAAAAABD/2gAIAQEAAT8hH//Z");
+
+    private static string ToPortablePath(string path) =>
+        path.Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/');
+
+    private static string SanitizePathSegment(string value, string fallback)
+    {
+        var candidate = string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
+        foreach (var invalid in Path.GetInvalidFileNameChars())
+            candidate = candidate.Replace(invalid, '_');
+
+        candidate = candidate.Replace('/', '_').Replace('\\', '_');
+        return string.IsNullOrWhiteSpace(candidate) ? fallback : candidate;
     }
 
     private async Task CompleteRunAfterDelayAsync(CancellationToken cancellationToken)
@@ -588,7 +684,11 @@ public sealed class SimulatorSession
                 if (cancellationToken.IsCancellationRequested || State != SimulatorState.Running)
                     return;
 
-                EmitResult(string.Empty);
+                if (EmitResult() is null)
+                {
+                    await StopAsync(new SystemStopRequest { Reason = "Simulator artifact persistence failed." }, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
             }
         }
         catch (OperationCanceledException)
@@ -617,6 +717,9 @@ public sealed class SimulatorSession
 
     private void LogMessage(string message) => Log?.Invoke(this, message);
 
+    private void LogEvent<T>(string eventType, T payload) =>
+        LogMessage($"Event: {eventType} payload={ProtocolJson.Serialize(payload)}");
+
     private static bool Match(string value, string? filter) =>
         string.IsNullOrWhiteSpace(filter) || string.Equals(value, filter, StringComparison.OrdinalIgnoreCase);
 
@@ -626,14 +729,4 @@ public sealed class SimulatorSession
     private static string NormalizeCondition(string? condition) =>
         string.IsNullOrWhiteSpace(condition) ? string.Empty : condition!.Trim();
 
-    private static string JoinExternalPath(string prefix, string relative)
-    {
-        if (string.IsNullOrWhiteSpace(prefix))
-            return relative;
-
-        var separator = ContainsDirectorySeparator(prefix) ? "\\" : "/";
-        return prefix.Trim().TrimEnd('\\', '/') + separator + relative.Replace("/", separator);
-    }
-
-    private static bool ContainsDirectorySeparator(string value) => value.Contains("\\");
 }

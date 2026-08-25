@@ -1,6 +1,11 @@
 # C# SDK 指南
 
+
 `Virex.NET.Client` 為公開 RESTful API、TCP、MQTT 整合 API 提供強型別封裝。
+
+## 完整範例
+
+需要包含所有 `using` 與 project reference、可直接執行的 C# 程式，請使用[C# SDK 範例](samples.zh-Hant.md)。本頁程式碼區塊只展示完整檔案中的個別操作。
 
 ## 安裝
 
@@ -17,6 +22,11 @@ dotnet add package Virex.NET.Contracts
 ## 建立用戶端
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Contracts;
 using Virex.NET.Client;
 
 using var client = new VirexClient(new VirexClientOptions
@@ -35,8 +45,22 @@ using var client = new VirexClient(new VirexClientOptions
 ## RESTful API 命令/查詢流程
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
 using Virex.NET.Contracts;
 
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var status = await client.GetStatusAsync();
 
 var initialize = await client.InitializeAsync();
@@ -77,6 +101,21 @@ if (status.RecoveryAction == RecoveryActions.Deinitialize)
 ## TCP 事件
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.TcpEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"TCP {value.Type}");
@@ -95,9 +134,26 @@ await client.TcpEvents.SendProductInfoAsync(new ProductInfo
 await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 ```
 
+當 `value.Type` 為 `imageGrabbed` 時讀取 `value.ImageGrabbed`。它的 `captureId` 會對應稍後的 `resultCreated`，路徑會在該事件提供。
+
 ## MQTT 事件
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.MqttEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"MQTT {value.Type}");
@@ -109,11 +165,28 @@ await client.MqttEvents.RunAsync(cts.Token);
 
 MQTT 只用於事件。命令請使用 RESTful API 或 TCP。
 
+當 `value.Type` 為 `imageGrabbed` 時讀取 `value.ImageGrabbed`。它的 `captureId` 會對應稍後的 `resultCreated`，路徑會在該事件提供。
+
 ## 錯誤處理
 
 RESTful API 傳輸失敗與非成功 HTTP 回應會丟出 `VirexClientException`。通訊協定層級的拒絕會以 `CommandResponse` 表示：
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var response = await client.StartAsync();
 if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 {

@@ -2,6 +2,10 @@
 
 MQTT is a bidirectional integration channel. The service publishes events to `virex/{eventName}`. Clients can publish RESTful API equivalent commands and queries to `virex/commands/...` and receive correlated responses on `virex/responses/{correlationId}`.
 
+## Complete samples
+
+The language tabs in this reference are request fragments. For directly runnable source with all `using`, `import`, and `#include` directives, use the [complete samples](samples.md). The complete C++ sample implements the raw MQTT exchange and does not require an external MQTT library.
+
 ## Basic Information
 
 | Item | Value |
@@ -20,6 +24,7 @@ The simulator starts the embedded MQTT broker after **Start Servers** is pressed
 | --- | --- | --- |
 | `virex/statusChanged` | [SystemStatus](payloads/system/system-status.md) | Public state changes. |
 | `virex/productInfoChanged` | [ProductInfo](payloads/product/product-info.md) | ProductInfo update completes. |
+| `virex/imageGrabbed` | [ImageGrabbedInfo](payloads/events/image-grabbed.md) | A capture completed; no image or result path is available yet. |
 | `virex/runStarted` | [SystemStatus](payloads/system/system-status.md) | State enters `Running`. |
 | `virex/runCompleted` | [SystemStatus](payloads/system/system-status.md) | A run leaves `Running` and returns to `Ready`. |
 | `virex/resultCreated` | [ResultSummary](payloads/results/result-summary.md) | A result summary is created. |
@@ -267,6 +272,13 @@ Response payload field: `commandResponse`.
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var commands = new VirexMqttCommandClient(new VirexClientOptions
     {
         MqttHost = "127.0.0.1",
@@ -283,23 +295,52 @@ Response payload field: `commandResponse`.
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+    using MQTTnet;
+    using MQTTnet.Client;
+
+    var factory = new MqttFactory();
+    using var client = factory.CreateMqttClient();
+    var options = new MqttClientOptionsBuilder()
+        .WithTcpServer("127.0.0.1", 1883)
+        .Build();
+    await client.ConnectAsync(options);
+
     var correlationId = "status-1";
-    await client.SubscribeAsync($"virex/responses/{correlationId}");
+    var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
+        .WithTopicFilter(filter => filter.WithTopic($"virex/responses/{correlationId}"))
+        .Build();
+    await client.SubscribeAsync(subscribeOptions);
+
     var message = new MqttApplicationMessageBuilder()
         .WithTopic("virex/commands/status/get")
         .WithPayload(JsonSerializer.Serialize(new { correlationId }))
         .Build();
     await client.PublishAsync(message);
+    await client.DisconnectAsync();
     ```
 
 === "Python"
 
     ```python
+    import json
+    import paho.mqtt.client as mqtt
+
+    client = mqtt.Client()
+    client.connect("127.0.0.1", 1883)
+    client.loop_start()
+
     correlation_id = "status-1"
     client.subscribe(f"virex/responses/{correlation_id}")
     client.publish(
         "virex/commands/status/get",
         json.dumps({"correlationId": correlation_id}))
+
+    client.loop_stop()
+    client.disconnect()
     ```
 
 ## Subscription example
@@ -307,6 +348,13 @@ Response payload field: `commandResponse`.
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
     var subscriber = new VirexMqttEventSubscriber(new VirexClientOptions
     {
         MqttHost = "127.0.0.1",
@@ -319,54 +367,63 @@ Response payload field: `commandResponse`.
         Console.WriteLine(e.Type);
     };
 
-    await subscriber.RunAsync(cancellationToken);
+    await subscriber.RunAsync(CancellationToken.None);
     ```
 
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading.Tasks;
+    using MQTTnet;
+    using MQTTnet.Client;
+
     var factory = new MqttFactory();
     using var client = factory.CreateMqttClient();
-    client.ApplicationMessageReceivedAsync += e =>
-    {
-        var json = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment);
-        Console.WriteLine($"{e.ApplicationMessage.Topic}: {json}");
-        return Task.CompletedTask;
-    };
-
     var options = new MqttClientOptionsBuilder()
         .WithTcpServer("127.0.0.1", 1883)
         .Build();
-
     await client.ConnectAsync(options);
-    await client.SubscribeAsync("virex/#");
+
+    var correlationId = "status-1";
+    var subscribeOptions = factory.CreateSubscribeOptionsBuilder()
+        .WithTopicFilter(filter => filter.WithTopic($"virex/responses/{correlationId}"))
+        .Build();
+    await client.SubscribeAsync(subscribeOptions);
+
+    var message = new MqttApplicationMessageBuilder()
+        .WithTopic("virex/commands/status/get")
+        .WithPayload(JsonSerializer.Serialize(new { correlationId }))
+        .Build();
+    await client.PublishAsync(message);
+    await client.DisconnectAsync();
     ```
 
 === "Python"
 
     ```python
+    import json
     import paho.mqtt.client as mqtt
 
-    def on_message(client, userdata, message):
-        print(message.topic, message.payload.decode("utf-8"))
-
     client = mqtt.Client()
-    client.on_message = on_message
     client.connect("127.0.0.1", 1883)
-    client.subscribe("virex/#")
-    client.loop_forever()
+    client.loop_start()
+
+    correlation_id = "status-1"
+    client.subscribe(f"virex/responses/{correlation_id}")
+    client.publish(
+        "virex/commands/status/get",
+        json.dumps({"correlationId": correlation_id}))
+
+    client.loop_stop()
+    client.disconnect()
     ```
 
 === "C++"
 
-    ```cpp
-    // Subscribe to virex/# with the MQTT client library used by your project.
-    // Each message payload is UTF-8 JSON.
-    OnMqttMessage([](const std::string& topic, const std::string& payload)
-    {
-        std::cout << topic << ": " << payload << std::endl;
-    });
-    ```
+    See the [complete C++ raw MQTT sample](samples.md) for the complete source file with all headers and helper definitions.
 
 ## statusChanged
 
@@ -420,6 +477,25 @@ virex/productInfoChanged
 
 This event contains ProductInfo only. It does not contain result data.
 
+## imageGrabbed
+
+### Purpose
+
+Notifies clients that one image acquisition completed. It contains capture metadata only; related image and result paths are provided later by `resultCreated`.
+
+### Topic
+
+```text
+virex/imageGrabbed
+```
+
+### Payload
+
+```json
+{"captureId":"CAP-1","timestamp":"2026-08-17T10:00:00.000+08:00","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
+```
+
+The later `resultCreated` event uses the same `captureId` and contains the persisted image and result paths.
 ## runStarted
 
 ### Purpose
@@ -571,6 +647,6 @@ The client should keep the **Deinitialize** action enabled and retry it until th
 ## Error handling
 
 MQTT events do not have HTTP status codes. Malformed JSON, unknown topics, broker disconnections, and subscription failures should be treated as transport-layer errors. `commandRejected` is an application-layer rejection reported by the Virex.NET compatible service.
-## 2.2.1 recovery envelope
+## 2.2.2 recovery envelope
 
 During recovery, `statusChanged`, `errorChanged`, and `commandRejected` use the same optional fields: `recoveryAction`, `errorCode`, `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, and sanitized `recoveryDetails`. The public state remains `Deinitializing`; internal `Faulted`, `RequiresDeinitialize`, and `RestartApp` values are never published. Keep Deinitialize enabled for retry; application restart is a UI-only final fallback.

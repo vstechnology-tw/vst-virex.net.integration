@@ -20,6 +20,9 @@ theme:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/mermaid.js?v=1
+
 extra:
   alternate:
     - name: English
@@ -152,6 +155,8 @@ nav:
       - System Payloads:
           - SystemStatus: payloads/system/system-status.md
           - ErrorInfo: payloads/system/error-info.md
+          - Event Payloads:
+              - ImageGrabbedInfo: payloads/events/image-grabbed.md
           - Product Payloads:
               - ProductInfo: payloads/product/product-info.md
           - Command Payloads:

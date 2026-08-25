@@ -248,4 +248,29 @@ public sealed class ProtocolContractTests
         public string State { get; set; } = string.Empty;
     }
 
+    [Fact]
+    public void ImageGrabbedFrameIncludesMetadataWithoutPath()
+    {
+        var frame = TcpSocketEventFormatter.FormatImageGrabbed(new ImageGrabbedInfo
+        {
+            CaptureId = "capture-1",
+            Timestamp = "2026-08-17T10:00:00.000+08:00",
+            LotID = "LOT-001",
+            WaferID = "W01",
+            Recipe = "RCP-A",
+            Slot = "1",
+            FoupID = "FOUP-A",
+            ChamberID = "CH-1",
+        });
+
+        using var doc = JsonDocument.Parse(frame);
+        Assert.Equal("imageGrabbed", doc.RootElement.GetProperty("type").GetString());
+        Assert.Equal("capture-1", doc.RootElement.GetProperty("captureId").GetString());
+        Assert.False(doc.RootElement.TryGetProperty("imagePath", out _));
+        Assert.False(doc.RootElement.TryGetProperty("resultPath", out _));
+
+        Assert.True(VirexEventParser.TryParse(frame, out var value, out _));
+        Assert.Equal("capture-1", value.ImageGrabbed?.CaptureId);
+        Assert.Equal("W01", value.ImageGrabbed?.WaferID);
+    }
 }

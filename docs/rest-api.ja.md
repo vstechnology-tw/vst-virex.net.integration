@@ -1,6 +1,11 @@
 # RESTful API
 
+
 RESTful API は、状態の読み取り、ProductInfo の管理、システム コマンドの送信、および結果の概要のクエリに使用されます。
+
+## 完全なサンプル
+
+このページの language tabs は各操作を説明するリクエスト断片です。すべての `using`、`import`、`#include` を含む実行可能なソースは[完全なサンプル](samples.ja.md)を使用してください。C++ REST の `SendRequest` は完全なサンプル内のローカルヘルパーであり、ライブラリ API ではありません。
 
 ## 基本情報
 
@@ -53,6 +58,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var status = await client.GetStatusAsync();
     // 200 OK body: {"state":"Ready"}
     Console.WriteLine(status.State);
@@ -61,6 +80,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var status = await http.GetFromJsonAsync<SystemStatus>("/api/status");
     // 200 OK: {"state":"Ready"}
     Console.WriteLine(status?.State);
@@ -69,6 +94,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     with urllib.request.urlopen("http://127.0.0.1:5088/api/status") as response:
         status = json.loads(response.read().decode("utf-8"))
         # 200 OK: {"state":"Ready"}
@@ -77,11 +106,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const auto response = SendRequest(url, L"GET", L"/api/status");
-    // HTTP 200 body: {"state":"Ready"}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -118,6 +143,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var error = await client.GetErrorAsync();
     // 200 OK body: {"hasError":false,"state":"Ready"}
     Console.WriteLine(error.HasError);
@@ -126,6 +165,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var error = await http.GetFromJsonAsync<ErrorInfo>("/api/error");
     // 200 OK body: {"hasError":false,"state":"Ready"}
     Console.WriteLine(error?.HasError);
@@ -134,6 +179,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     with urllib.request.urlopen("http://127.0.0.1:5088/api/error") as response:
         error = json.loads(response.read().decode("utf-8"))
         # 200 OK body: {"hasError":false,"state":"Ready"}
@@ -142,11 +191,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const auto response = SendRequest(url, L"GET", L"/api/error");
-    // HTTP 200 body: {"hasError":false,"state":"Ready"}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -183,6 +228,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var productInfo = await client.GetProductInfoAsync();
     // 200 OK body: {"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
     Console.WriteLine(productInfo.LotID);
@@ -191,6 +250,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var productInfo = await http.GetFromJsonAsync<ProductInfo>("/api/product-info");
     // 200 OK body: {"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
     Console.WriteLine(productInfo?.LotID);
@@ -199,6 +264,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     with urllib.request.urlopen("http://127.0.0.1:5088/api/product-info") as response:
         product_info = json.loads(response.read().decode("utf-8"))
         # 200 OK body: {"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
@@ -207,11 +276,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const auto response = SendRequest(url, L"GET", L"/api/product-info");
-    // HTTP 200 body: {"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -263,6 +328,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     await client.SetProductInfoAsync(new ProductInfo
     {
         LotID = "LOT-001",
@@ -278,6 +357,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var productInfo = new ProductInfo
     {
         LotID = "LOT-001",
@@ -295,6 +380,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     payload = {
         "lotID": "LOT-001",
         "waferID": "W01",
@@ -316,13 +405,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const std::string body =
-        R"({"lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","slot":"1","foupID":"FOUP-A","chamberID":"CH-1"})";
-    const auto response = SendRequest(url, L"POST", L"/api/product-info", body);
-    // HTTP 200 body: {"accepted":true,"state":"Ready","command":"SetProductInfo","message":"SetProductInfo accepted."}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -370,6 +453,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var response = await client.InitializeAsync();
     // 200 OK body: {"accepted":true,"state":"Ready","command":"Initialize","message":"Initialize accepted."}
     Console.WriteLine(response.State);
@@ -378,6 +475,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var response = await http.PostAsync("/api/system/initialize", null);
     // 200 OK body: {"accepted":true,"state":"Ready","command":"Initialize","message":"Initialize accepted."}
     Console.WriteLine(await response.Content.ReadAsStringAsync());
@@ -386,6 +489,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     request = urllib.request.Request(
         "http://127.0.0.1:5088/api/system/initialize",
         method="POST")
@@ -396,11 +503,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const auto response = SendRequest(url, L"POST", L"/api/system/initialize");
-    // HTTP 200 body: {"accepted":true,"state":"Ready","command":"Initialize","message":"Initialize accepted."}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -438,6 +541,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var response = await client.DeinitializeAsync();
     // 200 OK body: {"accepted":true,"state":"Uninitialized","command":"Deinitialize","message":"Deinitialize accepted."}
     Console.WriteLine(response.State);
@@ -446,6 +563,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var response = await http.PostAsync("/api/system/deinitialize", null);
     // 200 OK body: {"accepted":true,"state":"Uninitialized","command":"Deinitialize","message":"Deinitialize accepted."}
     Console.WriteLine(await response.Content.ReadAsStringAsync());
@@ -454,6 +577,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     request = urllib.request.Request(
         "http://127.0.0.1:5088/api/system/deinitialize",
         method="POST")
@@ -464,11 +591,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const auto response = SendRequest(url, L"POST", L"/api/system/deinitialize");
-    // HTTP 200 body: {"accepted":true,"state":"Uninitialized","command":"Deinitialize","message":"Deinitialize accepted."}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -524,6 +647,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var response = await client.StartAsync("golden-sample", ControlRunModes.Continue);
     // 200 OK body: {"accepted":true,"state":"Running","command":"Start","message":"Start accepted."}
     Console.WriteLine(response.State);
@@ -532,6 +669,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var request = new SystemStartRequest
     {
         Condition = "golden-sample",
@@ -545,6 +688,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     payload = {"condition": "golden-sample", "runMode": "continue"}
     data = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
@@ -559,12 +706,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const std::string body = R"({"condition":"golden-sample","runMode":"continue"})";
-    const auto response = SendRequest(url, L"POST", L"/api/system/start", body);
-    // HTTP 200 body: {"accepted":true,"state":"Running","command":"Start","message":"Start accepted."}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -612,6 +754,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var response = await client.StopAsync("operator-request");
     // 200 OK body: {"accepted":true,"state":"Ready","command":"Stop","message":"Stop accepted."}
     Console.WriteLine(response.State);
@@ -620,6 +776,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var request = new SystemStopRequest { Reason = "operator-request" };
     var response = await http.PostAsJsonAsync("/api/system/stop", request);
     // 200 OK body: {"accepted":true,"state":"Ready","command":"Stop","message":"Stop accepted."}
@@ -628,6 +790,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     payload = {"reason": "operator-request"}
     data = json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
@@ -642,12 +808,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const std::string body = R"({"reason":"operator-request"})";
-    const auto response = SendRequest(url, L"POST", L"/api/system/stop", body);
-    // HTTP 200 body: {"accepted":true,"state":"Ready","command":"Stop","message":"Stop accepted."}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約
@@ -695,6 +856,20 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# SDK"
 
     ```csharp
+    using System;
+    using System.Threading.Tasks;
+    using Virex.NET.Client;
+    using Virex.NET.Contracts;
+    using var client = new VirexClient(new VirexClientOptions
+    {
+        RestBaseUrl = "http://127.0.0.1:5088",
+        TcpHost = "127.0.0.1",
+        TcpPort = 5089,
+        MqttHost = "127.0.0.1",
+        MqttPort = 1883,
+        MqttTopic = "virex",
+    });
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var results = await client.QueryResultsAsync(lotID: "LOT-001");
     // 200 OK body: {"items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
     Console.WriteLine(results.Count);
@@ -703,6 +878,12 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "C# Raw"
 
     ```csharp
+    using System;
+    using System.Net.Http;
+    using System.Net.Http.Json;
+    using System.Threading.Tasks;
+    using Virex.NET.Contracts;
+    using var http = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:5088/") };
     var results = await http.GetFromJsonAsync<ResultList>("/api/results?lotID=LOT-001");
     // 200 OK body: {"items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
     Console.WriteLine(results?.Count);
@@ -711,6 +892,10 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 === "Python"
 
     ```python
+    import json
+    import socket
+    import urllib.parse
+    import urllib.request
     with urllib.request.urlopen("http://127.0.0.1:5088/api/results?lotID=LOT-001") as response:
         results = json.loads(response.read().decode("utf-8"))
         # 200 OK body: {"items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
@@ -719,11 +904,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 === "C++"
 
-    ```cpp
-    const auto response = SendRequest(url, L"GET", L"/api/results?lotID=LOT-001");
-    // HTTP 200 body: {"items":[{"resultId":"RID-1","lotID":"LOT-001","waferID":"W01","recipe":"RCP-A","condition":"golden-sample","overallResult":"OK","defectCount":0}],"count":1}
-    std::cout << response.body << std::endl;
-    ```
+    See the [complete C++ raw REST sample](samples.md) for the complete source file with all headers and helper definitions.
 
 
 ### 状態の制約

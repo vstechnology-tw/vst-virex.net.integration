@@ -1,6 +1,11 @@
 # C# SDK ガイド
 
+
 `Virex.NET.Client` は、公開 RESTful API、TCP、および MQTT 統合 API の型付きラッパーを提供します。
+
+## 完全なサンプル
+
+すべての `using` と project reference を含む実行可能な C# プログラムは[C# SDK サンプル](samples.ja.md)を使用してください。以下のコードブロックは完全なファイルから抜粋した操作例です。
 
 ## インストール
 
@@ -17,6 +22,11 @@ dotnet add package Virex.NET.Contracts
 ## クライアントの作成
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Contracts;
 using Virex.NET.Client;
 
 using var client = new VirexClient(new VirexClientOptions
@@ -35,8 +45,22 @@ using var client = new VirexClient(new VirexClientOptions
 ## RESTful API コマンド/クエリの流れ
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
 using Virex.NET.Contracts;
 
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var status = await client.GetStatusAsync();
 
 var initialize = await client.InitializeAsync();
@@ -77,6 +101,21 @@ if (status.RecoveryAction == RecoveryActions.Deinitialize)
 ## TCP イベント
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.TcpEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"TCP {value.Type}");
@@ -95,9 +134,26 @@ await client.TcpEvents.SendProductInfoAsync(new ProductInfo
 await client.TcpEvents.SendStartAsync("tcp-check", ControlRunModes.Continue);
 ```
 
+`value.Type` が `imageGrabbed` の場合は `value.ImageGrabbed` を読み取ります。`captureId` は後続の `resultCreated` と一致し、artifact のパスはそこで取得できます。
+
 ## MQTT イベント
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 client.MqttEvents.EventReceived += (_, value) =>
 {
     Console.WriteLine($"MQTT {value.Type}");
@@ -109,11 +165,28 @@ await client.MqttEvents.RunAsync(cts.Token);
 
 MQTT はイベントにのみ使用されます。コマンドにはRESTまたはTCPを使用してください。
 
+`value.Type` が `imageGrabbed` の場合は `value.ImageGrabbed` を読み取ります。`captureId` は後続の `resultCreated` と一致し、artifact のパスはそこで取得できます。
+
 ## エラー処理
 
 RESTful API 通信の失敗と成功しない HTTP 応答は `VirexClientException` をスローします。プロトコルレベルのコマンド拒否は、`CommandResponse` で表されます。
 
 ```csharp
+using System;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Virex.NET.Client;
+using Virex.NET.Contracts;
+using var client = new VirexClient(new VirexClientOptions
+{
+    RestBaseUrl = "http://127.0.0.1:5088",
+    TcpHost = "127.0.0.1",
+    TcpPort = 5089,
+    MqttHost = "127.0.0.1",
+    MqttPort = 1883,
+    MqttTopic = "virex",
+});
 var response = await client.StartAsync();
 if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 {
