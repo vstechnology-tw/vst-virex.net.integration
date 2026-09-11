@@ -1,4 +1,6 @@
-# MQTT Protocol
+﻿# MQTT Protocol
+
+See [command completion and errors](communication-errors.md) for correlated failures, malformed payloads, and SDK exception behavior in 2.2.3.
 
 MQTT is a bidirectional integration channel. The service publishes events to `virex/{eventName}`. Clients can publish RESTful API equivalent commands and queries to `virex/commands/...` and receive correlated responses on `virex/responses/{correlationId}`.
 

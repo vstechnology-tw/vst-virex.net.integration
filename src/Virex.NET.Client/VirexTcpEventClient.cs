@@ -1,4 +1,4 @@
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Virex.NET.Contracts;
@@ -34,7 +34,7 @@ public sealed class VirexTcpEventClient
     }
 
     public async Task SendProductInfoAsync(ProductInfo info, CancellationToken cancellationToken = default) =>
-        await SendFrameAsync(TcpSocketEventFormatter.FormatProductInfo(info), cancellationToken).ConfigureAwait(false);
+        await SendFrameAsync(TcpSocketEventFormatter.FormatProductInfoCommand(info), cancellationToken).ConfigureAwait(false);
 
     public async Task SendInitializeAsync(CancellationToken cancellationToken = default) =>
         await SendFrameAsync(TcpSocketEventFormatter.FormatInitializeCommand(), cancellationToken).ConfigureAwait(false);
@@ -104,25 +104,46 @@ public sealed class VirexTcpEventClient
 
     private async Task<string> SendAndReadFrameAsync(string frame, string expectedType, CancellationToken cancellationToken)
     {
+        var requestId = Guid.NewGuid().ToString("N");
+        frame = CommandPayloadJson.WithRequestId(frame, requestId);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var timeoutMs = _options.TimeoutMs <= 0 ? 5000 : _options.TimeoutMs;
+        timeout.CancelAfter(timeoutMs);
         using var client = new TcpClient();
-        await client.ConnectAsync(_options.TcpHost, _options.TcpPort).ConfigureAwait(false);
-        using var stream = client.GetStream();
-        var bytes = Encoding.UTF8.GetBytes(frame);
-        await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
-        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-        while (!cancellationToken.IsCancellationRequested)
+        using var closeOnCancellation = timeout.Token.Register(client.Dispose);
+        try
         {
-            var line = await ReadFrameAsync(stream, cancellationToken).ConfigureAwait(false);
-            if (line is null)
-                throw new EndOfStreamException("TCP stream closed before the expected response frame was received.");
+            await client.ConnectAsync(_options.TcpHost, _options.TcpPort).ConfigureAwait(false);
+            using var stream = client.GetStream();
+            var bytes = Encoding.UTF8.GetBytes(frame);
+            await stream.WriteAsync(bytes, 0, bytes.Length, timeout.Token).ConfigureAwait(false);
+            await stream.FlushAsync(timeout.Token).ConfigureAwait(false);
 
-            using var doc = JsonDocument.Parse(line);
-            if (doc.RootElement.TryGetProperty("type", out var type) && type.GetString() == expectedType)
-                return line;
+            while (!timeout.IsCancellationRequested)
+            {
+                var line = await ReadFrameAsync(stream, timeout.Token).ConfigureAwait(false);
+                if (line is null)
+                    throw new EndOfStreamException("TCP stream closed before the expected response frame was received.");
+
+                using var doc = JsonDocument.Parse(line);
+                if (doc.RootElement.TryGetProperty("type", out var type))
+                {
+                    if (type.GetString() == expectedType)
+                        return line;
+                    if (type.GetString() == "commandRejected"
+                        && doc.RootElement.TryGetProperty("requestId", out var replyId)
+                        && replyId.GetString() == requestId)
+                        throw new VirexCommandException(ProtocolJson.Deserialize<CommandResponse>(line) ?? new CommandResponse());
+                }
+            }
+
+            throw new OperationCanceledException(timeout.Token);
         }
-
-        throw new OperationCanceledException(cancellationToken);
+        catch (Exception ex) when (timeout.IsCancellationRequested && ex is not VirexCommandException)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new TimeoutException($"TCP command response was not received within {timeoutMs} ms.", ex);
+        }
     }
 
     private async Task<string?> ReadFrameAsync(Stream stream, CancellationToken cancellationToken)

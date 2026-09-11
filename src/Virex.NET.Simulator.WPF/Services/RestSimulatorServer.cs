@@ -1,6 +1,7 @@
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Virex.NET.Contracts;
 using Virex.NET.Simulator.Core;
 
@@ -64,6 +65,7 @@ public sealed class RestSimulatorServer
 
     private async Task HandleAsync(HttpListenerContext context)
     {
+        var operation = CommandName(context.Request);
         try
         {
             var path = context.Request.Url?.AbsolutePath ?? "/";
@@ -88,15 +90,17 @@ public sealed class RestSimulatorServer
             else if (path == RestRoutes.ApiProductInfo && context.Request.HttpMethod == "POST")
             {
                 var body = await ReadBodyAsync(context).ConfigureAwait(false);
-                var info = ProtocolJson.Deserialize<ProductInfo>(body) ?? new ProductInfo();
+                var info = CommandPayloadJson.ReadObject<ProductInfo>(body) ?? throw new JsonException("ProductInfo is required.");
                 await CommandAsync(context, await _session.SetProductInfoAsync(info).ConfigureAwait(false)).ConfigureAwait(false);
             }
             else if (path == RestRoutes.ApiSystemInitialize && context.Request.HttpMethod == "POST")
             {
+                _ = await ReadOptionalJsonAsync<JsonElement>(context).ConfigureAwait(false);
                 await CommandAsync(context, await _session.InitializeAsync().ConfigureAwait(false)).ConfigureAwait(false);
             }
             else if (path == RestRoutes.ApiSystemDeinitialize && context.Request.HttpMethod == "POST")
             {
+                _ = await ReadOptionalJsonAsync<JsonElement>(context).ConfigureAwait(false);
                 await CommandAsync(context, await _session.DeinitializeAsync().ConfigureAwait(false)).ConfigureAwait(false);
             }
             else if (path == RestRoutes.ApiSystemStart && context.Request.HttpMethod == "POST")
@@ -117,6 +121,8 @@ public sealed class RestSimulatorServer
                     .ToArray();
                 if (invalid.Length > 0)
                 {
+                    _session.ReportFailure("QueryResults", CommandErrorCodes.InvalidPayload,
+                        "Only waferID, lotID, and recipe are supported query parameters.");
                     context.Response.StatusCode = 400;
                     await JsonAsync(context, new
                     {
@@ -127,8 +133,8 @@ public sealed class RestSimulatorServer
                 }
 
                 var items = _session.QueryResults(
-                    context.Request.QueryString["waferID"],
                     context.Request.QueryString["lotID"],
+                    context.Request.QueryString["waferID"],
                     context.Request.QueryString["recipe"]);
                 await JsonAsync(context, new ResultList { Items = items, Count = items.Length }).ConfigureAwait(false);
             }
@@ -146,10 +152,16 @@ public sealed class RestSimulatorServer
                 await TextAsync(context, "Not found", "text/plain").ConfigureAwait(false);
             }
         }
+        catch (JsonException)
+        {
+            await CommandAsync(context, _session.ReportFailure(operation, CommandErrorCodes.InvalidPayload,
+                "The request body must be a valid JSON object for this operation.")).ConfigureAwait(false);
+        }
         catch (Exception ex)
         {
-            context.Response.StatusCode = 500;
-            await TextAsync(context, ex.Message, "text/plain").ConfigureAwait(false);
+            _session.WriteLog("REST operation failed: " + ex.Message);
+            await CommandAsync(context, _session.ReportFailure(operation, CommandErrorCodes.CommandFailed,
+                "The operation could not be completed.")).ConfigureAwait(false);
         }
     }
 
@@ -159,19 +171,33 @@ public sealed class RestSimulatorServer
         return await reader.ReadToEndAsync().ConfigureAwait(false);
     }
 
+    private static string CommandName(HttpListenerRequest request) => request.Url?.AbsolutePath switch
+    {
+        RestRoutes.ApiStatus => "GetStatus",
+        RestRoutes.ApiError => "GetError",
+        RestRoutes.ApiResults => "QueryResults",
+        RestRoutes.ApiProductInfo => request.HttpMethod == "GET" ? "GetProductInfo" : "SetProductInfo",
+        RestRoutes.ApiSystemInitialize => "Initialize",
+        RestRoutes.ApiSystemDeinitialize => "Deinitialize",
+        RestRoutes.ApiSystemStart => "Start",
+        RestRoutes.ApiSystemStop => "Stop",
+        _ => "Unknown",
+    };
+
     private static async Task<T?> ReadOptionalJsonAsync<T>(HttpListenerContext context)
     {
         if (!context.Request.HasEntityBody)
             return default;
 
         var body = await ReadBodyAsync(context).ConfigureAwait(false);
-        return string.IsNullOrWhiteSpace(body) ? default : ProtocolJson.Deserialize<T>(body);
+        return CommandPayloadJson.ReadObject<T>(body, allowEmpty: true);
     }
 
     private static Task CommandAsync(HttpListenerContext context, CommandResponse response)
     {
         if (!response.Accepted)
-            context.Response.StatusCode = response.ErrorCode == CommandErrorCodes.InvalidRunMode ? 400 : 409;
+            context.Response.StatusCode = response.ErrorCode is CommandErrorCodes.InvalidRunMode or CommandErrorCodes.InvalidPayload ? 400
+                : response.ErrorCode == CommandErrorCodes.CommandFailed ? 503 : 409;
         return JsonAsync(context, response);
     }
 

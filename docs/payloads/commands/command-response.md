@@ -1,4 +1,4 @@
-# CommandResponse
+﻿# CommandResponse
 
 `CommandResponse` reports whether a command was accepted and the state after command processing.
 
@@ -49,6 +49,7 @@ When operator recovery is required, the response remains in the public `Deinitia
 | `accepted` | boolean | Yes | Whether the command is accepted. |
 | `state` | string | Yes | Current state after command processing. |
 | `command` | string | Yes | The public command name. |
+| `requestId` | string | No | Echoes a TCP query request ID on a correlated rejection. |
 | `errorCode` | string | No | Omitted for accepted commands. `invalid_state` means the command is invalid in the current state. |
 | `recoveryAction` | string | No | Operator recovery action required by the current state. The public protocol currently defines `Deinitialize`; application restart remains a UI-only last resort. |
 | `recoveryStartedAt` | string (date-time) | No | UTC timestamp at which the current recovery attempt began. |

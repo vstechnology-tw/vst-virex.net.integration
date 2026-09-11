@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -115,45 +115,45 @@ public sealed class TcpSimulatorServer
                     if (!TcpSocketMessageParser.TryParse(line, out var message, out var error))
                     {
                         _session.WriteLog("Invalid TCP frame: " + error);
+                        _session.ReportFailure("Unknown", CommandErrorCodes.InvalidPayload, "Invalid TCP command frame.", CommandPayloadJson.TryReadRequestId(line));
                         continue;
                     }
 
                     _session.WriteLog("TCP inbound: " + message.Type);
-                    if (message.Type == "status")
-                        SafeWrite(writer, TcpSocketEventFormatter.FormatStatusResponse(_session.Status));
-                    else if (message.Type == "error")
-                        SafeWrite(writer, TcpSocketEventFormatter.FormatErrorResponse(_session.Error));
-                    else if (message.Type == "getProductInfo")
-                        SafeWrite(writer, TcpSocketEventFormatter.FormatProductInfoResponse(_session.ProductInfo));
-                    else if (message.Type == "results")
+                    try
                     {
-                        var items = _session.QueryResults(message.LotID, message.WaferID, message.Recipe);
-                        SafeWrite(writer, TcpSocketEventFormatter.FormatResults(new ResultList
+                        if (message.Type == "status")
+                            SafeWrite(writer, CommandPayloadJson.WithRequestId(TcpSocketEventFormatter.FormatStatusResponse(_session.Status), message.RequestId));
+                        else if (message.Type == "error")
+                            SafeWrite(writer, CommandPayloadJson.WithRequestId(TcpSocketEventFormatter.FormatErrorResponse(_session.Error), message.RequestId));
+                        else if (message.Type == "getProductInfo")
+                            SafeWrite(writer, CommandPayloadJson.WithRequestId(TcpSocketEventFormatter.FormatProductInfoResponse(_session.ProductInfo), message.RequestId));
+                        else if (message.Type == "results")
                         {
-                            Items = items,
-                            Count = items.Length,
-                        }));
+                            var items = _session.QueryResults(message.LotID, message.WaferID, message.Recipe);
+                            SafeWrite(writer, CommandPayloadJson.WithRequestId(TcpSocketEventFormatter.FormatResults(new ResultList
+                            {
+                                Items = items,
+                                Count = items.Length,
+                            }), message.RequestId));
+                        }
+                        else if (message.Type == "initialize")
+                            await _session.InitializeAsync(token).ConfigureAwait(false);
+                        else if (message.Type == "deinitialize")
+                            await _session.DeinitializeAsync(token).ConfigureAwait(false);
+                        else if (message.Type == "productInfo" && message.ProductInfo is not null)
+                            await _session.SetProductInfoAsync(message.ProductInfo, token).ConfigureAwait(false);
+                        else if (message.Type == "start")
+                            await _session.StartAsync(new SystemStartRequest { Condition = message.Condition, RunMode = message.RunMode }, token).ConfigureAwait(false);
+                        else if (message.Type == "stop")
+                            await _session.StopAsync(new SystemStopRequest { Reason = message.Reason }, token).ConfigureAwait(false);
                     }
-                    else if (message.Type == "initialize")
-                        await _session.InitializeAsync(token).ConfigureAwait(false);
-                    else if (message.Type == "deinitialize")
-                        await _session.DeinitializeAsync(token).ConfigureAwait(false);
-                    else if (message.Type == "productInfo" && message.ProductInfo is not null)
-                        await _session.SetProductInfoAsync(message.ProductInfo, token).ConfigureAwait(false);
-                    else if (message.Type == "start")
-                        _ = Task.Run(async () =>
-                        {
-                            try
-                            {
-                                await _session.StartAsync(new SystemStartRequest { Condition = message.Condition, RunMode = message.RunMode }, token).ConfigureAwait(false);
-                            }
-                            catch (Exception ex)
-                            {
-                                _session.WriteLog("TCP start failed: " + ex.Message);
-                            }
-                        }, token);
-                    else if (message.Type == "stop")
-                        await _session.StopAsync(new SystemStopRequest { Reason = message.Reason }, token).ConfigureAwait(false);
+                    catch (OperationCanceledException) when (token.IsCancellationRequested) { return; }
+                    catch (Exception ex)
+                    {
+                        _session.WriteLog("TCP operation failed: " + ex.Message);
+                        _session.ReportFailure(message.Type, CommandErrorCodes.CommandFailed, "The TCP operation could not be completed.", message.RequestId);
+                    }
                 }
             }
             finally
@@ -172,7 +172,7 @@ public sealed class TcpSimulatorServer
     {
         try
         {
-            writer.Write(frame);
+            lock (writer) writer.Write(frame);
         }
         catch (IOException ex)
         {

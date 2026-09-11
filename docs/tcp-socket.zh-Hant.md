@@ -1,4 +1,6 @@
-# TCP Socket 通訊協定
+﻿# TCP Socket 通訊協定
+
+2.2.3 的 requestId、查詢失敗與送出／完成差異，請參閱[命令完成與錯誤處理](communication-errors.zh-Hant.md)。
 
 
 TCP Socket 是雙向整合通道，適合需要用同一個簡單串流協定送出命令並接收事件的用戶端。

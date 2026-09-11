@@ -1,4 +1,4 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public sealed class CommandResponse
 {
@@ -7,6 +7,7 @@ public sealed class CommandResponse
     public string State { get; set; } = SystemStates.Uninitialized;
 
     public string Command { get; set; } = string.Empty;
+    public string? RequestId { get; set; }
 
     public string? ErrorCode { get; set; }
 

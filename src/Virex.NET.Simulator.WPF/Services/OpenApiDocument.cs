@@ -1,10 +1,10 @@
-using Virex.NET.Contracts;
+﻿using Virex.NET.Contracts;
 
 namespace Virex.NET.Simulator.WPF.Services;
 
 internal static class OpenApiDocument
 {
-    private static readonly string[] RequiredProductInfoFields = ["waferID", "lotID", "slot", "foupID", "chamberID"];
+    private static readonly string[] RequiredProductInfoFields = ["waferID", "lotID", "recipe", "slot", "foupID", "chamberID"];
 
     public static object Create(string baseUrl) => new
     {
@@ -12,7 +12,7 @@ internal static class OpenApiDocument
         info = new
         {
             title = "Virex.NET Simulator API",
-            version = "2.2.2",
+            version = "2.2.3",
         },
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
@@ -91,6 +91,7 @@ internal static class OpenApiDocument
                     ["accepted"] = BoolSchema(),
                     ["state"] = StringSchema(),
                     ["command"] = StringSchema(),
+                    ["requestId"] = NullableStringSchema(),
                     ["errorCode"] = NullableStringSchema(),
                     ["message"] = StringSchema(),
                     ["recoveryAction"] = NullableStringSchema(),
@@ -111,6 +112,7 @@ internal static class OpenApiDocument
                 ["ResultSummary"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["resultId"] = StringSchema(),
+                    ["captureId"] = StringSchema(),
                     ["timestamp"] = StringSchema("date-time"),
                     ["waferID"] = StringSchema(),
                     ["lotID"] = StringSchema(),
@@ -154,6 +156,8 @@ internal static class OpenApiDocument
         responses = new Dictionary<string, object>
         {
             ["200"] = JsonResponse("Product information updated.", Ref("CommandResponse")),
+            ["400"] = JsonResponse("Invalid JSON payload.", Ref("CommandResponse")),
+            ["503"] = JsonResponse("Operation failed.", Ref("CommandResponse")),
             ["409"] = JsonResponse("Product information cannot be updated from the current state.", Ref("CommandResponse")),
         },
     };
@@ -170,6 +174,8 @@ internal static class OpenApiDocument
         responses = new Dictionary<string, object>
         {
             ["200"] = JsonResponse("Command accepted.", Ref("CommandResponse")),
+            ["400"] = JsonResponse("Invalid JSON payload or run mode.", Ref("CommandResponse")),
+            ["503"] = JsonResponse("Operation failed.", Ref("CommandResponse")),
             ["409"] = JsonResponse("The simulator cannot execute the command from the current state.", Ref("CommandResponse")),
         },
     };

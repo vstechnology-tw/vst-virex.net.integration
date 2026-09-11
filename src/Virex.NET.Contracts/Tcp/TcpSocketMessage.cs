@@ -1,7 +1,8 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public sealed class TcpSocketMessage
 {
+    public string? RequestId { get; set; }
     public string Type { get; set; } = string.Empty;
 
     public string? Condition { get; set; }

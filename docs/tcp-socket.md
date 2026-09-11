@@ -1,4 +1,6 @@
-# TCP Socket Protocol
+﻿# TCP Socket Protocol
+
+See [command completion and errors](communication-errors.md) for 2.2.3 query request IDs, rejection handling, and the distinction between sending a command and receiving its outcome.
 
 
 TCP Socket is a bidirectional integration channel for clients that need to send commands and receive events over the same simple streaming protocol.

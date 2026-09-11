@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Mediator;
 using MQTTnet;
 using MQTTnet.Client;
@@ -138,13 +138,38 @@ public sealed class MqttSimulatorPublisher :
             return;
 
         var payload = Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment.ToArray());
-        var request = string.IsNullOrWhiteSpace(payload)
-            ? new MqttCommandRequest()
-            : ProtocolJson.Deserialize<MqttCommandRequest>(payload) ?? new MqttCommandRequest();
+        MqttCommandRequest request;
+        try
+        {
+            request = CommandPayloadJson.ReadObject<MqttCommandRequest>(payload) ?? new MqttCommandRequest();
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            var correlationId = CommandPayloadJson.TryReadCorrelationId(payload);
+            var failure = _session.ReportFailure(childTopic, CommandErrorCodes.InvalidPayload, "Invalid MQTT request payload.");
+            if (!string.IsNullOrWhiteSpace(correlationId))
+                await PublishResponseAsync(correlationId!, FailureResponse(correlationId!, childTopic, failure)).ConfigureAwait(false);
+            return;
+        }
         if (string.IsNullOrWhiteSpace(request.CorrelationId))
             request.CorrelationId = Guid.NewGuid().ToString("N");
 
-        var response = await ExecuteCommandAsync(childTopic, payload, request).ConfigureAwait(false);
+        MqttCommandResponse response;
+        try
+        {
+            response = await ExecuteCommandAsync(childTopic, payload, request).ConfigureAwait(false);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            response = FailureResponse(request.CorrelationId, childTopic,
+                _session.ReportFailure(childTopic, CommandErrorCodes.InvalidPayload, "Invalid MQTT request payload."));
+        }
+        catch (Exception ex)
+        {
+            _session.WriteLog("MQTT operation failed: " + ex.Message);
+            response = FailureResponse(request.CorrelationId, childTopic,
+                _session.ReportFailure(childTopic, CommandErrorCodes.CommandFailed, "The operation could not be completed."));
+        }
         await PublishResponseAsync(request.CorrelationId, response).ConfigureAwait(false);
     }
 
@@ -183,13 +208,15 @@ public sealed class MqttSimulatorPublisher :
         }
         else
         {
-            response.Accepted = false;
-            response.ErrorCode = "unknown_topic";
-            response.Message = "Unknown MQTT command topic.";
+            response.CommandResponse = _session.ReportFailure("Unknown", "unknown_topic", "Unknown MQTT command topic.");
         }
 
         if (response.CommandResponse is not null)
+        {
             response.Accepted = response.CommandResponse.Accepted;
+            response.ErrorCode = response.CommandResponse.ErrorCode;
+            response.Message = response.CommandResponse.Message;
+        }
 
         return response;
     }
@@ -201,8 +228,18 @@ public sealed class MqttSimulatorPublisher :
 
         return ProductInfoJsonParser.TryParse(payload, out var info, out _)
             ? info
-            : new ProductInfo();
+            : throw new System.Text.Json.JsonException("ProductInfo is required.");
     }
+
+    private static MqttCommandResponse FailureResponse(string id, string topic, CommandResponse failure) => new MqttCommandResponse
+    {
+        CorrelationId = id,
+        Topic = topic,
+        Accepted = false,
+        ErrorCode = failure.ErrorCode,
+        Message = failure.Message,
+        CommandResponse = failure,
+    };
 
     private string ChildTopic(string topic)
     {

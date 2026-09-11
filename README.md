@@ -1,4 +1,4 @@
-# Virex.NET Integration Kit
+﻿# Virex.NET Integration Kit
 
 [![Virex.NET.Contracts](https://img.shields.io/nuget/v/Virex.NET.Contracts?label=Virex.NET.Contracts)](https://www.nuget.org/packages/Virex.NET.Contracts)
 [![Virex.NET.Client](https://img.shields.io/nuget/v/Virex.NET.Client?label=Virex.NET.Client)](https://www.nuget.org/packages/Virex.NET.Client)
@@ -72,6 +72,7 @@ Start here:
 - [Documentation Index](docs/index.md)
 - [RESTful API](docs/rest-api.md)
 - [System State Machine](docs/state-machine.md)
+- [Command Completion and Errors (2.2.3)](docs/communication-errors.md)
 - [Payload Reference](docs/payloads.md)
 - [TCP Socket Protocol](docs/tcp-socket.md)
 - [MQTT Protocol](docs/mqtt-events.md)
