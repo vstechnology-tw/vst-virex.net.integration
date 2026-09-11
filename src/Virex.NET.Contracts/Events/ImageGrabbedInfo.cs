@@ -1,8 +1,10 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public sealed class ImageGrabbedInfo
 {
     public string CaptureId { get; set; } = string.Empty;
+    public string? FrameId { get; set; }
+    public string? SourceId { get; set; }
 
     public string Timestamp { get; set; } = string.Empty;
 

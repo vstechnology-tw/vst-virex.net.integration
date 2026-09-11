@@ -1,4 +1,4 @@
-site_name: Virex.NET Integration Kit
+﻿site_name: Virex.NET Integration Kit
 site_url: https://vstechnology-tw.github.io/vst-virex.net.integration/
 repo_url: https://github.com/vstechnology-tw/vst-virex.net.integration
 repo_name: vstechnology-tw/vst-virex.net.integration
@@ -146,6 +146,7 @@ nav:
   - Quick Start: quick-start.md
   - Simulator Guide: simulator.md
   - State Machine: state-machine.md
+  - Completion and Errors: communication-errors.md
   - Protocol Reference:
       - RESTful API: rest-api.md
       - TCP Socket: tcp-socket.md

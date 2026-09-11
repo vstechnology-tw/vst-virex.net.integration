@@ -1,4 +1,4 @@
-using Stateless;
+﻿using Stateless;
 using Virex.NET.Contracts;
 
 namespace Virex.NET.Simulator.Core;
@@ -284,6 +284,8 @@ public sealed class SimulatorSession
     }
     internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken)
     {
+        if (State != SimulatorState.Ready)
+            return Reject("SetProductInfo");
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -291,12 +293,21 @@ public sealed class SimulatorSession
                 return Reject("SetProductInfo");
 
             await FireAsync(SimulatorTrigger.SetProductInfo).ConfigureAwait(false);
-            ProductInfo = productInfo.Snapshot();
-            LogEvent("productInfoChanged", ProductInfo);
-            ProductInfoChanged?.Invoke(this, ProductInfo);
-            LogMessage("ProductInfo updated: " + FormatProductInfoForLog(ProductInfo));
-            await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
-            await FireAsync(SimulatorTrigger.ProductInfoUpdateCompleted).ConfigureAwait(false);
+            try
+            {
+                await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
+                ProductInfo = productInfo.Snapshot();
+                await FireAsync(SimulatorTrigger.ProductInfoUpdateCompleted).ConfigureAwait(false);
+                LogEvent("productInfoChanged", ProductInfo);
+                ProductInfoChanged?.Invoke(this, ProductInfo);
+                LogMessage("ProductInfo updated: " + FormatProductInfoForLog(ProductInfo));
+            }
+            catch
+            {
+                if (State == SimulatorState.UpdatingProductInfo)
+                    await FireAsync(SimulatorTrigger.ProductInfoUpdateCompleted).ConfigureAwait(false);
+                throw;
+            }
             return Accept("SetProductInfo", "ProductInfo updated.");
         }
         finally
@@ -307,6 +318,8 @@ public sealed class SimulatorSession
 
     internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken)
     {
+        if (State != SimulatorState.Ready)
+            return Reject("Start");
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -454,12 +467,16 @@ public sealed class SimulatorSession
             Message = message,
         };
 
-    private CommandResponse Reject(string command, string errorCode = CommandErrorCodes.InvalidState, string? message = null)
+    public CommandResponse ReportFailure(string command, string errorCode, string message, string? requestId = null) =>
+        Reject(command, errorCode, message, requestId);
+
+    private CommandResponse Reject(string command, string errorCode = CommandErrorCodes.InvalidState, string? message = null, string? requestId = null)
     {
         var response = new CommandResponse
         {
             Accepted = false,
             Command = command,
+            RequestId = requestId,
             State = SimulatorStateNames.ToDto(State),
             RecoveryAction = RecoveryActionFor(State),
             ErrorCode = errorCode,

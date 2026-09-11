@@ -1,4 +1,4 @@
-# ImageGrabbedInfo
+﻿# ImageGrabbedInfo
 
 `ImageGrabbedInfo` is the metadata payload for the public `imageGrabbed` event. It is sent as soon as image acquisition completes and contains no image or result paths; related paths are provided later by `resultCreated`.
 
@@ -13,6 +13,8 @@
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `captureId` | string | Yes | Stable identity shared with the later `ResultSummary`. |
+| `frameId` | string | No | Individual image identity when several source images share one capture group. |
+| `sourceId` | string | No | Configured source identity for the acquired image. |
 | `timestamp` | string | Yes | Image acquisition timestamp. |
 | `lotID` | string | Yes | Lot identifier snapshot. |
 | `waferID` | string | Yes | Wafer identifier snapshot. |

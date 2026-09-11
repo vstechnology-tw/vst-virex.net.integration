@@ -1,4 +1,6 @@
-# MQTT 通訊協定
+﻿# MQTT 通訊協定
+
+2.2.3 的 correlated response 與 SDK 例外處理，請參閱[命令完成與錯誤處理](communication-errors.zh-Hant.md)。
 
 
 ## 完整範例

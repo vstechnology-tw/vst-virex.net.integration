@@ -1,4 +1,4 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public static class TcpSocketEventFormatter
 {
@@ -55,11 +55,25 @@ public static class TcpSocketEventFormatter
             info.ChamberID,
         });
 
+    public static string FormatProductInfoCommand(ProductInfo info) =>
+        Format(new
+        {
+            type = "productInfo",
+            info.LotID,
+            info.WaferID,
+            info.Recipe,
+            info.Slot,
+            info.FoupID,
+            info.ChamberID,
+        });
+
     public static string FormatImageGrabbed(ImageGrabbedInfo image) =>
         Format(new
         {
             type = "imageGrabbed",
             image.CaptureId,
+            image.FrameId,
+            image.SourceId,
             image.Timestamp,
             image.LotID,
             image.WaferID,
@@ -142,6 +156,7 @@ public static class TcpSocketEventFormatter
         Format(new
         {
             type = "errorChanged",
+            error.HasError,
             message = error.Message,
             error.State,
             error.RecoveryAction,
@@ -157,6 +172,7 @@ public static class TcpSocketEventFormatter
         Format(new
         {
             type = "commandRejected",
+            response.RequestId,
             response.Accepted,
             response.State,
             response.Command,

@@ -1,4 +1,6 @@
-# System State Machine
+﻿# System State Machine
+
+See [command completion and errors](communication-errors.md) for ProductInfo completion ordering and cancellation of an outstanding Start preparation.
 
 The state machine defines which commands are valid in each system lifecycle state. Before a client sends a command, it should use the current state to decide whether that command is allowed.
 
