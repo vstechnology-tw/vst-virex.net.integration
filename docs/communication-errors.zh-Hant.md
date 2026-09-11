@@ -32,3 +32,14 @@ ProductInfo 完成後才發出 `productInfoChanged`，更新中會拒絕 Start�
 
 ProductInfo 的六個欄位為字串。舊送出端省略欄位時可使用預設值，但 null、object、
 array 不等於合法字串；建議送出全部六個欄位。
+
+## 既有 TCP 純字串整合
+
+Integration Kit 2.2.3 保留原有 TCP 命令名稱、NDJSON 換行格式、查詢回覆類型及
+完成／拒絕事件名稱。純字串 TCP 呼叫端不需要安裝 C# SDK，也不需要新增 requestId。
+productInfo 命令、舊版 productInfoChanged 輸入別名及既有無 type 的產品封包都保留。
+新增的可選欄位可忽略；接收端應依 type 辨識事件，不應假設每次命令只有下一行回覆。
+
+此版本以同一條 TCP 連線直接送 JSON 字串，驗證 Initialize → Start(single) → Ready →
+ProductInfo → 再次 Start。requestId 供 SDK 對應查詢拒絕使用。前述查詢例外處理變更
+適用於升級 Virex.NET.Client 的程式，不要求純字串 TCP 呼叫端改用 SDK 物件。

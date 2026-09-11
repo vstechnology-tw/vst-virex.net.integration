@@ -48,3 +48,18 @@ resultCreated or the results query after persistence.
 The ProductInfo schema uses six string fields. Older senders may omit fields and
 receive protocol defaults, but explicit null/object/array values are not valid
 string values. Send all six fields for portable integration.
+
+## Existing TCP string integrations
+
+Integration Kit 2.2.3 keeps the existing TCP command names, NDJSON framing, query
+response types, and completion/rejection event names. Raw TCP clients do not need
+to install the C# SDK or add requestId. Both productInfo and the legacy
+productInfoChanged input alias are accepted, along with existing untyped product
+frames. New optional fields may be ignored. A client should select frames by type
+rather than assume that every command produces exactly one next line.
+
+The release verifies Initialize -> Start(single) -> Ready -> ProductInfo -> Start
+using literal JSON strings on one TCP connection. The requestId field is only
+needed by SDK clients that want to correlate query rejections. SDK query exception
+handling changes described above apply when upgrading Virex.NET.Client; they do
+not require raw TCP clients to adopt SDK objects.
