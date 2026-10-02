@@ -109,6 +109,7 @@ internal static class OpenApiDocument
                 {
                     ["condition"] = NullableStringSchema(),
                     ["runMode"] = NullableStringSchema(),
+                    ["inspectionMode"] = new { type = "string", nullable = true, @enum = new[] { InspectionModes.CaptureOnly, InspectionModes.CaptureAndInspect }, description = "Optional per-start selection. Omitted/null preserves recipe behavior; independent of runMode." },
                 }),
                 ["SystemStopRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -141,20 +142,24 @@ internal static class OpenApiDocument
                 }),
                 ["RecipeInfo"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["recipe"] = StringSchema(), ["revision"] = StringSchema(),
+                    ["recipe"] = StringSchema(),
+                    ["revision"] = StringSchema(),
                 }, ["recipe", "revision"]),
                 ["RecipeList"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["items"] = new { type = "array", items = Ref("RecipeInfo") }, ["count"] = IntSchema(),
+                    ["items"] = new { type = "array", items = Ref("RecipeInfo") },
+                    ["count"] = IntSchema(),
                 }, ["items", "count"]),
                 ["RecipeParameters"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["recipe"] = StringSchema(), ["revision"] = StringSchema(),
+                    ["recipe"] = StringSchema(),
+                    ["revision"] = StringSchema(),
                     ["groups"] = new { type = "array", items = Ref("RecipeParameterGroup") },
                 }, ["recipe", "revision", "groups"]),
                 ["RecipeParameterGroup"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["key"] = StringSchema(), ["parameters"] = new { type = "array", items = Ref("RecipeParameter") },
+                    ["key"] = StringSchema(),
+                    ["parameters"] = new { type = "array", items = Ref("RecipeParameter") },
                 }, ["key", "parameters"]),
                 ["RecipeParameter"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -165,12 +170,15 @@ internal static class OpenApiDocument
                 ["ResultDetail"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["schemaVersion"] = new { type = "integer", @enum = new[] { ResultDetail.CurrentSchemaVersion } },
-                    ["resultId"] = StringSchema(), ["summary"] = Ref("ResultSummary"),
+                    ["resultId"] = StringSchema(),
+                    ["summary"] = Ref("ResultSummary"),
                     ["findings"] = new { type = "array", items = Ref("ResultFinding") },
                 }, ["schemaVersion", "resultId", "summary", "findings"]),
                 ["ResultFinding"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["findingId"] = StringSchema(), ["kind"] = StringSchema(), ["label"] = StringSchema(),
+                    ["findingId"] = StringSchema(),
+                    ["kind"] = StringSchema(),
+                    ["label"] = StringSchema(),
                     ["score"] = new { type = "number", nullable = true },
                     ["productPolygon"] = new { type = "array", items = Ref("ProductPoint") },
                     ["diagnosticImageIds"] = new { type = "array", items = StringSchema() },
@@ -182,7 +190,8 @@ internal static class OpenApiDocument
                 }, ["xmm", "ymm"]),
                 ["QueryError"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["errorCode"] = StringSchema(), ["message"] = StringSchema(),
+                    ["errorCode"] = StringSchema(),
+                    ["message"] = StringSchema(),
                 }, ["errorCode", "message"]),
             },
         },

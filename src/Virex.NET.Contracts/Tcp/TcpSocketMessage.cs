@@ -9,6 +9,8 @@ public sealed class TcpSocketMessage
 
     public string RunMode { get; set; } = ControlRunModes.Continue;
 
+    public string? InspectionMode { get; set; }
+
     public string? Reason { get; set; }
 
     public string? LotID { get; set; }

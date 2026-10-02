@@ -242,7 +242,7 @@ public sealed class RestSimulatorServer
     private static Task CommandAsync(HttpListenerContext context, CommandResponse response)
     {
         if (!response.Accepted)
-            context.Response.StatusCode = response.ErrorCode is CommandErrorCodes.InvalidRunMode or CommandErrorCodes.InvalidPayload ? 400
+            context.Response.StatusCode = response.ErrorCode is CommandErrorCodes.InvalidRunMode or CommandErrorCodes.InvalidInspectionMode or CommandErrorCodes.InvalidPayload ? 400
                 : response.ErrorCode == CommandErrorCodes.CommandFailed ? 503 : 409;
         return JsonAsync(context, response);
     }

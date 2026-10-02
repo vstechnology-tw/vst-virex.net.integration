@@ -192,6 +192,9 @@ public static class TcpSocketEventFormatter
     public static string FormatDeinitializeCommand() => FormatCommand("deinitialize");
 
     public static string FormatStartCommand(string? condition = null, string? runMode = null) =>
+        FormatStartCommand(condition, runMode, null);
+
+    public static string FormatStartCommand(string? condition, string? runMode, string? inspectionMode) =>
         Format(new
         {
             type = "start",
@@ -199,6 +202,7 @@ public static class TcpSocketEventFormatter
             runMode = ControlRunModes.TryNormalize(runMode, out var normalizedRunMode)
                 ? normalizedRunMode
                 : runMode,
+            inspectionMode,
         });
 
     public static string FormatStopCommand(string? reason = null) =>
