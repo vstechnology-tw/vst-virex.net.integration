@@ -5,6 +5,7 @@ namespace Virex.NET.Simulator.WPF.Services;
 internal static class OpenApiDocument
 {
     private static readonly string[] RequiredProductInfoFields = ["waferID", "lotID", "recipe", "slot", "foupID", "chamberID"];
+    private static readonly string[] ParameterTypes = ["string", "boolean", "integer", "number"];
 
     public static object Create(string baseUrl) => new
     {
@@ -29,6 +30,10 @@ internal static class OpenApiDocument
             [RestRoutes.ApiSystemDeinitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Deinitialize simulator", "Moves the simulator from Ready to Uninitialized and retries cleanup from public Deinitializing recovery state.") },
             [RestRoutes.ApiSystemStart] = new Dictionary<string, object> { ["post"] = CommandOperation("Start run", "Starts a simulated run.", Ref("SystemStartRequest")) },
             [RestRoutes.ApiSystemStop] = new Dictionary<string, object> { ["post"] = CommandOperation("Stop run", "Stops the current simulated run.", Ref("SystemStopRequest")) },
+            [RestRoutes.ApiRecipes] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("List available recipes", "RecipeList") },
+            [RestRoutes.ApiCurrentRecipe] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Read the actually loaded recipe", "RecipeInfo") },
+            [RestRoutes.ApiCurrentRecipeParameters] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Read one loaded parameter snapshot; compare recipe and revision across calls", "RecipeParameters") },
+            [RestRoutes.ApiResultDetail] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Read the exact committed ResultId; never select by Lot/Wafer or latest result", "ResultDetail", resultDetail: true) },
             [RestRoutes.ApiResults] = new Dictionary<string, object>
             {
                 ["get"] = new
@@ -134,7 +139,69 @@ internal static class OpenApiDocument
                     ["items"] = new { type = "array", items = Ref("ResultSummary") },
                     ["count"] = IntSchema(),
                 }),
+                ["RecipeInfo"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["recipe"] = StringSchema(), ["revision"] = StringSchema(),
+                }, ["recipe", "revision"]),
+                ["RecipeList"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["items"] = new { type = "array", items = Ref("RecipeInfo") }, ["count"] = IntSchema(),
+                }, ["items", "count"]),
+                ["RecipeParameters"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["recipe"] = StringSchema(), ["revision"] = StringSchema(),
+                    ["groups"] = new { type = "array", items = Ref("RecipeParameterGroup") },
+                }, ["recipe", "revision", "groups"]),
+                ["RecipeParameterGroup"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["key"] = StringSchema(), ["parameters"] = new { type = "array", items = Ref("RecipeParameter") },
+                }, ["key", "parameters"]),
+                ["RecipeParameter"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["key"] = StringSchema(),
+                    ["type"] = new { type = "string", @enum = ParameterTypes },
+                    ["value"] = new { oneOf = new object[] { StringSchema(), BoolSchema(), new { type = "number" } }, description = "JSON scalar matching type; integer must be an integral Int64 value." },
+                }, ["key", "type", "value"]),
+                ["ResultDetail"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["schemaVersion"] = new { type = "integer", @enum = new[] { ResultDetail.CurrentSchemaVersion } },
+                    ["resultId"] = StringSchema(), ["summary"] = Ref("ResultSummary"),
+                    ["findings"] = new { type = "array", items = Ref("ResultFinding") },
+                }, ["schemaVersion", "resultId", "summary", "findings"]),
+                ["ResultFinding"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["findingId"] = StringSchema(), ["kind"] = StringSchema(), ["label"] = StringSchema(),
+                    ["score"] = new { type = "number", nullable = true },
+                    ["productPolygon"] = new { type = "array", items = Ref("ProductPoint") },
+                    ["diagnosticImageIds"] = new { type = "array", items = StringSchema() },
+                }, ["findingId", "kind", "label", "productPolygon", "diagnosticImageIds"]),
+                ["ProductPoint"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["xmm"] = new { type = "number", description = "Product-frame X in millimeters." },
+                    ["ymm"] = new { type = "number", description = "Product-frame Y in millimeters." },
+                }, ["xmm", "ymm"]),
+                ["QueryError"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["errorCode"] = StringSchema(), ["message"] = StringSchema(),
+                }, ["errorCode", "message"]),
             },
+        },
+    };
+
+    private static object ReadQueryOperation(string summary, string schema, bool resultDetail = false) => new
+    {
+        summary,
+        description = "Read-only. No query parameters. Failures do not change machine state or emit command/error events.",
+        parameters = resultDetail ? new object[] { new { name = "resultId", @in = "path", required = true, schema = StringSchema(), description = "Exact, case-sensitive ResultId, URL-encoded as one path segment." } } : Array.Empty<object>(),
+        responses = new Dictionary<string, object>
+        {
+            ["200"] = JsonResponse("Snapshot; an empty findings array is valid.", Ref(schema)),
+            ["400"] = JsonResponse("invalid_query: query parameters or empty identifier.", Ref("QueryError")),
+            ["404"] = JsonResponse("result_not_found: unknown, uncommitted or outside retained history.", Ref("QueryError")),
+            ["405"] = JsonResponse("invalid_query: GET only; Allow: GET.", Ref("QueryError")),
+            ["409"] = JsonResponse("no_current_recipe or query_not_ready: no loaded recipe or snapshot unavailable during transition.", Ref("QueryError")),
+            ["410"] = JsonResponse("result_deleted: indexed committed artifact deleted.", Ref("QueryError")),
+            ["503"] = JsonResponse("query_failed: snapshot read failed, corrupt or inconsistent artifact.", Ref("QueryError")),
         },
     };
 

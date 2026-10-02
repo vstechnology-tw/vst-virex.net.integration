@@ -4,6 +4,10 @@
 
 ## RESTful API
 
+Issue #44 的新查詢另驗證 [已載入 Recipe、參數與精確 ResultId](read-only-queries.zh-Hant.md)：同 Lot/Wafer 多筆、零 Findings、未載入／過渡狀態、未知／未提交／刪除／損毀結果及舊 App 404 都不得假成功，錯誤不能改機台狀態或發出命令拒絕事件。
+
+跨目標實際 HTTP smoke：先 `dotnet build tests/Virex.NET.QuerySmoke/Virex.NET.QuerySmoke.csproj -c Release`，再執行對應 net48 EXE、net8/net10 DLL。加 `dotnet --roll-forward LatestPatch` 允許同 minor 的 patch 更新，避免把跨 major 執行誤報成目標 runtime 驗證。仍須執行 `dotnet test Virex.NET.Integration.slnx`。
+
 | 檢查項目 | 預期結果 |
 | --- | --- |
 | 讀取狀態 | `GET /api/status` 回傳含 `state` 的 `SystemStatus`。 |

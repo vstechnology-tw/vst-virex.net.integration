@@ -1,5 +1,7 @@
 # RESTful API
 
+Issue #44 候補版では `GET /api/recipes`、`GET /api/recipes/current`、`GET /api/recipes/current/parameters`、`GET /api/results/{resultId}` を追加します。[読み取り専用クエリの契約（英語）](read-only-queries.md)を参照してください。既存 API は互換性を維持します。
+
 
 RESTful API は、状態の読み取り、ProductInfo の管理、システム コマンドの送信、および結果の概要のクエリに使用されます。
 

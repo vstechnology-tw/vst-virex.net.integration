@@ -1,5 +1,7 @@
 # C# SDK 指南
 
+Issue #44 候選版在 VirexRestClient 與 VirexClient 新增 `GetRecipesAsync`、`GetCurrentRecipeAsync`、`GetCurrentRecipeParametersAsync`、`GetResultDetailAsync`。詳見 [唯讀查詢 DTO、快照與錯誤語義](read-only-queries.zh-Hant.md)。
+
 
 `Virex.NET.Client` 為公開 RESTful API、TCP、MQTT 整合 API 提供強型別封裝。
 

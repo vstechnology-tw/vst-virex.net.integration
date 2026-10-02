@@ -4,6 +4,10 @@ Use this checklist to determine whether a vendor integration is ready to move fr
 
 ## RESTful API
 
+For Issue #44, also verify [loaded recipe/parameters and exact ResultId](read-only-queries.md): repeated Lot/Wafer, zero Findings, absent/transitional recipe, unknown/uncommitted/deleted/corrupt result, and old-App 404. Failures must not become empty success or emit command/error state changes.
+
+Cross-target HTTP smoke: build `tests/Virex.NET.QuerySmoke/Virex.NET.QuerySmoke.csproj -c Release`, then execute the net48 EXE and net8/net10 DLLs. Use `dotnet --roll-forward LatestPatch` to allow patches within the requested runtime minor version without crossing major versions. The required `dotnet test Virex.NET.Integration.slnx` still applies.
+
 | Check | Expected Result |
 | --- | --- |
 | Read state | `GET /api/status` returns `SystemStatus` with `state`. |

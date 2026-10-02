@@ -49,6 +49,18 @@ public sealed class VirexClient : IDisposable
     public Task<ProductInfo> GetProductInfoAsync(CancellationToken cancellationToken = default) =>
         Rest.GetProductInfoAsync(cancellationToken);
 
+    public Task<RecipeList> GetRecipesAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetRecipesAsync(cancellationToken);
+
+    public Task<RecipeInfo> GetCurrentRecipeAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetCurrentRecipeAsync(cancellationToken);
+
+    public Task<RecipeParameters> GetCurrentRecipeParametersAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetCurrentRecipeParametersAsync(cancellationToken);
+
+    public Task<ResultDetail> GetResultDetailAsync(string resultId, CancellationToken cancellationToken = default) =>
+        Rest.GetResultDetailAsync(resultId, cancellationToken);
+
     public Task<CommandResponse> SetProductInfoAsync(ProductInfo info, CancellationToken cancellationToken = default) =>
         Rest.SetProductInfoAsync(info, cancellationToken);
 

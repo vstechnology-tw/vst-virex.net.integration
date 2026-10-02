@@ -13,4 +13,15 @@ public static class RestRoutes
     public const string ApiSystemStart = "/api/system/start";
     public const string ApiSystemStop = "/api/system/stop";
     public const string ApiResults = "/api/results";
+    public const string ApiRecipes = "/api/recipes";
+    public const string ApiCurrentRecipe = "/api/recipes/current";
+    public const string ApiCurrentRecipeParameters = "/api/recipes/current/parameters";
+    public const string ApiResultDetail = "/api/results/{resultId}";
+
+    public static string ResultDetail(string resultId)
+    {
+        if (string.IsNullOrWhiteSpace(resultId) || resultId == "." || resultId == "..")
+            throw new ArgumentException("A nonempty result identifier is required.", nameof(resultId));
+        return ApiResults + "/" + Uri.EscapeDataString(resultId);
+    }
 }

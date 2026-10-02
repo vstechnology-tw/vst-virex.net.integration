@@ -25,6 +25,7 @@ var product = new ProductInfo
 };
 
 using var client = new VirexClient(options);
+var includeQueries = Array.IndexOf(args, "--queries") >= 0;
 
 PrintStep("Virex.NET C# SDK 13-Step Demo");
 Console.WriteLine($"RESTful API: {options.RestBaseUrl}");
@@ -54,6 +55,18 @@ try
     PrintProductInfo(await client.GetProductInfoAsync());
 
     PrintStep("Step 8 - Start run");
+    if (includeQueries)
+    {
+        var recipes = await client.GetRecipesAsync();
+        var loaded = await client.GetCurrentRecipeAsync();
+        var parameters = await client.GetCurrentRecipeParametersAsync();
+        if (loaded.Recipe != parameters.Recipe || loaded.Revision != parameters.Revision)
+            throw new InvalidOperationException("Recipe changed between queries; retry the snapshot pair.");
+        Console.WriteLine($"Recipes={recipes.Count}, loaded={loaded.Recipe}, revision={loaded.Revision}");
+        foreach (var group in parameters.Groups)
+            foreach (var parameter in group.Parameters)
+                Console.WriteLine($"{group.Key}/{parameter.Key} ({parameter.Type}) = {parameter.Value}");
+    }
     PrintCommand(await client.StartAsync("golden-sample", ControlRunModes.Continue));
 
     PrintStep("Step 9 - Observe run events");
@@ -67,6 +80,12 @@ try
     PrintStep("Step 11 - Query results");
     var results = await client.QueryResultsAsync(lotID: product.LotID, waferID: product.WaferID);
     Console.WriteLine($"Result count for {product.LotID}/{product.WaferID}: {results.Count}");
+    if (includeQueries)
+        foreach (var summary in results.Items)
+        {
+            var detail = await client.GetResultDetailAsync(summary.ResultId);
+            Console.WriteLine($"ResultId={detail.ResultId}, schema={detail.SchemaVersion}, findings={detail.Findings.Length}");
+        }
 
     PrintStep("Step 12 - Deinitialize");
     PrintCommand(await client.DeinitializeAsync());
