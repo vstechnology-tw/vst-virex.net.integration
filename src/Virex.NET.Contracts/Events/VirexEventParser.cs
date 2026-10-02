@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Virex.NET.Contracts;
 
@@ -23,6 +23,9 @@ public static class VirexEventParser
             value.Type = type;
             switch (type)
             {
+                case "operationModeChanged":
+                    value.OperationMode = ProtocolJson.Deserialize<OperationModeInfo>(json);
+                    break;
                 case "statusChanged":
                     value.Status = ProtocolJson.Deserialize<SystemStatus>(json);
                     break;

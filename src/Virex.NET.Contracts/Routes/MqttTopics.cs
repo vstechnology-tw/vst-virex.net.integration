@@ -1,7 +1,10 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public static class MqttTopics
 {
+    public const string OperationModeChanged = "operationModeChanged";
+    public const string CommandOperationModeGet = "commands/operation-mode/get";
+    public const string CommandOperationModeSet = "commands/operation-mode/set";
     public const string DefaultBaseTopic = "virex";
     public const string Commands = "commands";
     public const string Responses = "responses";

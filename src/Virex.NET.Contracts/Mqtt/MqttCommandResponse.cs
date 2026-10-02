@@ -1,4 +1,4 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public sealed class MqttCommandResponse
 {
@@ -13,6 +13,7 @@ public sealed class MqttCommandResponse
     public string? Message { get; set; }
 
     public SystemStatus? Status { get; set; }
+    public OperationModeInfo? OperationMode { get; set; }
 
     public ErrorInfo? Error { get; set; }
 

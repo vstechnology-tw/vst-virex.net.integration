@@ -18,6 +18,11 @@ internal static class OpenApiDocument
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
         {
+            [RestRoutes.ApiOperationMode] = new Dictionary<string, object>
+            {
+                ["get"] = Operation("Get operation mode", "Independent of SystemStatus; managementEnabled is a host opt-in.", Ref("OperationModeInfo")),
+                ["post"] = CommandOperation("Apply operation mode", "External Local to Remote is allowed; success means applied. Source is host-assigned.", Ref("SetOperationModeRequest")),
+            },
             [RestRoutes.Health] = new Dictionary<string, object> { ["get"] = Operation("Health check", "Service is reachable.", Ref("HealthResponse")) },
             [RestRoutes.ApiStatus] = new Dictionary<string, object> { ["get"] = Operation("Get current simulator status", "Current simulator state.", Ref("SystemStatus")) },
             [RestRoutes.ApiError] = new Dictionary<string, object> { ["get"] = Operation("Get current simulator error", "Current simulator error state.", Ref("ErrorInfo")) },
@@ -57,6 +62,15 @@ internal static class OpenApiDocument
         {
             schemas = new Dictionary<string, object>
             {
+                ["OperationModeInfo"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["mode"] = new { type = "string", @enum = new[] { OperationModes.Local, OperationModes.Remote } },
+                    ["managementEnabled"] = BoolSchema(),
+                }, ["mode", "managementEnabled"]),
+                ["SetOperationModeRequest"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["mode"] = new { type = "string", @enum = new[] { OperationModes.Local, OperationModes.Remote } },
+                }, ["mode"]),
                 ["HealthResponse"] = ObjectSchema(new Dictionary<string, object> { ["status"] = StringSchema() }),
                 ["ProductInfo"] = ObjectSchema(
                     new Dictionary<string, object>
@@ -93,6 +107,7 @@ internal static class OpenApiDocument
                 }),
                 ["CommandResponse"] = ObjectSchema(new Dictionary<string, object>
                 {
+                    ["operationMode"] = Ref("OperationModeInfo"),
                     ["accepted"] = BoolSchema(),
                     ["state"] = StringSchema(),
                     ["command"] = StringSchema(),

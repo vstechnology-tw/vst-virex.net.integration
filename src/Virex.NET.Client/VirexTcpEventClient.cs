@@ -16,6 +16,18 @@ public sealed class VirexTcpEventClient
 
     public event EventHandler<VirexEvent>? EventReceived;
 
+    public async Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default)
+    {
+        var json = await SendAndReadFrameAsync(TcpSocketEventFormatter.FormatCommand("operationMode"), "operationMode", cancellationToken).ConfigureAwait(false);
+        return ProtocolJson.Deserialize<OperationModeInfo>(json) ?? throw new InvalidDataException("TCP response omitted operation mode.");
+    }
+
+    public async Task<CommandResponse> SetOperationModeAsync(string mode, CancellationToken cancellationToken = default)
+    {
+        var json = await SendAndReadFrameAsync(TcpSocketEventFormatter.FormatSetOperationModeCommand(mode), "commandResponse", cancellationToken).ConfigureAwait(false);
+        return ProtocolJson.Deserialize<CommandResponse>(json) ?? throw new InvalidDataException("TCP response omitted command response.");
+    }
+
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         using var client = new TcpClient();

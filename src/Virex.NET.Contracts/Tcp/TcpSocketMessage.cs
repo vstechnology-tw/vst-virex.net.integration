@@ -6,6 +6,7 @@ public sealed class TcpSocketMessage
     public string Type { get; set; } = string.Empty;
 
     public string? Condition { get; set; }
+    public string? Mode { get; set; }
 
     public string RunMode { get; set; } = ControlRunModes.Continue;
 

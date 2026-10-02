@@ -2,6 +2,22 @@
 
 public static class TcpSocketEventFormatter
 {
+    public static string FormatOperationMode(OperationModeInfo mode, string type = "operationModeChanged") =>
+        Format(new { type, mode.Mode, mode.ManagementEnabled });
+
+    public static string FormatSetOperationModeCommand(string? mode) => Format(new { type = "setOperationMode", mode });
+
+    public static string FormatCommandResponse(CommandResponse response) => Format(new
+    {
+        type = "commandResponse",
+        response.RequestId,
+        response.Accepted,
+        response.Command,
+        response.State,
+        response.ErrorCode,
+        response.Message,
+        response.OperationMode,
+    });
     public static string FormatStatus(SystemStatus status) =>
         Format(new
         {

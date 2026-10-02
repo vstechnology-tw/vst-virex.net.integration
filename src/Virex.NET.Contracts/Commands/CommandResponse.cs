@@ -3,6 +3,7 @@
 public sealed class CommandResponse
 {
     public bool Accepted { get; set; }
+    public OperationModeInfo? OperationMode { get; set; }
 
     public string State { get; set; } = SystemStates.Uninitialized;
 

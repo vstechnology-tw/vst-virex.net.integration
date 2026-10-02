@@ -16,6 +16,8 @@ public static class CommandPayloadJson
         if (document.RootElement.ValueKind != JsonValueKind.Object)
             throw new JsonException("The request body must be a JSON object.");
         var value = ProtocolJson.Deserialize<T>(json!);
+        if (document.RootElement.TryGetProperty("source", out _) || document.RootElement.TryGetProperty("operationSource", out _))
+            throw new JsonException("Operation source is assigned by the host, not a payload.");
         var product = value is ProductInfo info ? info : (value as MqttCommandRequest)?.ProductInfo;
         if (product is not null && (product.LotID is null || product.WaferID is null || product.Recipe is null
             || product.Slot is null || product.FoupID is null || product.ChamberID is null))

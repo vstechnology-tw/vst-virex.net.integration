@@ -1,7 +1,8 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public static class RestRoutes
 {
+    public const string ApiOperationMode = "/api/operation-mode";
     public const string Health = "/health";
     public const string OpenApiJson = "/openapi/v1.json";
     public const string Scalar = "/scalar";

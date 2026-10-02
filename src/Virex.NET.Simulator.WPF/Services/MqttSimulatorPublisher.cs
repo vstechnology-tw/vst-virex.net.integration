@@ -48,6 +48,7 @@ public sealed class MqttSimulatorPublisher :
             .Build();
         await _client.SubscribeAsync(subscribeOptions, CancellationToken.None).ConfigureAwait(false);
         _session.StatusChanged += OnStatusChanged;
+        _session.OperationModeChanged += OnOperationModeChanged;
         _session.ProductInfoChanged += OnProductInfoChanged;
         _session.ImageGrabbed += OnImageGrabbed;
         _session.ResultCreated += OnResultCreated;
@@ -62,6 +63,7 @@ public sealed class MqttSimulatorPublisher :
     public async Task StopAsync()
     {
         _session.StatusChanged -= OnStatusChanged;
+        _session.OperationModeChanged -= OnOperationModeChanged;
         _session.ImageGrabbed -= OnImageGrabbed;
         _session.ProductInfoChanged -= OnProductInfoChanged;
         _session.ResultCreated -= OnResultCreated;
@@ -117,6 +119,9 @@ public sealed class MqttSimulatorPublisher :
 
     private void OnImageGrabbed(object? sender, ImageGrabbedInfo image) =>
         _ = PublishAsync(MqttTopics.ImageGrabbed, ProtocolJson.Serialize(image));
+
+    private void OnOperationModeChanged(object? sender, OperationModeInfo mode) =>
+        _ = PublishAsync(MqttTopics.OperationModeChanged, ProtocolJson.Serialize(mode));
 
     private void OnProductInfoChanged(object? sender, ProductInfo info) =>
         _ = PublishAsync(MqttTopics.ProductInfoChanged, ProtocolJson.Serialize(info));
@@ -181,7 +186,11 @@ public sealed class MqttSimulatorPublisher :
             Topic = childTopic,
         };
 
-        if (childTopic == MqttTopics.CommandStatusGet)
+        if (childTopic == MqttTopics.CommandOperationModeGet)
+            response.OperationMode = _session.OperationMode;
+        else if (childTopic == MqttTopics.CommandOperationModeSet)
+            response.CommandResponse = await _session.SetOperationModeAsync(new SetOperationModeRequest { Mode = request.Mode }).ConfigureAwait(false);
+        else if (childTopic == MqttTopics.CommandStatusGet)
             response.Status = _session.Status;
         else if (childTopic == MqttTopics.CommandErrorGet)
             response.Error = _session.Error;

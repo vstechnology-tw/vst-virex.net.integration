@@ -66,6 +66,7 @@ public sealed class VirexMqttEventSubscriber
         var child = topic.TrimEnd('/').Substring(topic.TrimEnd('/').LastIndexOf('/') + 1);
         var type = child switch
         {
+            "operationModeChanged" => "operationModeChanged",
             "statusChanged" => "statusChanged",
             "productInfoChanged" => "productInfoChanged",
             "imageGrabbed" => "imageGrabbed",
