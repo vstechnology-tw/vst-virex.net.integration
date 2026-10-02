@@ -14,6 +14,49 @@ namespace Virex.NET.Contracts.Tests;
 public sealed class OperationModeTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task LocalDeinitializeCoalescesFailuresAndRequiresAnExplicitRetry(bool managed)
+    {
+        await using var fixture = await PublicTransportFixture.CreateAsync(managed);
+        var session = fixture.Session;
+        await session.InitializeFromSourceAsync(OperationSource.Local);
+        session.ConfigureDeinitializeFailures(1);
+        var first = session.DeinitializeFromSourceAsync(OperationSource.Local);
+        var second = session.DeinitializeFromSourceAsync(OperationSource.Local);
+        Assert.Same(first, second);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, (await first).ErrorCode);
+        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, (await second).ErrorCode);
+        Assert.Equal(SimulatorState.Deinitializing, session.State);
+        Assert.True((await session.DeinitializeFromSourceAsync(OperationSource.Local)).Accepted);
+        Assert.Equal(SimulatorState.Uninitialized, session.State);
+    }
+
+    [Fact]
+    public async Task InternalPersistenceFailureStopsManagedLocalContinuousCapture()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "virex-blocked-" + Guid.NewGuid().ToString("N"));
+        await File.WriteAllTextAsync(root, "not a directory");
+        var session = new SimulatorSession(root, true);
+        var stopped = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            await session.InitializeFromSourceAsync(OperationSource.Local);
+            session.StatusChanged += (_, status) => { if (status.State == SystemStates.Ready) stopped.TrySetResult(); };
+            Assert.True((await session.StartFromSourceAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue }, OperationSource.Local)).Accepted);
+            await stopped.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(SimulatorState.Ready, session.State);
+            Assert.True(session.Error.HasError);
+            Assert.Empty(session.Results);
+        }
+        finally
+        {
+            if (session.State == SimulatorState.Running) await session.StopFromSourceAsync(new SystemStopRequest(), OperationSource.Local);
+            File.Delete(root);
+        }
+    }
+
+    [Theory]
     [InlineData("rest")]
     [InlineData("tcp")]
     [InlineData("mqtt")]

@@ -49,8 +49,17 @@ public sealed partial class SimulatorSession
     public Task<CommandResponse> InitializeFromSourceAsync(OperationSource source, CancellationToken cancellationToken = default) =>
         HandleInitializeAsync(cancellationToken, source);
 
-    public Task<CommandResponse> DeinitializeFromSourceAsync(OperationSource source, CancellationToken cancellationToken = default) =>
-        HandleDeinitializeAsync(cancellationToken, source);
+    public Task<CommandResponse> DeinitializeFromSourceAsync(OperationSource source, CancellationToken cancellationToken = default)
+    {
+        if (CheckOperationSource("Deinitialize", source) is { } denied) return Task.FromResult(denied);
+        lock (_deinitializationGate)
+        {
+            if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization) return activeDeinitialization;
+            // Cleanup remains a single shared operation, independent of caller cancellation.
+            _activeDeinitialization = HandleDeinitializeAsync(CancellationToken.None, source);
+            return _activeDeinitialization;
+        }
+    }
 
     public Task<CommandResponse> SetProductInfoFromSourceAsync(ProductInfo info, OperationSource source, CancellationToken cancellationToken = default) =>
         HandleSetProductInfoAsync(info, cancellationToken, source);
