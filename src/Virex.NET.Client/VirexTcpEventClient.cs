@@ -31,17 +31,25 @@ public sealed class VirexTcpEventClient
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         using var client = new TcpClient();
-        await client.ConnectAsync(_options.TcpHost, _options.TcpPort).ConfigureAwait(false);
-        using var stream = client.GetStream();
-
-        while (!cancellationToken.IsCancellationRequested)
+        // .NET Framework NetworkStream reads do not interrupt on token cancellation.
+        using var registration = cancellationToken.Register(client.Dispose);
+        try
         {
-            var line = await ReadFrameAsync(stream, cancellationToken).ConfigureAwait(false);
-            if (line is null)
-                return;
+            await client.ConnectAsync(_options.TcpHost, _options.TcpPort).ConfigureAwait(false);
+            using var stream = client.GetStream();
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var line = await ReadFrameAsync(stream, cancellationToken).ConfigureAwait(false);
+                if (line is null)
+                    return;
 
-            if (VirexEventParser.TryParse(line, out var value, out _))
-                EventReceived?.Invoke(this, value);
+                if (VirexEventParser.TryParse(line, out var value, out _))
+                    EventReceived?.Invoke(this, value);
+            }
+        }
+        catch (Exception ex) when (cancellationToken.IsCancellationRequested && ex is IOException or SocketException or ObjectDisposedException)
+        {
+            throw new OperationCanceledException("TCP event subscription cancelled.", ex, cancellationToken);
         }
     }
 

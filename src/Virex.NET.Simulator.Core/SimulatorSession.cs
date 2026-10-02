@@ -599,7 +599,7 @@ public sealed partial class SimulatorSession
             if (!PrepareCapture()) return false;
             AnnounceCaptureReady();
         }
-        var cycle = _captureCycle;
+        var cycle = _captureCycle!;
         var captureId = cycle.CaptureId;
         var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz");
         var imageGrabbed = new ImageGrabbedInfo
