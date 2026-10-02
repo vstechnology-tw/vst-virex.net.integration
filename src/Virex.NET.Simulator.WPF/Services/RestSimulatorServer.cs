@@ -87,6 +87,33 @@ public sealed class RestSimulatorServer
             {
                 await JsonAsync(context, _session.ProductInfo).ConfigureAwait(false);
             }
+            else if (IsDetailQuery(path))
+            {
+                if (context.Request.HttpMethod != "GET")
+                {
+                    context.Response.Headers["Allow"] = "GET";
+                    await QueryErrorAsync(context, 405, QueryErrorCodes.InvalidQuery, "This endpoint supports GET only.").ConfigureAwait(false);
+                }
+                else if (context.Request.QueryString.Count > 0)
+                {
+                    await QueryErrorAsync(context, 400, QueryErrorCodes.InvalidQuery, "This endpoint does not accept query parameters.").ConfigureAwait(false);
+                }
+                else if (path == RestRoutes.ApiRecipes)
+                    await JsonAsync(context, _session.GetRecipes()).ConfigureAwait(false);
+                else if (path == RestRoutes.ApiCurrentRecipe)
+                    await JsonAsync(context, _session.GetCurrentRecipe()).ConfigureAwait(false);
+                else if (path == RestRoutes.ApiCurrentRecipeParameters)
+                    await JsonAsync(context, _session.GetCurrentRecipeParameters()).ConfigureAwait(false);
+                else
+                {
+#if NET10_0_OR_GREATER
+                    var resultId = Uri.UnescapeDataString(path.AsSpan(RestRoutes.ApiResults.Length + 1));
+#else
+                    var resultId = Uri.UnescapeDataString(path.Substring(RestRoutes.ApiResults.Length + 1));
+#endif
+                    await JsonAsync(context, await _session.GetResultDetailAsync(resultId).ConfigureAwait(false)).ConfigureAwait(false);
+                }
+            }
             else if (path == RestRoutes.ApiProductInfo && context.Request.HttpMethod == "POST")
             {
                 var body = await ReadBodyAsync(context).ConfigureAwait(false);
@@ -152,6 +179,10 @@ public sealed class RestSimulatorServer
                 await TextAsync(context, "Not found", "text/plain").ConfigureAwait(false);
             }
         }
+        catch (SimulatorQueryException ex)
+        {
+            await QueryErrorAsync(context, ex.StatusCode, ex.ErrorCode, ex.Message).ConfigureAwait(false);
+        }
         catch (JsonException)
         {
             await CommandAsync(context, _session.ReportFailure(operation, CommandErrorCodes.InvalidPayload,
@@ -160,9 +191,24 @@ public sealed class RestSimulatorServer
         catch (Exception ex)
         {
             _session.WriteLog("REST operation failed: " + ex.Message);
+            if (IsDetailQuery(context.Request.Url?.AbsolutePath ?? "/"))
+            {
+                await QueryErrorAsync(context, 503, QueryErrorCodes.QueryFailed, "The query could not be completed.").ConfigureAwait(false);
+                return;
+            }
             await CommandAsync(context, _session.ReportFailure(operation, CommandErrorCodes.CommandFailed,
                 "The operation could not be completed.")).ConfigureAwait(false);
         }
+    }
+
+    private static bool IsDetailQuery(string path) =>
+        path == RestRoutes.ApiRecipes || path == RestRoutes.ApiCurrentRecipe ||
+        path == RestRoutes.ApiCurrentRecipeParameters || path.StartsWith(RestRoutes.ApiResults + "/", StringComparison.Ordinal);
+
+    private static Task QueryErrorAsync(HttpListenerContext context, int statusCode, string errorCode, string message)
+    {
+        context.Response.StatusCode = statusCode;
+        return JsonAsync(context, new QueryError { ErrorCode = errorCode, Message = message });
     }
 
     private static async Task<string> ReadBodyAsync(HttpListenerContext context)

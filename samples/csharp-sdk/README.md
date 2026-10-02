@@ -1,5 +1,13 @@
 # C# SDK Sample
 
+To exercise the four Issue #44 read-only REST queries, use the candidate SDK/Simulator and run:
+
+```powershell
+dotnet run --project samples\csharp-sdk\CSharpSdkSample.csproj -- http://127.0.0.1:5088 --queries
+```
+
+This optional mode reads the recipe catalog, loaded recipe/parameters, and each exact ResultId from the result list. The default 13-step flow remains compatible with older Apps; `--queries` against an unsupported App fails with its actual HTTP status. See [query semantics](../../docs/read-only-queries.md).
+
 Demonstrates the current public `Virex.NET.Client` workflow:
 
 1. Read `GET /api/status`.

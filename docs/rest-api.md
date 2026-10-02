@@ -1,5 +1,7 @@
 # RESTful API
 
+The Issue #44 candidate adds [read-only Recipe and exact result detail queries](read-only-queries.md): `GET /api/recipes`, `GET /api/recipes/current`, `GET /api/recipes/current/parameters`, and `GET /api/results/{resultId}`. Existing endpoints remain compatible.
+
 
 The RESTful API is used to read state, manage ProductInfo, send system commands, and query result summaries.
 

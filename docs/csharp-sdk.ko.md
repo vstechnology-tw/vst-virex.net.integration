@@ -1,5 +1,7 @@
 # C# SDK 안내
 
+Issue #44 후보 버전은 VirexClient와 VirexRestClient에 `GetRecipesAsync`, `GetCurrentRecipeAsync`, `GetCurrentRecipeParametersAsync`, `GetResultDetailAsync`를 추가합니다. [DTO 및 오류 계약(영문)](read-only-queries.md)을 참고하세요.
+
 
 `Virex.NET.Client`는 공개 RESTful API, TCP 및 MQTT 통합 API에 대한 타입이 지정된 래퍼를 제공합니다.
 

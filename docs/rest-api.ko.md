@@ -1,5 +1,7 @@
 # RESTful API
 
+Issue #44 후보 버전은 `GET /api/recipes`, `GET /api/recipes/current`, `GET /api/recipes/current/parameters`, `GET /api/results/{resultId}`를 추가합니다. [읽기 전용 쿼리 계약(영문)](read-only-queries.md)을 참고하세요. 기존 API는 호환성을 유지합니다.
+
 
 RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령을 보내고, 결과 요약을 쿼리하는 데 사용됩니다.
 

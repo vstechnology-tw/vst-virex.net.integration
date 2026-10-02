@@ -3,7 +3,7 @@ using Virex.NET.Contracts;
 
 namespace Virex.NET.Simulator.Core;
 
-public sealed class SimulatorSession
+public sealed partial class SimulatorSession
 {
     private static readonly TimeSpan StatePreviewDelay = TimeSpan.FromSeconds(1);
     private readonly SemaphoreSlim _gate = new SemaphoreSlim(1, 1);
@@ -219,6 +219,7 @@ public sealed class SimulatorSession
 
             await FireAsync(SimulatorTrigger.Initialize).ConfigureAwait(false);
             await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
+            LoadRecipe(ProductInfo.RecipeOr);
             await FireAsync(SimulatorTrigger.InitializationCompleted).ConfigureAwait(false);
             return Accept("Initialize", "Initialized.");
         }
@@ -277,6 +278,7 @@ public sealed class SimulatorSession
         }
 
         ClearRecovery();
+        ClearLoadedRecipe();
         await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
         _pendingDeinitializationError = null;
         SetError(null);
@@ -297,6 +299,7 @@ public sealed class SimulatorSession
             {
                 await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
                 ProductInfo = productInfo.Snapshot();
+                LoadRecipe(ProductInfo.RecipeOr);
                 await FireAsync(SimulatorTrigger.ProductInfoUpdateCompleted).ConfigureAwait(false);
                 LogEvent("productInfoChanged", ProductInfo);
                 ProductInfoChanged?.Invoke(this, ProductInfo);
@@ -644,7 +647,18 @@ public sealed class SimulatorSession
         Directory.CreateDirectory(directory);
         File.WriteAllBytes(imagePath, CreateDummyBmp());
         File.WriteAllBytes(previewImagePath, CreateDummyJpeg());
-        File.WriteAllText(resultPath, ProtocolJson.Serialize(result));
+        // Preserve all legacy top-level summary fields, adding the new detail envelope.
+        var artifact = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(
+            ProtocolJson.Serialize(result), ProtocolJson.Options)!;
+        using var detailDocument = System.Text.Json.JsonDocument.Parse(ProtocolJson.Serialize(new ResultDetail
+        {
+            SchemaVersion = ResultDetail.CurrentSchemaVersion,
+            ResultId = result.ResultId,
+            Summary = result,
+            Findings = [],
+        }));
+        artifact["detail"] = detailDocument.RootElement.Clone();
+        File.WriteAllText(resultPath, ProtocolJson.Serialize(artifact));
     }
 
     private static byte[] CreateDummyBmp() =>
