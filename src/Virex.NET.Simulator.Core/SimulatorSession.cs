@@ -13,6 +13,7 @@ public sealed partial class SimulatorSession
     private int _resultSequence;
     private ProductInfo? _activeRunProductInfo;
     private string _activeRunCondition = string.Empty;
+    private string? _activeRunInspectionMode;
     private readonly string _resultRootDirectory;
     private CancellationTokenSource? _singleRunCompletion;
     private CancellationTokenSource? _continuousRun;
@@ -332,6 +333,9 @@ public sealed partial class SimulatorSession
             if (!ControlRunModes.TryNormalize(request.RunMode, out var runMode))
                 return Reject("Start", CommandErrorCodes.InvalidRunMode, "Invalid run mode.");
 
+            if (!InspectionModes.IsValid(request.InspectionMode))
+                return Reject("Start", CommandErrorCodes.InvalidInspectionMode, "Invalid inspection mode.");
+
             var condition = NormalizeCondition(request.Condition);
             if (condition.Length > 0)
                 LogMessage("Start condition: " + condition);
@@ -339,6 +343,7 @@ public sealed partial class SimulatorSession
 
             _activeRunProductInfo = ProductInfo.Snapshot();
             _activeRunCondition = condition;
+            _activeRunInspectionMode = request.InspectionMode;
             await FireAsync(SimulatorTrigger.Start).ConfigureAwait(false);
             if (runMode == ControlRunModes.SingleRun)
             {
@@ -389,7 +394,7 @@ public sealed partial class SimulatorSession
             if (trigger == SimulatorTrigger.RunCompleted)
             {
                 StopActiveRunTimers();
-                if (EmitResult() is null)
+                if (!EmitCapture())
                 {
                     await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
                     return Accept(command, "Run completed with errors.");
@@ -560,10 +565,11 @@ public sealed partial class SimulatorSession
         }
     }
 
-    private ResultSummary? EmitResult()
+    private bool EmitCapture()
     {
         var info = _activeRunProductInfo?.Snapshot() ?? ProductInfo.Snapshot();
         var condition = _activeRunCondition;
+        var inspectionMode = _activeRunInspectionMode;
         var now = DateTime.Now;
         var lotID = SanitizePathSegment(info.LotIDOr, "LOT-UNKNOWN");
         var waferID = SanitizePathSegment(info.WaferIDOr, "WAFER-UNKNOWN");
@@ -594,6 +600,22 @@ public sealed partial class SimulatorSession
         var imagePath = Path.Combine(_resultRootDirectory, relativeRoot, artifactName + ".bmp");
         var previewImagePath = Path.Combine(_resultRootDirectory, relativeRoot, artifactName + ".jpg");
         var resultPath = Path.Combine(_resultRootDirectory, relativeRoot, artifactName + ".json");
+        if (inspectionMode == InspectionModes.CaptureOnly)
+        {
+            try
+            {
+                WriteImages(imagePath, previewImagePath);
+                File.WriteAllText(Path.Combine(_resultRootDirectory, relativeRoot, artifactName + ".capture.json"),
+                    ProtocolJson.Serialize(new { capture = imageGrabbed, inspectionMode = InspectionModes.CaptureOnly }));
+                LogMessage("Inspection skipped: " + captureId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                EmitError("Failed to persist simulator capture " + captureId + ": " + ex.Message);
+                return false;
+            }
+        }
         var result = new ResultSummary
         {
             ResultId = captureId,
@@ -622,7 +644,7 @@ public sealed partial class SimulatorSession
         catch (Exception ex)
         {
             EmitError("Failed to persist simulator artifacts for capture " + captureId + ": " + ex.Message);
-            return null;
+            return false;
         }
 
         lock (_results)
@@ -635,18 +657,12 @@ public sealed partial class SimulatorSession
 
         LogMessage("Result emitted: " + captureId);
         ResultCreated?.Invoke(this, result);
-        return result;
+        return true;
     }
 
     private static void WriteArtifacts(ResultSummary result, string imagePath, string previewImagePath, string resultPath)
     {
-        var directory = Path.GetDirectoryName(imagePath);
-        if (string.IsNullOrWhiteSpace(directory))
-            throw new IOException("Simulator result directory could not be resolved.");
-
-        Directory.CreateDirectory(directory);
-        File.WriteAllBytes(imagePath, CreateDummyBmp());
-        File.WriteAllBytes(previewImagePath, CreateDummyJpeg());
+        WriteImages(imagePath, previewImagePath);
         // Preserve all legacy top-level summary fields, adding the new detail envelope.
         var artifact = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(
             ProtocolJson.Serialize(result), ProtocolJson.Options)!;
@@ -659,6 +675,17 @@ public sealed partial class SimulatorSession
         }));
         artifact["detail"] = detailDocument.RootElement.Clone();
         File.WriteAllText(resultPath, ProtocolJson.Serialize(artifact));
+    }
+
+    private static void WriteImages(string imagePath, string previewImagePath)
+    {
+        var directory = Path.GetDirectoryName(imagePath);
+        if (string.IsNullOrWhiteSpace(directory))
+            throw new IOException("Simulator result directory could not be resolved.");
+
+        Directory.CreateDirectory(directory);
+        File.WriteAllBytes(imagePath, CreateDummyBmp());
+        File.WriteAllBytes(previewImagePath, CreateDummyJpeg());
     }
 
     private static byte[] CreateDummyBmp() =>
@@ -715,7 +742,7 @@ public sealed partial class SimulatorSession
                 if (cancellationToken.IsCancellationRequested || State != SimulatorState.Running)
                     return;
 
-                if (EmitResult() is null)
+                if (!EmitCapture())
                 {
                     await StopAsync(new SystemStopRequest { Reason = "Simulator artifact persistence failed." }, cancellationToken).ConfigureAwait(false);
                     return;

@@ -47,6 +47,17 @@ public sealed class VirexMqttCommandClient
     public Task<CommandResponse> StartAsync(string? condition = null, string? runMode = null, CancellationToken cancellationToken = default) =>
         SendCommandAsync(MqttTopics.CommandSystemStart, new MqttCommandRequest { Condition = condition, RunMode = runMode }, cancellationToken);
 
+    public Task<CommandResponse> StartWithOptionsAsync(SystemStartRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+        return SendCommandAsync(MqttTopics.CommandSystemStart, new MqttCommandRequest
+        {
+            Condition = request.Condition,
+            RunMode = request.RunMode,
+            InspectionMode = request.InspectionMode,
+        }, cancellationToken);
+    }
+
     public Task<CommandResponse> StopAsync(string? reason = null, CancellationToken cancellationToken = default) =>
         SendCommandAsync(MqttTopics.CommandSystemStop, new MqttCommandRequest { Reason = reason }, cancellationToken);
 

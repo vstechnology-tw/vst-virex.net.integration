@@ -198,6 +198,7 @@ public sealed class MqttSimulatorPublisher :
             {
                 Condition = request.Condition,
                 RunMode = request.RunMode,
+                InspectionMode = request.InspectionMode,
             }).ConfigureAwait(false);
         else if (childTopic == MqttTopics.CommandSystemStop)
             response.CommandResponse = await _session.StopAsync(new SystemStopRequest { Reason = request.Reason }).ConfigureAwait(false);

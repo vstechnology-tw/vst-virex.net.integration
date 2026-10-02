@@ -41,7 +41,7 @@ public static class TcpSocketMessageParser
                 string.Equals(type, "results", System.StringComparison.OrdinalIgnoreCase))
             {
                 message.Type = NormalizeType(type);
-                foreach (var property in new[] { "condition", "runMode", "reason", "lotID", "waferID", "recipe", "requestId" })
+                foreach (var property in new[] { "condition", "runMode", "inspectionMode", "reason", "lotID", "waferID", "recipe", "requestId" })
                 {
                     if (root.TryGetProperty(property, out var element)
                         && element.ValueKind != JsonValueKind.String && element.ValueKind != JsonValueKind.Null)
@@ -52,6 +52,9 @@ public static class TcpSocketMessageParser
                 }
                 message.Condition = ReadOptionalString(root, "condition");
                 message.RunMode = ReadRunMode(root);
+                // Preserve invalid/empty values for explicit command rejection, rather than defaulting them.
+                message.InspectionMode = root.TryGetProperty("inspectionMode", out var inspectionMode)
+                    && inspectionMode.ValueKind == JsonValueKind.String ? inspectionMode.GetString() : null;
                 message.Reason = ReadOptionalString(root, "reason");
                 message.LotID = ReadOptionalString(root, "lotID");
                 message.WaferID = ReadOptionalString(root, "waferID");
