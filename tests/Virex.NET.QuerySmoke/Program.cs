@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Text.Json;
 using Virex.NET.Client;
 using Virex.NET.Contracts;
 using Virex.NET.Simulator.Core;
@@ -47,6 +49,30 @@ internal static class Program
             Require(list.Count == 1, "Legacy result list");
             var detail = await client.GetResultDetailAsync(list.Items[0].ResultId);
             Require(detail.ResultId == list.Items[0].ResultId && detail.SchemaVersion == 1 && detail.Findings.Length == 0, "Exact zero-Findings detail");
+            var artifact = ProtocolJson.Deserialize<Dictionary<string, JsonElement>>(File.ReadAllText(list.Items[0].ResultPath))!;
+            using var incomplete = JsonDocument.Parse(ProtocolJson.Serialize(new
+            {
+                schemaVersion = 1,
+                resultId = detail.ResultId,
+                summary = detail.Summary,
+                findings = new[] { new
+                {
+                    findingId = "F", kind = "Defect", label = "fixture",
+                    productPolygon = new[] { new Dictionary<string, object>() },
+                    diagnosticImageIds = Array.Empty<string>(),
+                } },
+            }));
+            artifact["detail"] = incomplete.RootElement.Clone();
+            File.WriteAllText(list.Items[0].ResultPath, ProtocolJson.Serialize(artifact));
+            try
+            {
+                await client.GetResultDetailAsync(detail.ResultId);
+                throw new InvalidOperationException("Incomplete geometry query falsely succeeded.");
+            }
+            catch (VirexClientException error)
+            {
+                Require(error.StatusCode == 503 && ProtocolJson.Deserialize<QueryError>(error.ResponseBody)!.ErrorCode == QueryErrorCodes.QueryFailed, "Incomplete geometry");
+            }
             File.Delete(list.Items[0].ResultPath);
             try
             {

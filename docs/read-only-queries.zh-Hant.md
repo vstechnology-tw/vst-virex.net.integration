@@ -17,6 +17,8 @@ Simulator 初始化與成功更新 ProductInfo 才提交已載入快照；取消
 
 Finding 使用既有公開 FindingId、Kind、Label、可選 Score、ProductPolygon 與 DiagnosticImageIds。幾何點為 xmm/ymm，表示產品座標系毫米值；不推測缺少的量測。Simulator 產生零 Findings，结果檔保留舊頂層摘要並加入 detail；只查詢本次 session 已提交且仍在索引內的精確結果（最多 100 筆）。
 
+SDK 回應與 Simulator 結果檔共用 QueryPayloadJson 驗證巢狀必填欄位、型別與 null 元素。缺少 parameters、Finding 欄位或座標會失敗，不補成空陣列或假的零座標；明確空陣列、真實 (0,0) 與缺省／null 的可選 Score 仍有效。
+
 | HTTP | errorCode | 語義 |
 | --- | --- | --- |
 | 400 | invalid_query | 不支援的 query 參數或空 ID |

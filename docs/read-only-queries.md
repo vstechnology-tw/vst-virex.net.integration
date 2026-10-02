@@ -38,6 +38,8 @@ Use the precise case-sensitive ResultId from `ResultSummary` or `resultCreated`.
 
 No additional measurements are inferred. Simulator generates valid zero-Findings results. Saved Simulator JSON retains all original top-level summary fields and adds a `detail` envelope. Reads use the exact committed artifact for the retained result index (up to 100 results per session). No query falls back to a cached summary if the detail artifact is unreadable or deleted.
 
+SDK responses and Simulator detail artifacts use the shared `QueryPayloadJson` reader to check required nested fields, JSON types and null elements. Missing `parameters`, Finding fields or point coordinates fail; they never become empty arrays or invented zero coordinates. Explicit empty arrays, actual `(0,0)` points and absent/null optional score remain valid.
+
 ## Query failures
 
 Non-200 responses use `QueryError`, e.g. `{"errorCode":"no_current_recipe","message":"No recipe is currently loaded."}`. Read failures do not change `/api/error` or system state.

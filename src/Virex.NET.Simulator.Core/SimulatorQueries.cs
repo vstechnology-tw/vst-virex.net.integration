@@ -86,10 +86,9 @@ public sealed partial class SimulatorSession
         {
             using var stream = File.OpenRead(path);
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
-            if (!document.RootElement.TryGetProperty("detail", out var element) ||
-                !element.TryGetProperty("findings", out var findings) || findings.ValueKind != JsonValueKind.Array)
+            if (document.RootElement.ValueKind != JsonValueKind.Object || !document.RootElement.TryGetProperty("detail", out var element))
                 throw new JsonException("Missing result detail.");
-            var detail = ProtocolJson.Deserialize<ResultDetail>(element.GetRawText());
+            var detail = QueryPayloadJson.ReadResultDetail(element);
             if (detail is null || detail.SchemaVersion != ResultDetail.CurrentSchemaVersion ||
                 detail.ResultId != resultId || detail.Summary is null || detail.Summary.ResultId != resultId || detail.Findings is null)
                 throw new JsonException("Invalid result detail identity or schema.");

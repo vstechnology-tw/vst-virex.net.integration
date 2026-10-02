@@ -40,15 +40,14 @@ public sealed class VirexRestClient
 
     public async Task<RecipeParameters> GetCurrentRecipeParametersAsync(CancellationToken cancellationToken = default)
     {
-        var value = await GetQueryAsync<RecipeParameters>(RestRoutes.ApiCurrentRecipeParameters, ["recipe", "revision", "groups"], cancellationToken).ConfigureAwait(false);
-        if (!ValidRecipe(value.Recipe, value.Revision) || value.Groups is null || value.Groups.Any(g => g is null || string.IsNullOrWhiteSpace(g.Key) || g.Parameters is null || g.Parameters.Any(p => p is null || !ValidParameter(p))))
-            throw new InvalidOperationException("Invalid recipe parameters response.");
-        return value;
+        return await GetQueryAsync<RecipeParameters>(RestRoutes.ApiCurrentRecipeParameters, ["recipe", "revision", "groups"], cancellationToken,
+            QueryPayloadJson.ReadRecipeParameters).ConfigureAwait(false);
     }
 
     public async Task<ResultDetail> GetResultDetailAsync(string resultId, CancellationToken cancellationToken = default)
     {
-        var value = await GetQueryAsync<ResultDetail>(RestRoutes.ResultDetail(resultId), ["schemaVersion", "resultId", "summary", "findings"], cancellationToken).ConfigureAwait(false);
+        var value = await GetQueryAsync<ResultDetail>(RestRoutes.ResultDetail(resultId), ["schemaVersion", "resultId", "summary", "findings"], cancellationToken,
+            QueryPayloadJson.ReadResultDetail).ConfigureAwait(false);
         if (value.SchemaVersion != ResultDetail.CurrentSchemaVersion || value.ResultId != resultId || value.Summary is null || value.Summary.ResultId != resultId || value.Findings is null)
             throw new InvalidOperationException("Invalid or mismatched result detail response.");
         return value;
@@ -118,7 +117,7 @@ public sealed class VirexRestClient
         return ProtocolJson.Deserialize<T>(json) ?? throw new InvalidOperationException("Empty response.");
     }
 
-    private async Task<T> GetQueryAsync<T>(string route, string[] required, CancellationToken cancellationToken)
+    private async Task<T> GetQueryAsync<T>(string route, string[] required, CancellationToken cancellationToken, Func<JsonElement, T>? reader = null)
     {
         using var response = await _http.GetAsync(route.TrimStart('/'), cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
@@ -128,21 +127,12 @@ public sealed class VirexRestClient
         if (document.RootElement.ValueKind != JsonValueKind.Object || required.Any(name =>
             !document.RootElement.EnumerateObject().Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))))
             throw new InvalidOperationException("Incomplete query response.");
-        return ProtocolJson.Deserialize<T>(json) ?? throw new InvalidOperationException("Empty query response.");
+        return reader is null ? ProtocolJson.Deserialize<T>(json) ?? throw new InvalidOperationException("Empty query response.")
+            : reader(document.RootElement);
     }
 
     private static bool ValidRecipe(string recipe, string revision) =>
         !string.IsNullOrWhiteSpace(recipe) && !string.IsNullOrWhiteSpace(revision);
-
-    private static bool ValidParameter(RecipeParameter parameter) =>
-        !string.IsNullOrWhiteSpace(parameter.Key) && (parameter.Type switch
-        {
-            "string" => parameter.Value.ValueKind == JsonValueKind.String,
-            "boolean" => parameter.Value.ValueKind is JsonValueKind.True or JsonValueKind.False,
-            "integer" => parameter.Value.ValueKind == JsonValueKind.Number && parameter.Value.TryGetInt64(out _),
-            "number" => parameter.Value.ValueKind == JsonValueKind.Number,
-            _ => false,
-        });
 
     private static StringContent JsonContent<T>(T value) =>
         new StringContent(ProtocolJson.Serialize(value), Encoding.UTF8, "application/json");

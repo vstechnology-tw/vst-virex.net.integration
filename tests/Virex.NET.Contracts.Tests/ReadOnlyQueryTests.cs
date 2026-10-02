@@ -180,6 +180,28 @@ public sealed class ReadOnlyQueryTests : IAsyncLifetime
     }
 
     [Theory]
+    [InlineData("[{}]")]
+    [InlineData("[null]")]
+    [InlineData("[{\"findingId\":\"F\",\"kind\":\"Defect\",\"label\":\"L\",\"productPolygon\":[{}],\"diagnosticImageIds\":[]}]")]
+    [InlineData("[{\"findingId\":\"F\",\"kind\":\"Defect\",\"label\":\"L\",\"productPolygon\":[null],\"diagnosticImageIds\":[]}]")]
+    [InlineData("[{\"findingId\":\"F\",\"kind\":\"Defect\",\"label\":\"L\",\"productPolygon\":[],\"diagnosticImageIds\":null}]")]
+    public async Task IncompleteCommittedFindingsReturnQueryFailureWithoutStateChanges(string findings)
+    {
+        await _client.InitializeAsync();
+        var result = await CompleteResult();
+        var artifact = JsonNode.Parse(File.ReadAllText(result.ResultPath))!;
+        artifact["detail"]!["findings"] = JsonNode.Parse(findings);
+        File.WriteAllText(result.ResultPath, artifact.ToJsonString());
+        var events = 0;
+        _session.ErrorChanged += (_, _) => events++;
+        _session.CommandRejected += (_, _) => events++;
+        await AssertFailure(() => _client.GetResultDetailAsync(result.ResultId), 503, QueryErrorCodes.QueryFailed);
+        Assert.Equal(SimulatorState.Ready, _session.State);
+        Assert.False(_session.Error.HasError);
+        Assert.Equal(0, events);
+    }
+
+    [Theory]
     [InlineData("/api/recipes")]
     [InlineData("/api/recipes/current")]
     [InlineData("/api/recipes/current/parameters")]
