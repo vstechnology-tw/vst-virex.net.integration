@@ -150,6 +150,7 @@ nav:
   - Protocol Reference:
       - RESTful API: rest-api.md
       - Operation Mode: operation-mode.md
+      - Capture Lifecycle: capture-lifecycle.md
       - Recipe / Result Queries: read-only-queries.md
       - TCP Socket: tcp-socket.md
       - MQTT Protocol: mqtt-events.md

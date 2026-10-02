@@ -243,3 +243,6 @@ if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 ```
 
 `invalid_state` is normal command validation behavior, not a transport failure.
+
+
+VirexEvent adds CaptureReady and CaptureCompleted; ImageGrabbedInfo, ResultSummary and successful Start responses can carry JobId. See [Capture lifecycle](capture-lifecycle.md).

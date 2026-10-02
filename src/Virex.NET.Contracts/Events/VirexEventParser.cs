@@ -12,7 +12,7 @@ public static class VirexEventParser
         try
         {
             using var doc = JsonDocument.Parse(json);
-            if (!doc.RootElement.TryGetProperty("type", out var typeElement) ||
+            if (doc.RootElement.ValueKind != JsonValueKind.Object || !doc.RootElement.TryGetProperty("type", out var typeElement) ||
                 typeElement.ValueKind != JsonValueKind.String)
             {
                 error = "Event type is required.";
@@ -23,6 +23,12 @@ public static class VirexEventParser
             value.Type = type;
             switch (type)
             {
+                case "captureReady":
+                    value.CaptureReady = CaptureEventJson.ReadReady(json);
+                    break;
+                case "captureCompleted":
+                    value.CaptureCompleted = CaptureEventJson.ReadCompleted(json);
+                    break;
                 case "operationModeChanged":
                     value.OperationMode = ProtocolJson.Deserialize<OperationModeInfo>(json);
                     break;

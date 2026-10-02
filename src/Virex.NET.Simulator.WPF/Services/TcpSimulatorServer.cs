@@ -90,6 +90,8 @@ public sealed class TcpSimulatorServer
             }
             void OnProductInfo(object? sender, ProductInfo info) => SafeWrite(writer, TcpSocketEventFormatter.FormatProductInfo(info));
             void OnOperationMode(object? sender, OperationModeInfo mode) => SafeWrite(writer, TcpSocketEventFormatter.FormatOperationMode(mode));
+            void OnCaptureReady(object? sender, CaptureReadyInfo ready) => SafeWrite(writer, TcpSocketEventFormatter.FormatCaptureReady(ready));
+            void OnCaptureCompleted(object? sender, CaptureCompletedInfo completed) => SafeWrite(writer, TcpSocketEventFormatter.FormatCaptureCompleted(completed));
             void OnImageGrabbed(object? sender, ImageGrabbedInfo image) => SafeWrite(writer, TcpSocketEventFormatter.FormatImageGrabbed(image));
 
             void OnResult(object? sender, ResultSummary result) => SafeWrite(writer, TcpSocketEventFormatter.FormatResult(result));
@@ -98,6 +100,8 @@ public sealed class TcpSimulatorServer
 
             _session.ImageGrabbed += OnImageGrabbed;
             _session.OperationModeChanged += OnOperationMode;
+            _session.CaptureReady += OnCaptureReady;
+            _session.CaptureCompleted += OnCaptureCompleted;
             _session.StatusChanged += OnStatus;
             _session.ProductInfoChanged += OnProductInfo;
             _session.ResultCreated += OnResult;
@@ -170,6 +174,8 @@ public sealed class TcpSimulatorServer
             {
                 _session.StatusChanged -= OnStatus;
                 _session.OperationModeChanged -= OnOperationMode;
+                _session.CaptureReady -= OnCaptureReady;
+                _session.CaptureCompleted -= OnCaptureCompleted;
                 _session.ProductInfoChanged -= OnProductInfo;
                 _session.ImageGrabbed -= OnImageGrabbed;
                 _session.ResultCreated -= OnResult;

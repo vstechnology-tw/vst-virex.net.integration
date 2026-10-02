@@ -652,3 +652,6 @@ MQTT events do not have HTTP status codes. Malformed JSON, unknown topics, broke
 ## 2.2.2 recovery envelope
 
 During recovery, `statusChanged`, `errorChanged`, and `commandRejected` use the same optional fields: `recoveryAction`, `errorCode`, `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, and sanitized `recoveryDetails`. The public state remains `Deinitializing`; internal `Faulted`, `RequiresDeinitialize`, and `RestartApp` values are never published. Keep Deinitialize enabled for retry; application restart is a UI-only final fallback.
+
+
+Capture readiness and whole-capture completion use captureReady/captureCompleted topics, with jobId/captureId correlation. See [Capture lifecycle](capture-lifecycle.md).

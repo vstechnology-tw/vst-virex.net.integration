@@ -629,3 +629,6 @@ The client should not treat this event as a transport failure. It is a valid app
 ## Error handling
 
 Malformed JSON, a missing trailing newline, unsupported frame types, socket disconnections, and read timeouts are transport/protocol failures. Invalid state, invalid run mode, and rejected commands are reported through `commandRejected`.
+
+
+captureReady/captureCompleted NDJSON events are distinct from imageGrabbed and runCompleted. See [Capture lifecycle](capture-lifecycle.md) for correlation, source guarantees and cancellation handling.

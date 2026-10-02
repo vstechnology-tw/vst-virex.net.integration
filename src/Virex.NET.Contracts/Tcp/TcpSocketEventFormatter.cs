@@ -2,6 +2,11 @@
 
 public static class TcpSocketEventFormatter
 {
+    public static string FormatCaptureReady(CaptureReadyInfo ready) =>
+        Format(new { type = "captureReady", ready.JobId, ready.CaptureId, ready.Timestamp, ready.SourceIds });
+
+    public static string FormatCaptureCompleted(CaptureCompletedInfo completed) =>
+        Format(new { type = "captureCompleted", completed.JobId, completed.CaptureId, completed.Timestamp, completed.SourceIds, completed.ImageCount });
     public static string FormatOperationMode(OperationModeInfo mode, string type = "operationModeChanged") =>
         Format(new { type, mode.Mode, mode.ManagementEnabled });
 
@@ -17,6 +22,8 @@ public static class TcpSocketEventFormatter
         response.ErrorCode,
         response.Message,
         response.OperationMode,
+        response.JobId,
+        response.CaptureId,
     });
     public static string FormatStatus(SystemStatus status) =>
         Format(new
@@ -87,6 +94,7 @@ public static class TcpSocketEventFormatter
         Format(new
         {
             type = "imageGrabbed",
+            image.JobId,
             image.CaptureId,
             image.FrameId,
             image.SourceId,
@@ -149,6 +157,7 @@ public static class TcpSocketEventFormatter
         Format(new
         {
             type = "resultCreated",
+            summary.JobId,
             summary.ResultId,
             summary.CaptureId,
             summary.Timestamp,

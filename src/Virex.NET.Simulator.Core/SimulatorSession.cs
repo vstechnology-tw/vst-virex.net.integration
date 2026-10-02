@@ -134,6 +134,7 @@ public sealed partial class SimulatorSession
             if (State == SimulatorState.Running)
             {
                 StopActiveRunTimers();
+                InvalidateCapture();
                 await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
                 LogMessage("Stopped. reason=Simulated acquisition fault");
             }
@@ -337,7 +338,14 @@ public sealed partial class SimulatorSession
             _activeRunProductInfo = ProductInfo.Snapshot();
             _activeRunCondition = condition;
             _activeRunInspectionMode = request.InspectionMode;
+            _activeJobId = Guid.NewGuid().ToString("N");
+            if (!PrepareCapture())
+            {
+                InvalidateCapture();
+                return Reject("Start", CommandErrorCodes.CapturePreparationFailed, "Simulated source preparation failed.");
+            }
             await FireAsync(SimulatorTrigger.Start).ConfigureAwait(false);
+            AnnounceCaptureReady();
             if (runMode == ControlRunModes.SingleRun)
             {
                 _singleRunCompletion = new CancellationTokenSource();
@@ -349,7 +357,10 @@ public sealed partial class SimulatorSession
                 _ = EmitContinuousResultsAsync(_continuousRun.Token);
             }
 
-            return Accept("Start", "Started.");
+            var response = Accept("Start", "Started.");
+            response.JobId = _activeJobId;
+            response.CaptureId = _captureCycle!.CaptureId;
+            return response;
         }
         finally
         {
@@ -375,16 +386,18 @@ public sealed partial class SimulatorSession
     {
         if (!CanFire(SimulatorTrigger.Stop)) return Reject("Stop");
         StopActiveRunTimers();
+        InvalidateCapture();
         await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
         LogMessage(string.IsNullOrWhiteSpace(request.Reason) ? "Stopped." : "Stopped. reason=" + request.Reason);
         return Accept("Stop", "Stopped.");
     }
 
-    private async Task StopAfterCaptureFailureAsync()
+    private async Task StopAfterCaptureFailureAsync(string? jobId)
     {
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
+            if (_activeJobId != jobId || State != SimulatorState.Running) return;
             await StopUnderGateAsync(new SystemStopRequest { Reason = "Simulator artifact persistence failed." }).ConfigureAwait(false);
         }
         finally { _gate.Release(); }
@@ -404,11 +417,13 @@ public sealed partial class SimulatorSession
                 if (!EmitCapture())
                 {
                     await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
+                    InvalidateCapture();
                     return Accept(command, "Run completed with errors.");
                 }
             }
 
             await FireAsync(trigger).ConfigureAwait(false);
+            InvalidateCapture();
             return Accept(command, command + ".");
         }
         finally
@@ -579,14 +594,18 @@ public sealed partial class SimulatorSession
         var inspectionMode = _activeRunInspectionMode;
         var now = DateTime.Now;
         var lotID = SanitizePathSegment(info.LotIDOr, "LOT-UNKNOWN");
-        var waferID = SanitizePathSegment(info.WaferIDOr, "WAFER-UNKNOWN");
-        var slot = SanitizePathSegment(info.SlotOr, "SLOT-UNKNOWN");
-        var sequence = Interlocked.Increment(ref _resultSequence);
-        var captureId = $"{lotID}-{waferID}-{slot}-{now:yyyyMMdd_HHmmss}_{sequence:000}";
+        if (_captureCycle is null)
+        {
+            if (!PrepareCapture()) return false;
+            AnnounceCaptureReady();
+        }
+        var cycle = _captureCycle!;
+        var captureId = cycle.CaptureId;
         var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz");
         var imageGrabbed = new ImageGrabbedInfo
         {
             CaptureId = captureId,
+            JobId = cycle.JobId,
             Timestamp = timestamp,
             LotID = info.LotIDOr,
             WaferID = info.WaferIDOr,
@@ -595,9 +614,25 @@ public sealed partial class SimulatorSession
             FoupID = info.FoupIDOr,
             ChamberID = info.ChamberIDOr,
         };
-        LogEvent("imageGrabbed", imageGrabbed);
-
-        ImageGrabbed?.Invoke(this, imageGrabbed);
+        foreach (var source in _captureSources)
+        {
+            for (var frame = 1; frame <= _framesPerSource; frame++)
+            {
+                var image = ProtocolJson.Deserialize<ImageGrabbedInfo>(ProtocolJson.Serialize(imageGrabbed))!;
+                image.SourceId = source;
+                image.FrameId = source + "-" + frame;
+                if (!cycle.AddImage(image)) return false;
+                LogEvent("imageGrabbed", image);
+                ImageGrabbed?.Invoke(this, image);
+            }
+            if (!cycle.CompleteSource(cycle.JobId, captureId, source, out var completed)) return false;
+            if (completed is not null)
+            {
+                LogEvent("captureCompleted", completed);
+                CaptureCompleted?.Invoke(this, completed);
+            }
+        }
+        _captureCycle = null;
 
         var relativeRoot = Path.Combine(now.ToString("yyyyMMdd"), lotID);
         var artifactName = captureId;
@@ -627,6 +662,7 @@ public sealed partial class SimulatorSession
         {
             ResultId = captureId,
             CaptureId = captureId,
+            JobId = cycle.JobId,
             Timestamp = timestamp,
             LotID = info.LotIDOr,
             WaferID = info.WaferIDOr,
@@ -749,9 +785,19 @@ public sealed partial class SimulatorSession
                 if (cancellationToken.IsCancellationRequested || State != SimulatorState.Running)
                     return;
 
-                if (!EmitCapture())
+                bool captured;
+                string? jobId;
+                await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
                 {
-                    await StopAfterCaptureFailureAsync().ConfigureAwait(false);
+                    if (cancellationToken.IsCancellationRequested || State != SimulatorState.Running) return;
+                    jobId = _activeJobId;
+                    captured = EmitCapture();
+                }
+                finally { _gate.Release(); }
+                if (!captured)
+                {
+                    await StopAfterCaptureFailureAsync(jobId).ConfigureAwait(false);
                     return;
                 }
             }

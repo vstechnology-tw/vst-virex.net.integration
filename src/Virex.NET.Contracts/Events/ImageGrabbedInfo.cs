@@ -3,6 +3,7 @@
 public sealed class ImageGrabbedInfo
 {
     public string CaptureId { get; set; } = string.Empty;
+    public string? JobId { get; set; }
     public string? FrameId { get; set; }
     public string? SourceId { get; set; }
 
