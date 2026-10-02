@@ -2,6 +2,8 @@
 
 public static class MqttTopics
 {
+    public const string CaptureReady = "captureReady";
+    public const string CaptureCompleted = "captureCompleted";
     public const string OperationModeChanged = "operationModeChanged";
     public const string CommandOperationModeGet = "commands/operation-mode/get";
     public const string CommandOperationModeSet = "commands/operation-mode/set";

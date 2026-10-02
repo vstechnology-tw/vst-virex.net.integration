@@ -12,6 +12,8 @@ public sealed class VirexEvent
     public ProductInfo? ProductInfo { get; set; }
 
     public ImageGrabbedInfo? ImageGrabbed { get; set; }
+    public CaptureReadyInfo? CaptureReady { get; set; }
+    public CaptureCompletedInfo? CaptureCompleted { get; set; }
 
     public ResultSummary? Result { get; set; }
 

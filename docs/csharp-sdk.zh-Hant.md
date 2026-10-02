@@ -197,3 +197,6 @@ if (!response.Accepted && response.ErrorCode == CommandErrorCodes.InvalidState)
 ```
 
 `invalid_state` 是正常的命令驗證行為，不是傳輸失敗。
+
+
+VirexEvent 新增 CaptureReady／CaptureCompleted；ImageGrabbedInfo、ResultSummary 與成功 Start 回覆可含 JobId。見[取像生命週期](capture-lifecycle.md)。

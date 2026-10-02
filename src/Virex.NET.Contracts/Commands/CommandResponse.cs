@@ -3,6 +3,8 @@
 public sealed class CommandResponse
 {
     public bool Accepted { get; set; }
+    public string? JobId { get; set; }
+    public string? CaptureId { get; set; }
     public OperationModeInfo? OperationMode { get; set; }
 
     public string State { get; set; } = SystemStates.Uninitialized;

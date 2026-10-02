@@ -20,3 +20,6 @@
 | `slot` | string | 是 | Slot 識別碼快照。 |
 | `foupID` | string | 是 | FOUP 識別碼快照。 |
 | `chamberID` | string | 是 | Chamber 識別碼快照。 |
+
+
+可選 jobId 關聯同一次 Start；frameId／sourceId 仍代表個別影像，單張影像不代表整次完成。見[取像生命週期](../../capture-lifecycle.md)。

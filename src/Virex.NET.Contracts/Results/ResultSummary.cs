@@ -1,10 +1,11 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public sealed class ResultSummary
 {
     public string ResultId { get; set; } = string.Empty;
 
     public string CaptureId { get; set; } = string.Empty;
+    public string? JobId { get; set; }
 
     public string Timestamp { get; set; } = string.Empty;
 

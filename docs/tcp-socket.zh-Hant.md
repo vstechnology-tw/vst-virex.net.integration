@@ -633,3 +633,6 @@ C# SDK 讀取 TCP/NDJSON 時，會對單一資料框套用閒置逾時。兩個�
 ## 錯誤處理
 
 JSON 格式錯誤、缺少換行結尾、不支援的資料框類型、socket 斷線與讀取逾時都屬於傳輸或通訊協定錯誤。狀態不合法、run mode 不合法、命令被拒絕則由 `commandRejected` 回報。
+
+
+captureReady／captureCompleted NDJSON 與 imageGrabbed／runCompleted 分開。關聯、來源保證與取消處理見[取像生命週期](capture-lifecycle.md)。

@@ -23,6 +23,8 @@ public sealed class MqttSimulatorPublisher :
     private readonly string _topic;
     private IMqttClient? _client;
     private bool _runActive;
+    private readonly object _publishGate = new object();
+    private Task _publishTail = Task.CompletedTask;
 
     public MqttSimulatorPublisher(SimulatorSession session, string host, int port, string topic)
     {
@@ -49,6 +51,8 @@ public sealed class MqttSimulatorPublisher :
         await _client.SubscribeAsync(subscribeOptions, CancellationToken.None).ConfigureAwait(false);
         _session.StatusChanged += OnStatusChanged;
         _session.OperationModeChanged += OnOperationModeChanged;
+        _session.CaptureReady += OnCaptureReady;
+        _session.CaptureCompleted += OnCaptureCompleted;
         _session.ProductInfoChanged += OnProductInfoChanged;
         _session.ImageGrabbed += OnImageGrabbed;
         _session.ResultCreated += OnResultCreated;
@@ -64,11 +68,16 @@ public sealed class MqttSimulatorPublisher :
     {
         _session.StatusChanged -= OnStatusChanged;
         _session.OperationModeChanged -= OnOperationModeChanged;
+        _session.CaptureReady -= OnCaptureReady;
+        _session.CaptureCompleted -= OnCaptureCompleted;
         _session.ImageGrabbed -= OnImageGrabbed;
         _session.ProductInfoChanged -= OnProductInfoChanged;
         _session.ResultCreated -= OnResultCreated;
         _session.ErrorChanged -= OnErrorChanged;
         _session.CommandRejected -= OnCommandRejected;
+        Task pending;
+        lock (_publishGate) pending = _publishTail;
+        await pending.ConfigureAwait(false);
         if (_client is not null && _client.IsConnected)
         {
             _client.ApplicationMessageReceivedAsync -= HandleCommandAsync;
@@ -102,38 +111,54 @@ public sealed class MqttSimulatorPublisher :
 
     private void OnStatusChanged(object? sender, SystemStatus status)
     {
-        _ = PublishAsync(MqttTopics.StatusChanged, ProtocolJson.Serialize(status));
+        _ = QueuePublishAsync(MqttTopics.StatusChanged, ProtocolJson.Serialize(status));
 
         if (string.Equals(status.State, SystemStates.Running, StringComparison.OrdinalIgnoreCase))
         {
             _runActive = true;
-            _ = PublishAsync(MqttTopics.RunStarted, ProtocolJson.Serialize(status));
+            _ = QueuePublishAsync(MqttTopics.RunStarted, ProtocolJson.Serialize(status));
         }
 
         if (_runActive && string.Equals(status.State, SystemStates.Ready, StringComparison.OrdinalIgnoreCase))
         {
             _runActive = false;
-            _ = PublishAsync(MqttTopics.RunCompleted, ProtocolJson.Serialize(status));
+            _ = QueuePublishAsync(MqttTopics.RunCompleted, ProtocolJson.Serialize(status));
         }
     }
 
     private void OnImageGrabbed(object? sender, ImageGrabbedInfo image) =>
-        _ = PublishAsync(MqttTopics.ImageGrabbed, ProtocolJson.Serialize(image));
+        _ = QueuePublishAsync(MqttTopics.ImageGrabbed, ProtocolJson.Serialize(image));
+
+    private void OnCaptureReady(object? sender, CaptureReadyInfo ready) =>
+        _ = QueuePublishAsync(MqttTopics.CaptureReady, ProtocolJson.Serialize(ready));
+
+    private void OnCaptureCompleted(object? sender, CaptureCompletedInfo completed) =>
+        _ = QueuePublishAsync(MqttTopics.CaptureCompleted, ProtocolJson.Serialize(completed));
+
+    private Task QueuePublishAsync(string topic, string payload)
+    {
+        lock (_publishGate)
+        {
+            _publishTail = _publishTail.ContinueWith(_ => PublishAsync(topic, payload),
+                CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default).Unwrap();
+            return _publishTail;
+        }
+    }
 
     private void OnOperationModeChanged(object? sender, OperationModeInfo mode) =>
-        _ = PublishAsync(MqttTopics.OperationModeChanged, ProtocolJson.Serialize(mode));
+        _ = QueuePublishAsync(MqttTopics.OperationModeChanged, ProtocolJson.Serialize(mode));
 
     private void OnProductInfoChanged(object? sender, ProductInfo info) =>
-        _ = PublishAsync(MqttTopics.ProductInfoChanged, ProtocolJson.Serialize(info));
+        _ = QueuePublishAsync(MqttTopics.ProductInfoChanged, ProtocolJson.Serialize(info));
 
     private void OnResultCreated(object? sender, ResultSummary result) =>
-        _ = PublishAsync(MqttTopics.ResultCreated, ProtocolJson.Serialize(result));
+        _ = QueuePublishAsync(MqttTopics.ResultCreated, ProtocolJson.Serialize(result));
 
     private void OnErrorChanged(object? sender, ErrorInfo error) =>
-        _ = PublishAsync(MqttTopics.ErrorChanged, ProtocolJson.Serialize(error));
+        _ = QueuePublishAsync(MqttTopics.ErrorChanged, ProtocolJson.Serialize(error));
 
     private void OnCommandRejected(object? sender, CommandResponse response) =>
-        _ = PublishAsync(MqttTopics.CommandRejected, ProtocolJson.Serialize(response));
+        _ = QueuePublishAsync(MqttTopics.CommandRejected, ProtocolJson.Serialize(response));
 
     private async Task HandleCommandAsync(MqttApplicationMessageReceivedEventArgs e)
     {

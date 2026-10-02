@@ -633,3 +633,6 @@ MQTT 事件沒有 HTTP status code。JSON 格式錯誤、未知 topic、broker �
 ## 2.2.2 復原封套
 
 復原期間，`statusChanged`、`errorChanged`、`commandRejected` 使用相同的選用欄位：`recoveryAction`、`errorCode`、`recoveryStartedAt`、`recoverySource`、`recoveryPhase` 與已清理的 `recoveryDetails`。公開狀態維持 `Deinitializing`，不會送出內部的 `Faulted`、`RequiresDeinitialize` 或 `RestartApp`。Deinitialize 必須保持可重試；重新啟動 App 只屬於 UI 的最後手段。
+
+
+captureReady／captureCompleted topic 提供準備與整次完成，以 jobId／captureId 關聯。來源保證與取消處理見[取像生命週期](capture-lifecycle.md)。

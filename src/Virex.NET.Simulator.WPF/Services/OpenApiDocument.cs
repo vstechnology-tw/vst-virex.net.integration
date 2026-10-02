@@ -67,6 +67,21 @@ internal static class OpenApiDocument
                     ["mode"] = new { type = "string", @enum = new[] { OperationModes.Local, OperationModes.Remote } },
                     ["managementEnabled"] = BoolSchema(),
                 }, ["mode", "managementEnabled"]),
+                ["CaptureReadyInfo"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["jobId"] = StringSchema(),
+                    ["captureId"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
+                    ["sourceIds"] = new { type = "array", minItems = 1, uniqueItems = true, items = StringSchema() },
+                }, ["jobId", "captureId", "timestamp", "sourceIds"]),
+                ["CaptureCompletedInfo"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["jobId"] = StringSchema(),
+                    ["captureId"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
+                    ["sourceIds"] = new { type = "array", minItems = 1, uniqueItems = true, items = StringSchema() },
+                    ["imageCount"] = new { type = "integer", minimum = 1 },
+                }, ["jobId", "captureId", "timestamp", "sourceIds", "imageCount"]),
                 ["SetOperationModeRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["mode"] = new { type = "string", @enum = new[] { OperationModes.Local, OperationModes.Remote } },
@@ -107,6 +122,8 @@ internal static class OpenApiDocument
                 }),
                 ["CommandResponse"] = ObjectSchema(new Dictionary<string, object>
                 {
+                    ["jobId"] = NullableStringSchema(),
+                    ["captureId"] = NullableStringSchema(),
                     ["operationMode"] = Ref("OperationModeInfo"),
                     ["accepted"] = BoolSchema(),
                     ["state"] = StringSchema(),
@@ -132,6 +149,7 @@ internal static class OpenApiDocument
                 }),
                 ["ResultSummary"] = ObjectSchema(new Dictionary<string, object>
                 {
+                    ["jobId"] = NullableStringSchema(),
                     ["resultId"] = StringSchema(),
                     ["captureId"] = StringSchema(),
                     ["timestamp"] = StringSchema("date-time"),

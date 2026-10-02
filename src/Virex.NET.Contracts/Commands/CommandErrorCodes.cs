@@ -2,6 +2,7 @@
 
 public static class CommandErrorCodes
 {
+    public const string CapturePreparationFailed = "capture_preparation_failed";
     public const string InvalidOperationMode = "invalid_operation_mode";
     public const string InvalidOperationSource = "invalid_operation_source";
     public const string OperationNotAllowed = "operation_not_allowed";

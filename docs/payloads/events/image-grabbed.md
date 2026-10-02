@@ -22,3 +22,6 @@
 | `slot` | string | Yes | Slot identifier snapshot. |
 | `foupID` | string | Yes | FOUP identifier snapshot. |
 | `chamberID` | string | Yes | Chamber identifier snapshot. |
+
+
+Optional jobId associates an image with one Start; frameId/sourceId still identify an individual image. An image is not whole-capture completion. See [Capture lifecycle](../../capture-lifecycle.md).

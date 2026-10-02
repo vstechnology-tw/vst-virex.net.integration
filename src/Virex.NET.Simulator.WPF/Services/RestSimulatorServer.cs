@@ -253,7 +253,7 @@ public sealed class RestSimulatorServer
     {
         if (!response.Accepted)
             context.Response.StatusCode = response.ErrorCode is CommandErrorCodes.InvalidRunMode or CommandErrorCodes.InvalidInspectionMode or CommandErrorCodes.InvalidOperationMode or CommandErrorCodes.InvalidPayload ? 400
-                : response.ErrorCode == CommandErrorCodes.CommandFailed ? 503 : 409;
+                : response.ErrorCode is CommandErrorCodes.CommandFailed or CommandErrorCodes.CapturePreparationFailed ? 503 : 409;
         return JsonAsync(context, response);
     }
 
