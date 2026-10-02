@@ -1,4 +1,4 @@
-using Virex.NET.Contracts;
+﻿using Virex.NET.Contracts;
 
 namespace Virex.NET.Client;
 
@@ -39,6 +39,12 @@ public sealed class VirexClient : IDisposable
     public VirexMqttEventSubscriber MqttEvents { get; }
 
     public VirexMqttCommandClient MqttCommands { get; }
+
+    public Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetOperationModeAsync(cancellationToken);
+
+    public Task<CommandResponse> SetOperationModeAsync(string mode, CancellationToken cancellationToken = default) =>
+        Rest.SetOperationModeAsync(mode, cancellationToken);
 
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         Rest.GetStatusAsync(cancellationToken);

@@ -1,4 +1,4 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public sealed class VirexEvent
 {
@@ -7,6 +7,7 @@ public sealed class VirexEvent
     public string RawJson { get; set; } = string.Empty;
 
     public SystemStatus? Status { get; set; }
+    public OperationModeInfo? OperationMode { get; set; }
 
     public ProductInfo? ProductInfo { get; set; }
 

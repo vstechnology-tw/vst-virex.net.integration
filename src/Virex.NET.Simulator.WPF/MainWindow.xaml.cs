@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Virex.NET.Contracts;
@@ -9,7 +9,8 @@ namespace Virex.NET.Simulator.WPF;
 
 public partial class MainWindow : Window
 {
-    private readonly SimulatorSession _session = new SimulatorSession();
+    private readonly SimulatorSession _session = new SimulatorSession(null,
+        Environment.GetCommandLineArgs().Contains("--manage-operation-mode", StringComparer.Ordinal));
     private static readonly Brush InactiveStateBackground = new SolidColorBrush(Color.FromRgb(229, 231, 235));
     private static readonly Brush InactiveStateBorder = new SolidColorBrush(Color.FromRgb(148, 163, 184));
     private static readonly Brush InactiveStateForeground = new SolidColorBrush(Color.FromRgb(17, 24, 39));
@@ -67,24 +68,24 @@ public partial class MainWindow : Window
 
     private async void ApplyProductInfo_Click(object sender, RoutedEventArgs e)
     {
-        var response = await _session.SetProductInfoAsync(ReadProductInfo());
+        var response = await _session.SetProductInfoFromSourceAsync(ReadProductInfo(), OperationSource.Local);
         AppendCommandResponse(response);
     }
 
     private async void Initialize_Click(object sender, RoutedEventArgs e) =>
-        AppendCommandResponse(await _session.InitializeAsync());
+        AppendCommandResponse(await _session.InitializeFromSourceAsync(OperationSource.Local));
 
     private async void Deinitialize_Click(object sender, RoutedEventArgs e) =>
-        AppendCommandResponse(await _session.DeinitializeAsync());
+        AppendCommandResponse(await _session.DeinitializeFromSourceAsync(OperationSource.Local));
 
     private async void StartSingle_Click(object sender, RoutedEventArgs e) =>
-        AppendCommandResponse(await _session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.SingleRun }));
+        AppendCommandResponse(await _session.StartFromSourceAsync(new SystemStartRequest { RunMode = ControlRunModes.SingleRun }, OperationSource.Local));
 
     private async void StartContinue_Click(object sender, RoutedEventArgs e) =>
-        AppendCommandResponse(await _session.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue }));
+        AppendCommandResponse(await _session.StartFromSourceAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue }, OperationSource.Local));
 
     private async void Stop_Click(object sender, RoutedEventArgs e) =>
-        AppendCommandResponse(await _session.StopAsync());
+        AppendCommandResponse(await _session.StopFromSourceAsync(new SystemStopRequest(), OperationSource.Local));
 
     private ProductInfo ReadProductInfo() =>
         new ProductInfo

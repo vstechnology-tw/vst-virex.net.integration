@@ -26,6 +26,11 @@ public static class TcpSocketMessageParser
             }
 
             message.RequestId = ReadOptionalString(root, "requestId");
+            if (root.TryGetProperty("source", out _) || root.TryGetProperty("operationSource", out _))
+            {
+                error = "Operation source is assigned by the host.";
+                return false;
+            }
             var type = root.TryGetProperty("type", out var typeElement) &&
                        typeElement.ValueKind == JsonValueKind.String
                 ? typeElement.GetString() ?? string.Empty
@@ -38,10 +43,12 @@ public static class TcpSocketMessageParser
                 string.Equals(type, "status", System.StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(type, "error", System.StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(type, "getProductInfo", System.StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(type, "results", System.StringComparison.OrdinalIgnoreCase))
+                string.Equals(type, "results", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "operationMode", System.StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(type, "setOperationMode", System.StringComparison.OrdinalIgnoreCase))
             {
                 message.Type = NormalizeType(type);
-                foreach (var property in new[] { "condition", "runMode", "inspectionMode", "reason", "lotID", "waferID", "recipe", "requestId" })
+                foreach (var property in new[] { "mode", "condition", "runMode", "inspectionMode", "reason", "lotID", "waferID", "recipe", "requestId" })
                 {
                     if (root.TryGetProperty(property, out var element)
                         && element.ValueKind != JsonValueKind.String && element.ValueKind != JsonValueKind.Null)
@@ -51,6 +58,7 @@ public static class TcpSocketMessageParser
                     }
                 }
                 message.Condition = ReadOptionalString(root, "condition");
+                message.Mode = ReadOptionalString(root, "mode");
                 message.RunMode = ReadRunMode(root);
                 // Preserve invalid/empty values for explicit command rejection, rather than defaulting them.
                 message.InspectionMode = root.TryGetProperty("inspectionMode", out var inspectionMode)

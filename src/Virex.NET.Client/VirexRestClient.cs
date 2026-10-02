@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Virex.NET.Contracts;
 
@@ -15,6 +15,12 @@ public sealed class VirexRestClient
 
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
+
+    public Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default) =>
+        GetAsync<OperationModeInfo>(RestRoutes.ApiOperationMode, cancellationToken);
+
+    public Task<CommandResponse> SetOperationModeAsync(string mode, CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiOperationMode, new SetOperationModeRequest { Mode = mode }, cancellationToken);
 
     public Task<ErrorInfo> GetErrorAsync(CancellationToken cancellationToken = default) =>
         GetAsync<ErrorInfo>(RestRoutes.ApiError, cancellationToken);

@@ -11,6 +11,7 @@ public sealed class MqttCommandRequest
     public string? Recipe { get; set; }
 
     public string? Condition { get; set; }
+    public string? Mode { get; set; }
 
     public string? RunMode { get; set; }
 

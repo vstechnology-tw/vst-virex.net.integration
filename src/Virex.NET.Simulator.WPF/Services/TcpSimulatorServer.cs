@@ -89,6 +89,7 @@ public sealed class TcpSimulatorServer
                 }
             }
             void OnProductInfo(object? sender, ProductInfo info) => SafeWrite(writer, TcpSocketEventFormatter.FormatProductInfo(info));
+            void OnOperationMode(object? sender, OperationModeInfo mode) => SafeWrite(writer, TcpSocketEventFormatter.FormatOperationMode(mode));
             void OnImageGrabbed(object? sender, ImageGrabbedInfo image) => SafeWrite(writer, TcpSocketEventFormatter.FormatImageGrabbed(image));
 
             void OnResult(object? sender, ResultSummary result) => SafeWrite(writer, TcpSocketEventFormatter.FormatResult(result));
@@ -96,6 +97,7 @@ public sealed class TcpSimulatorServer
             void OnRejected(object? sender, CommandResponse response) => SafeWrite(writer, TcpSocketEventFormatter.FormatCommandRejected(response));
 
             _session.ImageGrabbed += OnImageGrabbed;
+            _session.OperationModeChanged += OnOperationMode;
             _session.StatusChanged += OnStatus;
             _session.ProductInfoChanged += OnProductInfo;
             _session.ResultCreated += OnResult;
@@ -122,7 +124,15 @@ public sealed class TcpSimulatorServer
                     _session.WriteLog("TCP inbound: " + message.Type);
                     try
                     {
-                        if (message.Type == "status")
+                        if (message.Type == "operationmode")
+                            SafeWrite(writer, CommandPayloadJson.WithRequestId(TcpSocketEventFormatter.FormatOperationMode(_session.OperationMode, "operationMode"), message.RequestId));
+                        else if (message.Type == "setoperationmode")
+                        {
+                            var response = await _session.SetOperationModeAsync(new SetOperationModeRequest { Mode = message.Mode }, token).ConfigureAwait(false);
+                            response.RequestId = message.RequestId;
+                            SafeWrite(writer, TcpSocketEventFormatter.FormatCommandResponse(response));
+                        }
+                        else if (message.Type == "status")
                             SafeWrite(writer, CommandPayloadJson.WithRequestId(TcpSocketEventFormatter.FormatStatusResponse(_session.Status), message.RequestId));
                         else if (message.Type == "error")
                             SafeWrite(writer, CommandPayloadJson.WithRequestId(TcpSocketEventFormatter.FormatErrorResponse(_session.Error), message.RequestId));
@@ -159,6 +169,7 @@ public sealed class TcpSimulatorServer
             finally
             {
                 _session.StatusChanged -= OnStatus;
+                _session.OperationModeChanged -= OnOperationMode;
                 _session.ProductInfoChanged -= OnProductInfo;
                 _session.ImageGrabbed -= OnImageGrabbed;
                 _session.ResultCreated -= OnResult;

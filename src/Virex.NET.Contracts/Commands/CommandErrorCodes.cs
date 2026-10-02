@@ -2,6 +2,9 @@
 
 public static class CommandErrorCodes
 {
+    public const string InvalidOperationMode = "invalid_operation_mode";
+    public const string InvalidOperationSource = "invalid_operation_source";
+    public const string OperationNotAllowed = "operation_not_allowed";
     public const string InvalidState = "invalid_state";
     public const string InvalidRunMode = "invalid_run_mode";
     public const string InvalidInspectionMode = "invalid_inspection_mode";

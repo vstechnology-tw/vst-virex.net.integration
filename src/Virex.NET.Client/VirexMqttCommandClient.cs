@@ -21,6 +21,16 @@ public sealed class VirexMqttCommandClient
         return response.Status ?? throw new InvalidDataException("MQTT response omitted status.");
     }
 
+    public async Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await SendAsync(MqttTopics.CommandOperationModeGet, new MqttCommandRequest(), cancellationToken).ConfigureAwait(false);
+        ThrowIfRejected(response);
+        return response.OperationMode ?? throw new InvalidDataException("MQTT response omitted operation mode.");
+    }
+
+    public Task<CommandResponse> SetOperationModeAsync(string mode, CancellationToken cancellationToken = default) =>
+        SendCommandAsync(MqttTopics.CommandOperationModeSet, new MqttCommandRequest { Mode = mode }, cancellationToken);
+
     public async Task<ErrorInfo> GetErrorAsync(CancellationToken cancellationToken = default)
     {
         var response = await SendAsync(MqttTopics.CommandErrorGet, new MqttCommandRequest(), cancellationToken).ConfigureAwait(false);

@@ -97,6 +97,7 @@ public sealed partial class SimulatorSession
 
     public Task<CommandResponse> DeinitializeAsync(CancellationToken cancellationToken = default)
     {
+        if (CheckOperationSource("Deinitialize", OperationSource.External) is { } denied) return Task.FromResult(denied);
         lock (_deinitializationGate)
         {
             if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization)
@@ -210,11 +211,12 @@ public sealed partial class SimulatorSession
 
     public void WriteLog(string message) => LogMessage(message);
 
-    internal async Task<CommandResponse> HandleInitializeAsync(CancellationToken cancellationToken)
+    internal async Task<CommandResponse> HandleInitializeAsync(CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckOperationSource("Initialize", source) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.Initialize))
                 return Reject("Initialize");
 
@@ -230,11 +232,12 @@ public sealed partial class SimulatorSession
         }
     }
 
-    internal async Task<CommandResponse> HandleDeinitializeAsync(CancellationToken cancellationToken)
+    internal async Task<CommandResponse> HandleDeinitializeAsync(CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckOperationSource("Deinitialize", source) is { } denied) return denied;
             return await HandleDeinitializeUnderGateAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -285,13 +288,14 @@ public sealed partial class SimulatorSession
         SetError(null);
         return Accept("Deinitialize", "Deinitialized.");
     }
-    internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken)
+    internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
-        if (State != SimulatorState.Ready)
-            return Reject("SetProductInfo");
+        if (CheckOperationSource("SetProductInfo", source) is { } sourceDenied) return sourceDenied;
+        if (State != SimulatorState.Ready) return Reject("SetProductInfo");
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckOperationSource("SetProductInfo", source) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.SetProductInfo))
                 return Reject("SetProductInfo");
 
@@ -320,13 +324,14 @@ public sealed partial class SimulatorSession
         }
     }
 
-    internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken)
+    internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
-        if (State != SimulatorState.Ready)
-            return Reject("Start");
+        if (CheckOperationSource("Start", source) is { } sourceDenied) return sourceDenied;
+        if (State != SimulatorState.Ready) return Reject("Start");
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckOperationSource("Start", source) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.Start))
                 return Reject("Start");
 
@@ -364,11 +369,12 @@ public sealed partial class SimulatorSession
         }
     }
 
-    internal async Task<CommandResponse> HandleStopAsync(SystemStopRequest request, CancellationToken cancellationToken)
+    internal async Task<CommandResponse> HandleStopAsync(SystemStopRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckOperationSource("Stop", source) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.Stop))
                 return Reject("Stop");
 

@@ -79,6 +79,15 @@ public sealed class RestSimulatorServer
             {
                 await JsonAsync(context, _session.Status).ConfigureAwait(false);
             }
+            else if (path == RestRoutes.ApiOperationMode && context.Request.HttpMethod == "GET")
+            {
+                await JsonAsync(context, _session.OperationMode).ConfigureAwait(false);
+            }
+            else if (path == RestRoutes.ApiOperationMode && context.Request.HttpMethod == "POST")
+            {
+                var request = CommandPayloadJson.ReadObject<SetOperationModeRequest>(await ReadBodyAsync(context).ConfigureAwait(false))!;
+                await CommandAsync(context, await _session.SetOperationModeAsync(request).ConfigureAwait(false)).ConfigureAwait(false);
+            }
             else if (path == RestRoutes.ApiError && context.Request.HttpMethod == "GET")
             {
                 await JsonAsync(context, _session.Error).ConfigureAwait(false);
@@ -220,6 +229,7 @@ public sealed class RestSimulatorServer
     private static string CommandName(HttpListenerRequest request) => request.Url?.AbsolutePath switch
     {
         RestRoutes.ApiStatus => "GetStatus",
+        RestRoutes.ApiOperationMode => request.HttpMethod == "GET" ? "GetOperationMode" : "SetOperationMode",
         RestRoutes.ApiError => "GetError",
         RestRoutes.ApiResults => "QueryResults",
         RestRoutes.ApiProductInfo => request.HttpMethod == "GET" ? "GetProductInfo" : "SetProductInfo",
@@ -242,7 +252,7 @@ public sealed class RestSimulatorServer
     private static Task CommandAsync(HttpListenerContext context, CommandResponse response)
     {
         if (!response.Accepted)
-            context.Response.StatusCode = response.ErrorCode is CommandErrorCodes.InvalidRunMode or CommandErrorCodes.InvalidInspectionMode or CommandErrorCodes.InvalidPayload ? 400
+            context.Response.StatusCode = response.ErrorCode is CommandErrorCodes.InvalidRunMode or CommandErrorCodes.InvalidInspectionMode or CommandErrorCodes.InvalidOperationMode or CommandErrorCodes.InvalidPayload ? 400
                 : response.ErrorCode == CommandErrorCodes.CommandFailed ? 503 : 409;
         return JsonAsync(context, response);
     }
