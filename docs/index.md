@@ -79,7 +79,7 @@ All three communication interfaces use UTF-8 JSON payloads with the same public 
 2. Start the simulator:
 
    ```powershell
-   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
    ```
 
 3. Press **Start Servers** in the simulator to start the RESTful API/TCP/MQTT services.

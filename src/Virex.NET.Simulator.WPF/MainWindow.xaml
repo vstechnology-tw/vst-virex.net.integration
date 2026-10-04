@@ -85,20 +85,22 @@
           <TextBox x:Name="FoupIDBox" Grid.Row="4" Grid.Column="1" Text="FOUP-A" Margin="0,2" />
           <TextBlock Grid.Row="5" Text="Chamber ID" VerticalAlignment="Center" />
           <TextBox x:Name="ChamberIDBox" Grid.Row="5" Grid.Column="1" Text="CH-1" Margin="0,2" />
-          <Button Grid.Row="6" Grid.Column="1" Content="Apply ProductInfo" Click="ApplyProductInfo_Click" Margin="0,8,0,0" />
+          <Button x:Name="ApplyProductInfoButton" Grid.Row="6" Grid.Column="1" Content="Apply ProductInfo" Click="ApplyProductInfo_Click" Margin="0,8,0,0" />
         </Grid>
       </GroupBox>
 
       <GroupBox Grid.Column="2" Header="State" Padding="12">
-        <StackPanel>
+        <StackPanel x:Name="LifecyclePanel">
           <TextBlock x:Name="StatusText" Text="state=Uninitialized" Margin="0,0,0,10" TextWrapping="Wrap" />
-          <Button Content="Start Servers" Click="StartServers_Click" Margin="0,0,0,6" />
-          <Button Content="Stop Servers" Click="StopServers_Click" Margin="0,0,0,12" />
-          <Button Content="Initialize" Click="Initialize_Click" Margin="0,0,0,6" />
-          <Button Content="Deinitialize" Click="Deinitialize_Click" Margin="0,0,0,6" />
-          <Button Content="Start Single" Click="StartSingle_Click" Margin="0,0,0,6" />
-          <Button Content="Start Continue" Click="StartContinue_Click" Margin="0,0,0,6" />
-          <Button Content="Stop" Click="Stop_Click" Margin="0,0,0,6" />
+          <Button x:Name="StartServersButton" Content="Start Servers" Click="StartServers_Click" Margin="0,0,0,6" />
+          <Button x:Name="StopServersButton" Content="Stop Servers" Click="StopServers_Click" Margin="0,0,0,12" />
+          <Button x:Name="InitializeButton" Content="Initialize" Click="Initialize_Click" Margin="0,0,0,6" />
+          <Button x:Name="DeinitializeButton" Content="Deinitialize" Click="Deinitialize_Click" Margin="0,0,0,6" />
+          <TextBlock Text="Inspection mode" Margin="0,0,0,2" />
+          <ComboBox x:Name="InspectionModeBox" SelectedIndex="0" Margin="0,0,0,6" />
+          <Button x:Name="StartSingleButton" Content="Start Single" Click="StartSingle_Click" Margin="0,0,0,6" />
+          <Button x:Name="StartContinueButton" Content="Start Continue" Click="StartContinue_Click" Margin="0,0,0,6" />
+          <Button x:Name="StopButton" Content="Stop" Click="Stop_Click" Margin="0,0,0,6" />
         </StackPanel>
       </GroupBox>
     </Grid>
@@ -119,7 +121,46 @@
                  HorizontalScrollBarVisibility="Auto" />
       </GroupBox>
 
-      <GroupBox Grid.Column="1" Header="State Machine" Padding="8">
+      <TabControl x:Name="DetailsTabs" Grid.Column="1">
+        <TabItem Header="Queries / Operation Mode">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="8">
+              <WrapPanel>
+                <Button x:Name="GetRecipesButton" Content="Get recipes" Click="GetRecipes_Click" Margin="0,0,6,6" />
+                <Button x:Name="GetCurrentRecipeButton" Content="Get current recipe" Click="GetCurrentRecipe_Click" Margin="0,0,6,6" />
+                <Button x:Name="GetCurrentParametersButton" Content="Get current parameters" Click="GetCurrentParameters_Click" Margin="0,0,6,6" />
+              </WrapPanel>
+              <TextBlock Text="Exact ResultId (required; case-sensitive)" />
+              <DockPanel Margin="0,4,0,8">
+                <Button x:Name="GetResultDetailButton" DockPanel.Dock="Right" Content="Get result detail" Click="GetResultDetail_Click" Margin="6,0,0,0" />
+                <TextBox x:Name="ResultIdBox" />
+              </DockPanel>
+              <WrapPanel>
+                <Button x:Name="GetOperationModeButton" Content="Get operation mode" Click="GetOperationMode_Click" Margin="0,0,6,6" />
+                <ComboBox x:Name="OperationModeBox" Width="85" SelectedIndex="0" Margin="0,0,6,6" />
+                <Button x:Name="ApplyOperationModeButton" Content="Apply mode" Click="ApplyOperationMode_Click" Margin="0,0,6,6" />
+                <Button x:Name="CancelQueryButton" Content="Cancel query" Click="CancelQuery_Click" IsEnabled="False" Margin="0,0,6,6" />
+              </WrapPanel>
+              <TextBlock x:Name="OperationModeText" TextWrapping="Wrap" />
+              <TextBlock Text="Management is enabled only by --manage-operation-mode at startup." TextWrapping="Wrap" Margin="0,4,0,8" />
+              <TextBox x:Name="QueryOutputBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" VerticalScrollBarVisibility="Auto" />
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem Header="Capture Events">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="8">
+              <TextBlock Text="Simulator session events. These do not prove App or camera readiness." TextWrapping="Wrap" Margin="0,0,0,8" />
+              <TextBlock Text="captureReady" FontWeight="SemiBold" />
+              <TextBox x:Name="CaptureReadyBox" IsReadOnly="True" TextWrapping="Wrap" Text="No event observed." Margin="0,4,0,10" />
+              <TextBlock Text="captureCompleted" FontWeight="SemiBold" />
+              <TextBox x:Name="CaptureCompletedBox" IsReadOnly="True" TextWrapping="Wrap" Text="No event observed." Margin="0,4,0,10" />
+              <TextBlock x:Name="ResultStatusText" Text="No resultCreated observed." TextWrapping="Wrap" />
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+        <TabItem Header="State Machine">
+      <GroupBox Header="State Machine" Padding="8">
         <Viewbox Stretch="Uniform">
           <Canvas Width="560" Height="360">
             <Canvas.Resources>
@@ -246,6 +287,8 @@
           </Canvas>
         </Viewbox>
       </GroupBox>
+        </TabItem>
+      </TabControl>
     </Grid>
   </Grid>
 </Window>

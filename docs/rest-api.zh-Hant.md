@@ -1,6 +1,6 @@
 # RESTful API
 
-Issue #44 候選版本新增 [Recipe 與精確結果明細唯讀查詢](read-only-queries.zh-Hant.md)：`GET /api/recipes`、`GET /api/recipes/current`、`GET /api/recipes/current/parameters`、`GET /api/results/{resultId}`。下列既有端點保持相容。
+2.3.0 版本新增 [Recipe 與精確結果明細唯讀查詢](read-only-queries.zh-Hant.md)：`GET /api/recipes`、`GET /api/recipes/current`、`GET /api/recipes/current/parameters`、`GET /api/results/{resultId}`。下列既有端點保持相容。
 
 
 RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以及查詢結果摘要。

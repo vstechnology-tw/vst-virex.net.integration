@@ -349,12 +349,12 @@ public sealed partial class SimulatorSession
             if (runMode == ControlRunModes.SingleRun)
             {
                 _singleRunCompletion = new CancellationTokenSource();
-                _ = CompleteRunAfterDelayAsync(_singleRunCompletion.Token);
+                TrackRunTask(CompleteRunAfterDelayAsync(_singleRunCompletion.Token));
             }
             else
             {
                 _continuousRun = new CancellationTokenSource();
-                _ = EmitContinuousResultsAsync(_continuousRun.Token);
+                TrackRunTask(EmitContinuousResultsAsync(_continuousRun.Token));
             }
 
             var response = Accept("Start", "Started.");
@@ -408,6 +408,9 @@ public sealed partial class SimulatorSession
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (_shutdownRequested)
+                return Reject(command, CommandErrorCodes.InvalidState, "Simulator host is shutting down.");
+
             if (!CanFire(trigger))
                 return Reject(command);
 

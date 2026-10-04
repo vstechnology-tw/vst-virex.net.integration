@@ -7,7 +7,7 @@
 저장소 루트에서 실행합니다.
 
 ```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
 ```
 
 기본 엔드포인트 설정을 유지하고 **Start Servers**를 클릭하여 RESTful API/TCP/MQTT 서비스를 시작합니다.

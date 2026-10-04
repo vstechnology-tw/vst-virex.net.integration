@@ -16,6 +16,10 @@
 - 模擬器、SDK、文件、合約測試必須同步。
 - [資料模型參考](payloads.zh-Hant.md) 必須與公開資料模型、路由、主題、事件結構對齊。
 
+## Version 2.3.0
+
+新增公開 recipe/result 查詢、每次 Start 的 inspectionMode、opt-in Local/Remote 來源授權，以及可關聯的 captureReady/captureCompleted。模擬器介面提供這些操作，保留省略與預設行為，並在關閉時等待自己的執行排空。Contracts/Client 保持 netstandard2.0；Simulator 保持 net48、net8.0-windows、net10.0-windows。
+
 ## 已發布版本說明
 
 以下整理提供給客戶的已發布版本。每個標題都連到對應的 GitHub Release。

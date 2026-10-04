@@ -149,6 +149,7 @@ nav:
   - Completion and Errors: communication-errors.md
   - Protocol Reference:
       - RESTful API: rest-api.md
+      - Inspection Mode: inspection-mode.md
       - Operation Mode: operation-mode.md
       - Capture Lifecycle: capture-lifecycle.md
       - Recipe / Result Queries: read-only-queries.md

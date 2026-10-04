@@ -16,6 +16,10 @@
 - 시뮬레이터, SDK, 문서, 계약 테스트를 동기화해야 합니다.
 - [페이로드 참조](payloads.ko.md)는 공개 페이로드 모델, 경로, 토픽 및 이벤트 구조와 정렬되어야 합니다.
 
+## Version 2.3.0
+
+공개 recipe/result 조회, Start별 inspectionMode, opt-in Local/Remote 권한, 상관된 captureReady/captureCompleted를 추가합니다. 시뮬레이터 화면에서 조작할 수 있으며 생략된 기본 동작을 유지하고 종료 시 실행 완료를 기다립니다. Contracts/Client는 netstandard2.0, Simulator는 net48, net8.0-windows, net10.0-windows를 유지합니다.
+
 ## 공개 릴리스 노트
 
 다음은 고객에게 공개된 버전의 목록입니다. 각 제목은 해당 GitHub Release로 연결됩니다.

@@ -79,7 +79,7 @@ RESTful API는 commands를 HTTP route로 표현하며 event stream은 제공하�
 2. 시뮬레이터를 시작합니다:
 
    ```powershell
-   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
    ```
 
 3. 시뮬레이터에서 **Start Servers**를 눌러 RESTful API/TCP/MQTT 서비스를 시작합니다.
