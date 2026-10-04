@@ -16,7 +16,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj 
 
 ## 取像與檢測模式
 
-按 **Start Single** 或 **Start Continue** 前，選擇 **Legacy (omitted)**、**captureOnly** 或 **captureAndInspect**。Run mode 與 inspection mode 各自獨立。省略 inspectionMode 時保留 recipe 預設。在本模擬器中，captureOnly 產生取像事件，但不產生 resultCreated，也不保存影像或結果檔案；captureAndInspect 另產生模擬檢測結果。
+按 **Start Single** 或 **Start Continue** 前，選擇 **Omitted (legacy)**、**captureOnly** 或 **captureAndInspect**。Run mode 與 inspection mode 各自獨立。省略 inspectionMode 時保留 recipe 預設。在本模擬器中，captureOnly 保存模擬影像與 capture 診斷檔，但不產生檢測結果或 resultCreated 事件；captureAndInspect 另產生模擬檢測結果。
 
 ## 查詢與操作模式
 

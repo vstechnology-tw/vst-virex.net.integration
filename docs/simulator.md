@@ -16,7 +16,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj 
 
 ## Inspection mode
 
-Choose **Legacy (omitted)**, **captureOnly**, or **captureAndInspect** before **Start Single** or **Start Continue**. Run mode and inspection mode are independent. Omission preserves recipe defaults. In this Simulator, captureOnly emits capture events without resultCreated or persisted image/result artifacts; captureAndInspect also produces a synthetic inspection result.
+Choose **Omitted (legacy)**, **captureOnly**, or **captureAndInspect** before **Start Single** or **Start Continue**. Run mode and inspection mode are independent. Omission preserves recipe defaults. In this Simulator, captureOnly saves simulated images and capture diagnostic files, but produces no inspection result or resultCreated event; captureAndInspect also produces a synthetic inspection result.
 
 ## Queries / Operation Mode
 

@@ -16,7 +16,7 @@ dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj 
 
 ## 이미지 캡처 및 검사 모드
 
-**Start Single** 또는 **Start Continue** 전에 **Legacy (omitted)**, **captureOnly**, **captureAndInspect**를 선택합니다. Run mode와 inspection mode는 독립적입니다. 생략하면 recipe 기본값을 유지합니다. 이 시뮬레이터에서 captureOnly는 캡처 이벤트를 생성하지만 resultCreated를 생성하거나 이미지 및 결과 파일을 저장하지 않습니다. captureAndInspect는 모의 검사 결과도 생성합니다.
+**Start Single** 또는 **Start Continue** 전에 **Omitted (legacy)**, **captureOnly**, **captureAndInspect**를 선택합니다. Run mode와 inspection mode는 독립적입니다. 생략하면 recipe 기본값을 유지합니다. 이 시뮬레이터에서 captureOnly는 모의 이미지와 capture 진단 파일을 저장하지만 검사 결과나 resultCreated 이벤트는 생성하지 않습니다. captureAndInspect는 모의 검사 결과도 생성합니다.
 
 ## 조회 및 조작 모드
 
