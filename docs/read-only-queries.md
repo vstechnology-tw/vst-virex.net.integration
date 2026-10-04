@@ -1,6 +1,6 @@
 # Recipe and result detail queries
 
-These additive REST queries are available in the Issue #44 candidate SDK and Simulator. Existing status, ProductInfo, result lists, commands and events keep their contracts. No new MQTT/TCP commands are introduced. App support requires the corresponding App implementation; an old App returning HTTP 404 is a failure, never an empty successful query.
+These additive REST queries are available in the version 2.3.0 SDK and Simulator. Existing status, ProductInfo, result lists, commands and events keep their contracts. No new MQTT/TCP commands are introduced. App support requires the corresponding App implementation; an old App returning HTTP 404 is a failure, never an empty successful query.
 
 | GET route | C# method (VirexRestClient and VirexClient) | 200 body |
 | --- | --- | --- |

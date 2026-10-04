@@ -31,6 +31,9 @@ public sealed partial class SimulatorSession
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (_shutdownRequested)
+                return Reject("SetOperationMode", CommandErrorCodes.InvalidState, "Simulator host is shutting down.");
+
             if (!OperationModes.IsValid(mode))
                 return Reject("SetOperationMode", CommandErrorCodes.InvalidOperationMode, "Mode must be local or remote.");
             if (_operationMode != mode)
@@ -72,6 +75,9 @@ public sealed partial class SimulatorSession
 
     private CommandResponse? CheckOperationSource(string command, OperationSource source)
     {
+        if (_shutdownRequested)
+            return Reject(command, CommandErrorCodes.InvalidState, "Simulator host is shutting down.");
+
         if (source is not OperationSource.Local and not OperationSource.External)
             return Reject(command, CommandErrorCodes.InvalidOperationSource, "Invalid operation source.");
         if (_operationManagementEnabled &&

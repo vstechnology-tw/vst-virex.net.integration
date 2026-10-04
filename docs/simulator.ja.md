@@ -1,88 +1,50 @@
 # シミュレーターガイド
 
-`Virex.NET.Simulator.WPF` は、統合開発のローカル エンドポイントです。 RESTful API、TCP、MQTT、データモデル、状態、イベントの観点から見ると、本番環境と互換性のある Virex.NET サービスのように動作する必要があります。
-
-リポジトリのルートから起動します。
+公開 REST、TCP、MQTT 契約のローカルシミュレーターです。取得画像と検査結果は模擬データです。イベントは実際の App やカメラの準備完了を証明しません。
 
 ```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
+# ソースポリシーを明示的に有効化
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows -- --manage-operation-mode
 ```
 
-シミュレーターを起動すると、次の WPF ウィンドウが表示されます。
+## ウィンドウ操作
 
-![番号付きのシミュレーター メイン ウィンドウ](assets/simulator-main-window-annotated.png)
+- **Connection Settings**：REST prefix、TCP port、MQTT host／port／topic を設定します。**Start Servers** または **Stop Servers** で、このウィンドウが所有するエンドポイントを起動または停止します。
+- **ProductInfo**：Lot ID、Wafer ID、Recipe、Slot、Foup ID、Chamber ID を設定します。Ready で **Apply ProductInfo** を押して適用します。
+- **State**：**Initialize**、**Deinitialize**、**Start Single**、**Start Continue**、**Stop** を提供します。Start には Ready、Stop には Running が必要です。Single 完了後は自動で Ready に戻ります。
 
-## シミュレーター ウィンドウの見方
+## 画像取得と検査モード
 
-| 領域 | 画面領域 | 用途 |
-| --- | --- | --- |
-| 1 | **Connection Settings** | シミュレーターが公開するエンドポイントを設定します。**RESTful API prefix** は HTTP のベース アドレス、**TCP port** は NDJSON socket の待ち受けポート、**MQTT host** と **MQTT port/topic** は組み込み MQTT broker とトピック プレフィックス、**Result prefix** は結果 ID または結果パスにテスト用プレフィックスが必要な場合だけ使用します。 |
-| 2 | **ProductInfo** | 模擬システムへ送る製品コンテキストを設定します。Lot ID、Wafer ID、Recipe、Slot、Foup ID、Chamber ID を入力し、システムが `Ready` になってから **Apply ProductInfo** を押します。 |
-| 3 | **State** | 現在のシミュレーター状態を表示し、主要な操作ボタンを提供します。**Start Servers** は RESTful API、TCP、MQTT エンドポイントを開きます。**Initialize**、**Deinitialize**、**Start Single**、**Start Continue**、**Stop** は、外部 RESTful API クライアントから呼び出せるものと同じ公開状態遷移を実行します。 |
-| 4 | **Event Log** | ローカル シミュレーターの動作、サーバーの起動/停止メッセージ、コマンド拒否、生成された結果、その他の診断出力を表示します。ボタン操作やクライアント コマンドがシミュレーターに届いたことを確認するために使用します。 |
-| 5 | **State Machine** | ライブ状態図を表示します。強調表示されたブロックは現在のシミュレーター状態に追従します。`ƒ` ラベルは command、`⚡` ラベルは event です。`Initializing`、`UpdatingProductInfo`、`Deinitializing` などの中間状態は短時間表示されるため、遷移経路を確認しやすくなります。 |
+**Start Single** または **Start Continue** の前に **Omitted (legacy)**、**captureOnly**、**captureAndInspect** を選択します。Run mode と inspection mode は独立しています。省略時は recipe の既定値を維持します。このシミュレーターでは、captureOnly は模擬画像と capture 診断ファイルを保存しますが、検査結果や resultCreated イベントは生成しません。captureAndInspect は模擬検査結果も生成します。
 
-## シミュレーターの目的
+## クエリと操作モード
 
-|目的 |何を確認するか |
-| --- | --- |
-|契約の確認 |ベンダーアプリケーションが本番環境と同じ RESTful API ルート、データモデル、TCP フレーム、および MQTT トピックを使用していることを確認します。 |
-|ステートマシンの検証 |コマンドの順序、有効な状態、拒否された状態、およびrunCompletedの動作を確認します。 |
-|イベント検証 | TCP/MQTT コンシューマーが状態、ProductInfo、実行、結果、エラー、および拒否イベントを処理できることを確認します。 |
+recipe 一覧、現在の recipe、公開パラメーター、result detail を照会します。**Get result detail** の前に、大文字小文字を区別する正確な ResultId を入力します。現在の recipe がない場合や ID が不明な場合は公開クエリエラーを表示し、最新結果に置き換えません。
 
-シミュレーターは本番検査エンジンではなく、非公開アルゴリズム、カメラの動作、レシピの内部、またはストレージの内部を公開しません。
+**Get operation mode** は適用済みの local/remote と managementEnabled を表示します。モードを選び **Apply mode** を押すと、受理後に表示が更新されます。管理は既定で無効です。起動引数 **--manage-operation-mode** で有効にすると、Local はローカル操作を、Remote は外部ライフサイクル操作を許可します。モード変更はライフサイクル状態を変更しません。
 
-## 標準動作
+## 取得イベントと状態機械
 
-1. シミュレーターを起動します。
-2. エンドポイントの設定を確認します。
-3. **Start Servers** を押します。
-4. サンプルまたはベンダーのクライアントを接続します。
-5. システムを初期化します。
-6. 製品情報を送信します。
-7. **Start Single** を押して 1 回だけ自動実行するか、**Start Continue** を押して **Stop** まで結果を継続生成します。
-8. **State Machine** の強調表示が現在状態に合わせて移動することを確認します。
-9. run mode に応じて `runStarted`、`runCompleted`、`resultCreated`、または連続した `resultCreated` イベントを観察します。
-10. `GET /api/results` をクエリします。
+**Capture Events** タブには最新の captureReady と captureCompleted の JobId、CaptureId、SourcesCount、timestamp が表示されます。captureCompleted と後続の resultCreated は別のイベントです。Event Log で順序を確認します。**State Machine** タブは実際の session 状態を表示します。
+
+## キャンセルと終了
+
+照会はウィンドウをブロックしません。**Cancel query** は現在の照会を取り消します。古い照会は新しい結果を上書きしません。ウィンドウを閉じると模擬実行を取り消して完了を待ち、所有するエンドポイントを停止します。ホスト終了は外部 Stop を偽装せず operation mode を変更しません。
 
 ## 既定のエンドポイント
 
-|インターフェース |既定 |
+| インターフェース | 既定値 |
 | --- | --- |
-| RESTful API | `http://127.0.0.1:5088` |
-| RESTful API ブラウザ | `http://127.0.0.1:5088/scalar` |
-| OpenAPI JSON | `http://127.0.0.1:5088/openapi/v1.json` |
+| REST | `http://127.0.0.1:5088` |
+| API ブラウザー | `http://127.0.0.1:5088/scalar` |
+| OpenAPI | `http://127.0.0.1:5088/openapi/v1.json` |
 | TCP | `127.0.0.1:5089` |
-| MQTT | `127.0.0.1:1883`、トピックプレフィックス `virex` |
+| MQTT | `127.0.0.1:1883`, topic `virex` |
 
-## ボタンの動作
-
-|ボタン |動作 |
-| --- | --- |
-| **Start Servers** | RESTful API、TCP、および MQTT エンドポイントを開始します。システム状態を変更しません。 |
-| **Initialize** |初期化コマンドを送信します。 `Uninitialized` でのみ有効です。 |
-| **Deinitialize** |初期化解除コマンドを送信します。`Ready` で有効で、公開復旧状態 `Deinitializing` ではクリーンアップを再試行できます。 |
-| **Apply ProductInfo** |現在の ProductInfo を更新します。 `Ready` でのみ有効です。 |
-| **Start Single** | `runMode=single` で 1 回の実行を開始します。`Ready` でのみ有効です。応答状態は `Running` です。シミュレーターは結果を生成し、run-completed event の後で `Ready` に戻ります。 |
-| **Start Continue** | `runMode=continue` で継続実行を開始します。`Ready` でのみ有効です。応答状態は `Running` です。**Stop** を押すまで結果を継続生成します。 |
-| **Stop** |アクティブな実行を停止します。 `Running` でのみ有効です。応答状態は `Ready` です。 |
-
-## 観察可能な動作
-
-|アクション |予想される外部観測 |
-| --- | --- |
-| Initialize | RESTful API コマンドは `Ready` を返します。状態イベントが公開されます。 |
-| ProductInfo アップデート | RESTful API コマンドは `Ready` を返します。 ProductInfo イベントが公開されます。 |
-| Start single | RESTful API コマンドは `Running` を返します。状態は `Running` に変わります。結果作成イベントが公開され、run-completed によって状態は `Ready` に戻ります。 |
-| Start continue | RESTful API コマンドは `Running` を返します。状態は `Running` のままです。stop コマンドが受け入れられるまで結果作成イベントが継続します。 |
-| Stop | 状態は `Ready` に戻ります。continue mode では追加の自動 run-completed event は不要です。 |
-|無効なコマンド |コマンド応答には `accepted=false` および `errorCode=invalid_state` が含まれます。拒否イベントが公開される場合があります。 |
-
-## 推奨されるシミュレーターの受け入れプロセス
+## 検証
 
 ```powershell
 dotnet test Virex.NET.Integration.slnx
 python -m mkdocs build --strict
 ```
-
-次に、ローカル シミュレーターを手動で使用して、生成されたドキュメントと C# SDK サンプルを確認します。

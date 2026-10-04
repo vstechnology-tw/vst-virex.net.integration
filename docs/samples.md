@@ -7,7 +7,7 @@ Before executing any example:
 1. Start the simulator:
 
    ```powershell
-   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
    ```
 
 2. Keep the default endpoint settings.

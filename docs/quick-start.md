@@ -7,7 +7,7 @@ This process uses the local simulator to validate the core integration path.
 Execute from the repository root:
 
 ```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
 ```
 
 Keep the default endpoint settings and click **Start Servers** to start the RESTful API/TCP/MQTT service.

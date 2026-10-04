@@ -21,7 +21,7 @@ The simulator and production-compatible services are expected to expose the same
 
 ```powershell
 dotnet test Virex.NET.Integration.slnx
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
 ```
 
 In the simulator, press **Start Servers**, then run:
@@ -45,11 +45,17 @@ GET  /api/status
 GET  /api/error
 GET  /api/product-info
 POST /api/product-info
+GET  /api/operation-mode
+POST /api/operation-mode
+GET  /api/recipes
+GET  /api/recipes/current
+GET  /api/recipes/current/parameters
 POST /api/system/initialize
 POST /api/system/deinitialize
 POST /api/system/start
 POST /api/system/stop
 GET  /api/results
+GET  /api/results/{resultId}
 ```
 
 ## Current Public Event Names
@@ -57,6 +63,9 @@ GET  /api/results
 ```text
 statusChanged
 productInfoChanged
+operationModeChanged
+captureReady
+captureCompleted
 imageGrabbed
 runStarted
 runCompleted
@@ -73,6 +82,10 @@ Start here:
 - [RESTful API](docs/rest-api.md)
 - [System State Machine](docs/state-machine.md)
 - [Command Completion and Errors (2.2.3)](docs/communication-errors.md)
+- [Recipe and Result Queries](docs/read-only-queries.md)
+- [Per-start Inspection Mode](docs/inspection-mode.md)
+- [Local and Remote Operation Mode](docs/operation-mode.md)
+- [Capture Lifecycle](docs/capture-lifecycle.md)
 - [Payload Reference](docs/payloads.md)
 - [TCP Socket Protocol](docs/tcp-socket.md)
 - [MQTT Protocol](docs/mqtt-events.md)

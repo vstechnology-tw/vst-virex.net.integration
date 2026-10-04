@@ -7,7 +7,7 @@
 從儲存庫根目錄執行：
 
 ```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
 ```
 
 保留預設端點設定，按 **Start Servers** 啟動 RESTful API/TCP/MQTT 服務。

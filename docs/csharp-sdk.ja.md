@@ -1,6 +1,6 @@
 # C# SDK ガイド
 
-Issue #44 候補版では VirexClient と VirexRestClient に `GetRecipesAsync`、`GetCurrentRecipeAsync`、`GetCurrentRecipeParametersAsync`、`GetResultDetailAsync` を追加します。[DTO とエラーの契約（英語）](read-only-queries.md)を参照してください。
+バージョン 2.3.0 では VirexClient と VirexRestClient に `GetRecipesAsync`、`GetCurrentRecipeAsync`、`GetCurrentRecipeParametersAsync`、`GetResultDetailAsync` を追加します。[DTO とエラーの契約（英語）](read-only-queries.md)を参照してください。
 
 
 `Virex.NET.Client` は、公開 RESTful API、TCP、および MQTT 統合 API の型付きラッパーを提供します。

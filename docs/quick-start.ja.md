@@ -7,7 +7,7 @@
 リポジトリのルートから実行します。
 
 ```powershell
-dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
 ```
 
 既定のエンドポイント設定を保持し、**Start Servers** をクリックして、RESTful API/TCP/MQTT サービスを開始します。

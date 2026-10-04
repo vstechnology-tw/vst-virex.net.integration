@@ -1,6 +1,6 @@
 # Recipe 與結果明細唯讀查詢
 
-Issue #44 候選 SDK 與 Simulator 新增四個 REST 查詢。既有命令、事件、結果清單與 ProductInfo 契約保持相容；App 須另實作對應端點。舊 App 回傳 404 時，SDK 會保留失敗，不假成功回傳空資料。完整欄位與範例見 [查詢契約](read-only-queries.md)。
+2.3.0 SDK 與 Simulator 新增四個 REST 查詢。既有命令、事件、結果清單與 ProductInfo 契約保持相容；App 須另實作對應端點。舊 App 回傳 404 時，SDK 會保留失敗，不假成功回傳空資料。完整欄位與範例見 [查詢契約](read-only-queries.md)。
 
 | GET 路徑 | SDK 方法（VirexClient 與 VirexRestClient） | DTO |
 | --- | --- | --- |

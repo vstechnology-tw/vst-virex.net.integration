@@ -1,6 +1,6 @@
 # C# SDK Guide
 
-The Issue #44 candidate adds `GetRecipesAsync`, `GetCurrentRecipeAsync`, `GetCurrentRecipeParametersAsync`, and `GetResultDetailAsync` on VirexRestClient and VirexClient. See [read-only query DTOs, snapshots and failures](read-only-queries.md).
+Version 2.3.0 adds `GetRecipesAsync`, `GetCurrentRecipeAsync`, `GetCurrentRecipeParametersAsync`, and `GetResultDetailAsync` on VirexRestClient and VirexClient. See [read-only query DTOs, snapshots and failures](read-only-queries.md).
 
 
 `Virex.NET.Client` provides typed wrappers for the public RESTful API, TCP, and MQTT integration APIs.

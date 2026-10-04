@@ -7,7 +7,7 @@
 1. 시뮬레이터를 시작합니다:
 
    ```powershell
-   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj
+   dotnet run --project src\Virex.NET.Simulator.WPF\Virex.NET.Simulator.WPF.csproj --framework net10.0-windows
    ```
 
 2. 기본 엔드포인트 설정을 유지합니다.

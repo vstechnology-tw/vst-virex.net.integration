@@ -16,6 +16,10 @@
 - シミュレーター、SDK、ドキュメント、および契約テストは同期する必要があります。
 - [ペイロードリファレンス](payloads.ja.md) は、公開ペイロード モデル、ルート、トピック、イベント構造と一致している必要があります。
 
+## Version 2.3.0
+
+公開 recipe/result 照会、Start ごとの inspectionMode、opt-in Local/Remote 権限、相関付き captureReady/captureCompleted を追加します。シミュレーター画面で操作でき、省略時の動作を維持し、終了時に実行完了を待ちます。Contracts/Client は netstandard2.0、Simulator は net48、net8.0-windows、net10.0-windows を維持します。
+
 ## 公開済みリリースノート
 
 以下はお客様向けに公開されたバージョンの一覧です。各見出しは対応する GitHub Release にリンクしています。

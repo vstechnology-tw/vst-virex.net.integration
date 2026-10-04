@@ -16,6 +16,10 @@ Use semantic versioning for public package and protocol changes.
 - The simulator, SDK, documentation, and contract tests must be synchronized.
 - [Payload Reference](payloads.md) must be aligned with the public payload models, routes, topics, and event structures.
 
+## Version 2.3.0
+
+Adds public recipe/result queries, per-start inspectionMode, opt-in Local/Remote source policy, and correlated captureReady/captureCompleted events. The simulator window exposes these operations, keeps omission/default behavior, and joins its owned runs on close. Contracts/Client remain netstandard2.0; Simulator builds remain net48, net8.0-windows and net10.0-windows.
+
 ## Published release notes
 
 These entries summarize the releases published for customers. Each heading links to the corresponding GitHub Release.
