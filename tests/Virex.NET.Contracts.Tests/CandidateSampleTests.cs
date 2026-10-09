@@ -31,6 +31,29 @@ public sealed class CandidateSampleTests(ITestOutputHelper output)
         Assert.True(document.RootElement.GetProperty("paths").TryGetProperty("/api/system/reset", out _));
     }
 
+    [Theory]
+    [InlineData(" source / 零 value ")]
+    [InlineData("Δ/measurement")]
+    [InlineData(" outer + inner & ? ")]
+    [InlineData("literal %E9%9B%B6")]
+    public async Task ExactUtf8SourceNameDoesNotUseRequestBodyCharset(string name)
+    {
+        await using var fixture = await PublicTransportFixture.CreateAsync(false);
+        using (var value = System.Text.Json.JsonDocument.Parse("0"))
+            await fixture.Session.ConfigureLiveDataSourceAsync(name, "integer", value.RootElement);
+        using var request = new HttpRequestMessage(HttpMethod.Get, RestRoutes.DataSourceValue(name))
+        {
+            Content = new StringContent(string.Empty),
+        };
+        request.Content.Headers.ContentType!.CharSet = "iso-8859-1";
+        using var response = await fixture.Http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var actual = ProtocolJson.Deserialize<DataSourceValue>(await response.Content.ReadAsStringAsync())!;
+        Assert.Equal(name, actual.Name);
+        Assert.Equal(0, actual.Value.GetInt32());
+        Assert.Equal(name, (await fixture.Client.ReadDataSourceAsync(name)).Name);
+    }
+
     [Fact]
     public async Task SampleRejectsAnotherWorksResultEvenWhenThatResultIsCommitted()
     {

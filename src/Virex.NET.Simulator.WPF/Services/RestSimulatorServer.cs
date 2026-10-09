@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Specialized;
+using System.IO;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -102,18 +103,19 @@ public sealed class RestSimulatorServer
             }
             else if (path == RestRoutes.ApiDataSourceValue)
             {
+                var query = ReadUtf8Query(context.Request.Url?.Query ?? string.Empty);
                 if (context.Request.HttpMethod != "GET")
                 {
                     context.Response.Headers["Allow"] = "GET";
                     await QueryErrorAsync(context, 405, QueryErrorCodes.InvalidQuery, "This endpoint supports GET only.").ConfigureAwait(false);
                 }
-                else if (context.Request.QueryString.AllKeys.Any(key => key is not "name" and not "resultId") ||
-                    context.Request.QueryString.GetValues("name")?.Length != 1 ||
-                    context.Request.QueryString.GetValues("resultId")?.Length > 1)
+                else if (query.AllKeys.Any(key => key is not "name" and not "resultId") ||
+                    query.GetValues("name")?.Length != 1 ||
+                    query.GetValues("resultId")?.Length > 1)
                     await QueryErrorAsync(context, 400, QueryErrorCodes.InvalidQuery, "Supply one exact name and at most one explicit resultId.").ConfigureAwait(false);
                 else
-                    await JsonAsync(context, await _session.ReadDataSourceAsync(context.Request.QueryString["name"]!,
-                        context.Request.QueryString["resultId"]).ConfigureAwait(false)).ConfigureAwait(false);
+                    await JsonAsync(context, await _session.ReadDataSourceAsync(query["name"]!,
+                        query["resultId"]).ConfigureAwait(false)).ConfigureAwait(false);
             }
             else if (IsDetailQuery(path))
             {
@@ -238,6 +240,22 @@ public sealed class RestSimulatorServer
             await CommandAsync(context, _session.ReportFailure(operation, CommandErrorCodes.CommandFailed,
                 "The operation could not be completed.")).ConfigureAwait(false);
         }
+    }
+
+    private static NameValueCollection ReadUtf8Query(string rawQuery)
+    {
+        // HttpListener.QueryString on .NET Framework uses ContentEncoding (Windows-1252 by default).
+        // Public source names are UTF-8 URL components and must not depend on the request body charset.
+        var query = new NameValueCollection(StringComparer.Ordinal);
+        if (rawQuery.Length == 0) return query;
+        foreach (var component in rawQuery.TrimStart('?').Split('&'))
+        {
+            var separator = component.IndexOf('=');
+            var key = separator < 0 ? component : component.Substring(0, separator);
+            var value = separator < 0 ? string.Empty : component.Substring(separator + 1);
+            query.Add(WebUtility.UrlDecode(key), WebUtility.UrlDecode(value));
+        }
+        return query;
     }
 
     private static bool IsDetailQuery(string path) =>
