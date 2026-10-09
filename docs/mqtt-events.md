@@ -641,7 +641,7 @@ Use this event to correlate RESTful API, TCP, or UI commands that were rejected.
 ```
 
 ```json
-{"accepted":false,"state":"Faulted","command":"Start","errorCode":"requires_reset","recoveryAction":"Reset","message":"Reset cleanup is required before initialization."}
+{"accepted":false,"state":"Faulted","command":"Start","errorCode":"invalid_state","recoveryAction":"Reset","message":"Command is not valid in the current state."}
 ```
 
 The client should keep the **Deinitialize** action enabled and retry it until the service returns `Uninitialized`. Restarting the application is a UI-only last resort after Deinitialize cannot recover the service.
