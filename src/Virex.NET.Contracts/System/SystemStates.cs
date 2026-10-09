@@ -1,4 +1,4 @@
-namespace Virex.NET.Contracts;
+﻿namespace Virex.NET.Contracts;
 
 public static class SystemStates
 {
@@ -8,4 +8,5 @@ public static class SystemStates
     public const string UpdatingProductInfo = "UpdatingProductInfo";
     public const string Running = "Running";
     public const string Deinitializing = "Deinitializing";
+    public const string Faulted = "Faulted";
 }

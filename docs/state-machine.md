@@ -14,6 +14,7 @@ The state machine defines which commands are valid in each system lifecycle stat
 | `UpdatingProductInfo` | ProductInfo update has been accepted and the system is waiting for the completion event. |
 | `Running` | A run is active. Internal run phases are not public states. |
 | `Deinitializing` | Deinitialize is running or is a retryable recovery action; the client must keep Deinitialize available until cleanup completes. |
+| `Faulted` | A classified fault remains latched. Reset/Deinitialize cleanup must succeed before explicit Initialize. |
 
 ## Commands and events
 
@@ -35,7 +36,8 @@ Solid transitions represent commands. Dashed transitions represent events.
 | `SetProductInfo` | `Ready` | Enters `UpdatingProductInfo`; `ProductInfoUpdateCompleted` returns the state to `Ready`. |
 | `Start` | `Ready` | Captures the current ProductInfo snapshot and enters `Running`. |
 | `Stop` | `Running` | Stops the active run and returns the state to `Ready`. |
-| `Deinitialize` | `Ready` or `Deinitializing` (recovery retry) | Enters or remains in `Deinitializing`; successful completion changes the state to `Uninitialized`. |
+| `Deinitialize` | `Ready`, `Faulted`, or `Deinitializing` | Runs cleanup; success returns `Uninitialized`, failure remains `Faulted`. |
+| `Reset` | `Running`, `Ready`, `Faulted`, or `Deinitializing`; idempotent in `Uninitialized` | Stops, joins cancelled work and cleans up. Success returns `Uninitialized`; explicit Initialize is required. |
 
 ## Rejected Commands
 
@@ -45,10 +47,9 @@ For example, sending `SetProductInfo` while the state is `Running` is invalid be
 
 ## Recovery contract
 
-When an internal acquisition fault makes the current sources untrusted, `Faulted` must not be exposed to clients.
-The public projection remains `Deinitializing` and `CommandResponse`, `SystemStatus`, or `ErrorInfo` carries
-`recoveryAction: "Deinitialize"`. Clients must keep Deinitialize actionable and may retry it when the first automatic
-deinitialization attempt fails. Restarting the app is the last resort only after Deinitialize retries cannot complete.
+Classified acquisition, persistence and cleanup faults latch public `Faulted` with `recoveryAction: "Reset"`.
+They do not automatically return to Uninitialized. See [Alarm sources and two-stage recovery](alarms.md).
+Reset completes stop/cleanup, then returns Uninitialized. A later explicit Initialize returns Ready after completion.
 
 Recovery payloads may also contain optional `recoveryStartedAt`, `recoverySource`,
 `recoveryPhase`, sanitized `recoveryDetails`, and (for errors/commands) a stable

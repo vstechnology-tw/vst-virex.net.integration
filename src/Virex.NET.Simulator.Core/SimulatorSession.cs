@@ -19,7 +19,7 @@ public sealed partial class SimulatorSession
     private CancellationTokenSource? _continuousRun;
     private int _deinitializeFailuresRemaining;
     private string? _deinitializeFailureMessage;
-    private string? _pendingDeinitializationError;
+    private string? _pendingPersistenceFault;
     private Task<CommandResponse>? _activeDeinitialization;
     private DateTimeOffset? _recoveryStartedAt;
     private string? _recoverySource;
@@ -107,48 +107,27 @@ public sealed partial class SimulatorSession
         _deinitializeFailureMessage = message;
     }
 
-    public Task<CommandResponse> SimulateAcquisitionFaultAsync(
+    /// <summary>Actual synthetic acquisition-fault producer. A nonempty message is required;
+    /// invalid input throws ArgumentException. Latches Faulted, returning a rejected requires_reset response,
+    /// and never automatically resets or initializes. Cancellation before gate admission has no effects.
+    /// State and event identity serialize on the session gate; this session owns cancellation and run resources.</summary>
+    public async Task<CommandResponse> SimulateAcquisitionFaultAsync(
         string message,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("A fault message is required.", nameof(message));
 
-        lock (_deinitializationGate)
-        {
-            if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization)
-                return activeDeinitialization;
-
-            _activeDeinitialization = SimulateAcquisitionFaultCoreAsync(message, cancellationToken);
-            return _activeDeinitialization;
-        }
-    }
-
-    private async Task<CommandResponse> SimulateAcquisitionFaultCoreAsync(
-        string message,
-        CancellationToken cancellationToken)
-    {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (State == SimulatorState.Running)
-            {
-                StopActiveRunTimers();
-                await EndRunTransitionAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
-                LogMessage("Stopped. reason=Simulated acquisition fault");
-            }
-
-            if (State != SimulatorState.Ready)
+            if (_shutdownRequested || State is not SimulatorState.Running and not SimulatorState.Ready and not SimulatorState.Faulted)
                 return Reject("SimulateAcquisitionFault");
-
-            _pendingDeinitializationError = message;
-            BeginRecovery(
-                message,
-                "Acquisition",
-                "Deinitializing",
-                CommandErrorCodes.RequiresDeinitialize);
-            LogMessage("Acquisition fault simulated: " + message);
-            return await HandleDeinitializeUnderGateAsync(cancellationToken).ConfigureAwait(false);
+            var work = SnapshotActiveWork();
+            var source = _alarmSources[AcquisitionAlarmName];
+            await LatchAlarmFaultUnderGateAsync(source, message, work).ConfigureAwait(false);
+            if (!_shutdownRequested) PublishAlarm(source, message, work);
+            return Reject("SimulateAcquisitionFault", CommandErrorCodes.RequiresReset, "The simulated acquisition fault requires reset.");
         }
         finally
         {
@@ -167,6 +146,7 @@ public sealed partial class SimulatorSession
     public Task<CommandResponse> RunCompletedAsync(CancellationToken cancellationToken = default) =>
         HandleCompletionAsync("RunCompleted", SimulatorTrigger.RunCompleted, cancellationToken);
 
+    /// <summary>Diagnostic ErrorInfo producer only. It does not represent a classified hardware/module Alarm.</summary>
     public void EmitError(string message)
     {
         var safeMessage = RecoveryMessageSanitizer.Sanitize(message) ?? "Simulated error.";
@@ -234,46 +214,47 @@ public sealed partial class SimulatorSession
     }
 
     private async Task<CommandResponse> HandleDeinitializeUnderGateAsync(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, string command = "Deinitialize", bool transitionAlreadyStarted = false)
     {
         if (!CanFire(SimulatorTrigger.Deinitialize))
-            return Reject("Deinitialize");
+            return Reject(command);
 
         var failureMessage = RecoveryMessageSanitizer.Sanitize(
-            _pendingDeinitializationError
-            ?? _deinitializeFailureMessage
+            _deinitializeFailureMessage
             ?? "Simulated deinitialization failed.")
             ?? "Simulated deinitialization failed.";
         var hasPendingFailure = HasPendingDeinitializeFailure();
-        if (hasPendingFailure)
+        if (hasPendingFailure && !Error.HasError)
         {
             BeginRecovery(
                 failureMessage,
-                string.IsNullOrWhiteSpace(_pendingDeinitializationError) ? "Simulator" : "Acquisition",
+                "cleanup",
                 "Deinitializing",
                 CommandErrorCodes.RequiresDeinitialize);
         }
 
-        await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
-        if (hasPendingFailure)
+        if (!transitionAlreadyStarted) await FireAsync(SimulatorTrigger.Deinitialize).ConfigureAwait(false);
+        if (hasPendingFailure && !Error.HasError)
             SetError(failureMessage);
         await DelayForStatePreviewAsync(cancellationToken).ConfigureAwait(false);
 
         if (TryConsumeDeinitializeFailure())
         {
-            SetError(failureMessage);
+            if (!Error.HasError) SetError(failureMessage);
+            await FireAsync(SimulatorTrigger.Fault).ConfigureAwait(false);
+            if (command != "Reset" && !_shutdownRequested)
+                PublishAlarm(_alarmSources[CleanupAlarmName], failureMessage, null);
             return Reject(
-                "Deinitialize",
-                CommandErrorCodes.RequiresDeinitialize,
+                command,
+                CommandErrorCodes.CleanupFailed,
                 failureMessage);
         }
 
         ClearRecovery();
         ClearLoadedRecipe();
         await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
-        _pendingDeinitializationError = null;
         SetError(null);
-        return Accept("Deinitialize", "Deinitialized.");
+        return Accept(command, "Deinitialized.");
     }
     internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
@@ -336,6 +317,7 @@ public sealed partial class SimulatorSession
             _activeRunProductInfo = ProductInfo.Snapshot();
             _activeRunCondition = condition;
             _activeRunInspectionMode = request.InspectionMode;
+            _pendingPersistenceFault = null;
             _activeRequestId = request.RequestId;
             _activeJobId = Guid.NewGuid().ToString("N");
             if (!PrepareCapture())
@@ -395,15 +377,19 @@ public sealed partial class SimulatorSession
         return Accept("Stop", "Stopped.");
     }
 
-    private async Task StopAfterCaptureFailureAsync(string? jobId)
+    private async Task HandleCaptureFailureUnderGateAsync()
     {
-        await _gate.WaitAsync().ConfigureAwait(false);
-        try
+        var message = _pendingPersistenceFault;
+        _pendingPersistenceFault = null;
+        if (message is null)
         {
-            if (_activeJobId != jobId || State != SimulatorState.Running) return;
             await StopUnderGateAsync(new SystemStopRequest { Reason = "Simulator artifact persistence failed." }).ConfigureAwait(false);
+            return;
         }
-        finally { _gate.Release(); }
+        var work = SnapshotActiveWork();
+        var source = _alarmSources[PersistenceAlarmName];
+        await LatchAlarmFaultUnderGateAsync(source, message, work).ConfigureAwait(false);
+        if (!_shutdownRequested) PublishAlarm(source, message, work);
     }
 
     private async Task<CommandResponse> HandleCompletionAsync(string command, SimulatorTrigger trigger, CancellationToken cancellationToken)
@@ -422,7 +408,7 @@ public sealed partial class SimulatorSession
                 StopActiveRunTimers();
                 if (!EmitCapture())
                 {
-                    await EndRunTransitionAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
+                    await HandleCaptureFailureUnderGateAsync().ConfigureAwait(false);
                     return Accept(command, "Run completed with errors.");
                 }
             }
@@ -439,12 +425,14 @@ public sealed partial class SimulatorSession
     private void ConfigureStateMachine()
     {
         _machine.Configure(SimulatorState.Uninitialized)
+            .Permit(SimulatorTrigger.Fault, SimulatorState.Faulted)
             .Permit(SimulatorTrigger.Initialize, SimulatorState.Initializing);
 
         _machine.Configure(SimulatorState.Initializing)
             .Permit(SimulatorTrigger.InitializationCompleted, SimulatorState.Ready);
 
         _machine.Configure(SimulatorState.Ready)
+            .Permit(SimulatorTrigger.Fault, SimulatorState.Faulted)
             .Permit(SimulatorTrigger.SetProductInfo, SimulatorState.UpdatingProductInfo)
             .Permit(SimulatorTrigger.Start, SimulatorState.Running)
             .Permit(SimulatorTrigger.Deinitialize, SimulatorState.Deinitializing);
@@ -457,8 +445,12 @@ public sealed partial class SimulatorSession
             .Permit(SimulatorTrigger.RunCompleted, SimulatorState.Ready);
 
         _machine.Configure(SimulatorState.Deinitializing)
+            .Permit(SimulatorTrigger.Fault, SimulatorState.Faulted)
             .PermitReentry(SimulatorTrigger.Deinitialize)
             .Permit(SimulatorTrigger.DeinitializationCompleted, SimulatorState.Uninitialized);
+
+        _machine.Configure(SimulatorState.Faulted)
+            .Permit(SimulatorTrigger.Deinitialize, SimulatorState.Deinitializing);
 
         _machine.OnTransitionCompleted(t =>
         {
@@ -526,7 +518,8 @@ public sealed partial class SimulatorSession
     }
 
     private static string? RecoveryActionFor(SimulatorState state) =>
-        state == SimulatorState.Deinitializing ? RecoveryActions.Deinitialize : null;
+        state == SimulatorState.Faulted ? RecoveryActions.Reset
+            : state == SimulatorState.Deinitializing ? RecoveryActions.Deinitialize : null;
 
     private void SetError(string? message)
     {
@@ -582,8 +575,7 @@ public sealed partial class SimulatorSession
 
 
     private bool HasPendingDeinitializeFailure() =>
-        !string.IsNullOrWhiteSpace(_pendingDeinitializationError)
-        || Volatile.Read(ref _deinitializeFailuresRemaining) > 0;
+        Volatile.Read(ref _deinitializeFailuresRemaining) > 0;
 
     private bool TryConsumeDeinitializeFailure()
     {
@@ -670,7 +662,7 @@ public sealed partial class SimulatorSession
             }
             catch (Exception ex)
             {
-                EmitError("Failed to persist simulator capture " + captureId + ": " + ex.Message);
+                _pendingPersistenceFault = "Failed to persist simulator capture " + captureId + ": " + ex.Message;
                 return false;
             }
         }
@@ -702,7 +694,7 @@ public sealed partial class SimulatorSession
         }
         catch (Exception ex)
         {
-            EmitError("Failed to persist simulator artifacts for capture " + captureId + ": " + ex.Message);
+            _pendingPersistenceFault = "Failed to persist simulator artifacts for capture " + captureId + ": " + ex.Message;
             return false;
         }
 
@@ -807,21 +799,17 @@ public sealed partial class SimulatorSession
                 if (cancellationToken.IsCancellationRequested || State != SimulatorState.Running)
                     return;
 
-                bool captured;
-                string? jobId;
                 await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
                     if (cancellationToken.IsCancellationRequested || State != SimulatorState.Running) return;
-                    jobId = _activeJobId;
-                    captured = EmitCapture();
+                    if (!EmitCapture())
+                    {
+                        await HandleCaptureFailureUnderGateAsync().ConfigureAwait(false);
+                        return;
+                    }
                 }
                 finally { _gate.Release(); }
-                if (!captured)
-                {
-                    await StopAfterCaptureFailureAsync(jobId).ConfigureAwait(false);
-                    return;
-                }
             }
         }
         catch (OperationCanceledException)

@@ -43,6 +43,14 @@ public sealed class VirexClient : IDisposable
     public Task<EventCatalog> GetEventCatalogAsync(CancellationToken cancellationToken = default) =>
         Rest.GetEventCatalogAsync(cancellationToken);
 
+    /// <summary>Discovers exact Alarm event names. Uses the ordinary TCP subscription API; no name whitelist.</summary>
+    public Task<AlarmCatalog> GetAlarmsAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetAlarmsAsync(cancellationToken);
+
+    /// <summary>See VirexRestClient.ResetAsync. Cancellation ends waiting; admitted server cleanup still completes.</summary>
+    public Task<CommandResponse> ResetAsync(CancellationToken cancellationToken = default) =>
+        Rest.ResetAsync(cancellationToken);
+
     public Task<DataSourceCatalog> GetDataSourcesAsync(CancellationToken cancellationToken = default) =>
         Rest.GetDataSourcesAsync(cancellationToken);
 

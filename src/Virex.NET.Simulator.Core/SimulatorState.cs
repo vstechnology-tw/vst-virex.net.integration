@@ -1,4 +1,4 @@
-using Virex.NET.Contracts;
+﻿using Virex.NET.Contracts;
 
 namespace Virex.NET.Simulator.Core;
 
@@ -10,6 +10,7 @@ public enum SimulatorState
     UpdatingProductInfo,
     Running,
     Deinitializing,
+    Faulted,
 }
 
 public enum SimulatorTrigger
@@ -23,6 +24,7 @@ public enum SimulatorTrigger
     RunCompleted,
     Deinitialize,
     DeinitializationCompleted,
+    Fault,
 }
 
 public static class SimulatorStateNames
@@ -36,6 +38,7 @@ public static class SimulatorStateNames
             SimulatorState.UpdatingProductInfo => SystemStates.UpdatingProductInfo,
             SimulatorState.Running => SystemStates.Running,
             SimulatorState.Deinitializing => SystemStates.Deinitializing,
+            SimulatorState.Faulted => SystemStates.Faulted,
             _ => SystemStates.Uninitialized,
         };
 }

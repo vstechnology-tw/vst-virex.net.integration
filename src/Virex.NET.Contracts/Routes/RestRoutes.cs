@@ -2,6 +2,8 @@
 
 public static class RestRoutes
 {
+    public const string ApiAlarms = "/api/alarms";
+    public const string ApiSystemReset = "/api/system/reset";
     public const string ApiDataSources = "/api/data-sources";
     public const string ApiDataSourceValue = "/api/data-sources/value";
     public const string ApiCurrentResult = "/api/data-sources/current-result";

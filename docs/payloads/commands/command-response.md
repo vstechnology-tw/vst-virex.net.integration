@@ -25,20 +25,20 @@
 }
 ```
 
-When operator recovery is required, the response remains in the public `Deinitializing` state and carries a structured action:
+Classified faults remain in public `Faulted` with `recoveryAction: "Reset"`. Successful Reset returns `Uninitialized`; see [Alarm recovery](../../alarms.md). For example, a rejected Start while an acquisition fault is latched returns:
 
 ```json
 {
   "accepted": false,
-  "state": "Deinitializing",
-  "command": "Stop",
-  "errorCode": "requires_deinitialize",
-  "recoveryAction": "Deinitialize",
+  "state": "Faulted",
+  "command": "Start",
+  "errorCode": "invalid_state",
+  "recoveryAction": "Reset",
   "recoveryStartedAt": "2026-08-07T10:00:00.000+00:00",
   "recoverySource": "Acquisition",
-  "recoveryPhase": "Deinitializing",
-  "recoveryDetails": "Camera acquisition failed.",
-  "message": "Deinitialize is required before another command can be accepted."
+  "recoveryPhase": "Faulted",
+  "recoveryDetails": "Synthetic acquisition fault.",
+  "message": "Command is not valid in the current state."
 }
 ```
 
@@ -51,7 +51,7 @@ When operator recovery is required, the response remains in the public `Deinitia
 | `command` | string | Yes | The public command name. |
 | `requestId` | string | No | Echoes a TCP query request ID on a correlated rejection. |
 | `errorCode` | string | No | Omitted for accepted commands. `invalid_state` means the command is invalid in the current state. |
-| `recoveryAction` | string | No | Operator recovery action required by the current state. The public protocol currently defines `Deinitialize`; application restart remains a UI-only last resort. |
+| `recoveryAction` | string | No | `Reset` for latched `Faulted`, or `Deinitialize` during cleanup. Successful cleanup still requires explicit Initialize. |
 | `recoveryStartedAt` | string (date-time) | No | UTC timestamp at which the current recovery attempt began. |
 | `recoverySource` | string | No | Subsystem that reported the failure. |
 | `recoveryPhase` | string | No | Recovery phase currently in progress. |

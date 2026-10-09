@@ -134,6 +134,8 @@ public sealed class RestSimulatorServer
                     await JsonAsync(context, _session.GetCurrentRecipeParameters()).ConfigureAwait(false);
                 else if (path == RestRoutes.ApiDataSources)
                     await JsonAsync(context, await _session.GetDataSourcesAsync().ConfigureAwait(false)).ConfigureAwait(false);
+                else if (path == RestRoutes.ApiAlarms)
+                    await JsonAsync(context, await _session.GetAlarmsAsync().ConfigureAwait(false)).ConfigureAwait(false);
                 else if (path == RestRoutes.ApiCurrentResult)
                     await JsonAsync(context, await _session.GetCurrentResultAsync().ConfigureAwait(false)).ConfigureAwait(false);
                 else
@@ -161,6 +163,11 @@ public sealed class RestSimulatorServer
             {
                 _ = await ReadOptionalJsonAsync<JsonElement>(context).ConfigureAwait(false);
                 await CommandAsync(context, await _session.DeinitializeAsync().ConfigureAwait(false)).ConfigureAwait(false);
+            }
+            else if (path == RestRoutes.ApiSystemReset && context.Request.HttpMethod == "POST")
+            {
+                _ = await ReadOptionalJsonAsync<JsonElement>(context).ConfigureAwait(false);
+                await CommandAsync(context, await _session.ResetAsync().ConfigureAwait(false)).ConfigureAwait(false);
             }
             else if (path == RestRoutes.ApiSystemStart && context.Request.HttpMethod == "POST")
             {
@@ -234,6 +241,7 @@ public sealed class RestSimulatorServer
     }
 
     private static bool IsDetailQuery(string path) =>
+        path == RestRoutes.ApiAlarms ||
         path == RestRoutes.ApiDataSources || path == RestRoutes.ApiDataSourceValue || path == RestRoutes.ApiCurrentResult ||
         path == RestRoutes.ApiRecipes || path == RestRoutes.ApiCurrentRecipe ||
         path == RestRoutes.ApiCurrentRecipeParameters || path.StartsWith(RestRoutes.ApiResults + "/", StringComparison.Ordinal);
@@ -259,6 +267,7 @@ public sealed class RestSimulatorServer
         RestRoutes.ApiProductInfo => request.HttpMethod == "GET" ? "GetProductInfo" : "SetProductInfo",
         RestRoutes.ApiSystemInitialize => "Initialize",
         RestRoutes.ApiSystemDeinitialize => "Deinitialize",
+        RestRoutes.ApiSystemReset => "Reset",
         RestRoutes.ApiSystemStart => "Start",
         RestRoutes.ApiSystemStop => "Stop",
         _ => "Unknown",

@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Virex.NET.Contracts;
 using Virex.NET.Simulator.Core;
 
@@ -111,7 +111,7 @@ public sealed class SimulatorCoreStateMachineTests
     }
 
     [Fact]
-    public async Task ConcurrentFaultAndStartShareOneSerializedRecoveryTransition()
+    public async Task ConcurrentFaultAndStartRetainFirstFaultAndRejectNewWork()
     {
         var session = new SimulatorSession();
         Assert.True((await session.InitializeAsync()).Accepted);
@@ -119,7 +119,6 @@ public sealed class SimulatorCoreStateMachineTests
         {
             RunMode = ControlRunModes.Continue,
         })).Accepted);
-        session.ConfigureDeinitializeFailures(1, "Camera close failed.");
 
         var firstFault = session.SimulateAcquisitionFaultAsync("Camera acquisition failed.");
         var joinedFault = session.SimulateAcquisitionFaultAsync("A later fault must not overwrite recovery.");
@@ -128,14 +127,14 @@ public sealed class SimulatorCoreStateMachineTests
             RunMode = ControlRunModes.Continue,
         });
 
-        Assert.Same(firstFault, joinedFault);
+        Assert.False((await joinedFault).Accepted);
         Assert.False((await firstFault).Accepted);
         Assert.False((await concurrentStart).Accepted);
-        Assert.Equal(SimulatorState.Deinitializing, session.State);
+        Assert.Equal(SimulatorState.Faulted, session.State);
         Assert.Equal("Camera acquisition failed.", session.Status.RecoveryDetails);
     }
     [Fact]
-    public async Task AcquisitionFaultMakesDeinitializeRetryableUntilCleanupSucceeds()
+    public async Task AcquisitionFaultRequiresExplicitResetAndCleanupFailureRemainsFaulted()
     {
         var session = new SimulatorSession();
         await session.InitializeAsync();
@@ -145,24 +144,28 @@ public sealed class SimulatorCoreStateMachineTests
         var firstAttempt = await session.SimulateAcquisitionFaultAsync("camera disconnected");
 
         Assert.False(firstAttempt.Accepted);
-        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, firstAttempt.ErrorCode);
-        Assert.Equal(RecoveryActions.Deinitialize, firstAttempt.RecoveryAction);
+        Assert.Equal(CommandErrorCodes.RequiresReset, firstAttempt.ErrorCode);
+        Assert.Equal(RecoveryActions.Reset, firstAttempt.RecoveryAction);
         Assert.Equal("Acquisition", firstAttempt.RecoverySource);
-        Assert.Equal("Deinitializing", firstAttempt.RecoveryPhase);
+        Assert.Equal("Faulted", firstAttempt.RecoveryPhase);
         Assert.Equal("camera disconnected", firstAttempt.RecoveryDetails);
         Assert.NotNull(firstAttempt.RecoveryStartedAt);
-        Assert.Equal(SystemStates.Deinitializing, firstAttempt.State);
-        Assert.Equal(SystemStates.Deinitializing, session.Status.State);
-        Assert.Equal(RecoveryActions.Deinitialize, session.Status.RecoveryAction);
+        Assert.Equal(SystemStates.Faulted, firstAttempt.State);
+        Assert.Equal(SystemStates.Faulted, session.Status.State);
+        Assert.Equal(RecoveryActions.Reset, session.Status.RecoveryAction);
         Assert.Equal("Acquisition", session.Status.RecoverySource);
-        Assert.Equal("Deinitializing", session.Status.RecoveryPhase);
-        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, session.Status.ErrorCode);
+        Assert.Equal("Faulted", session.Status.RecoveryPhase);
+        Assert.Equal(CommandErrorCodes.RequiresReset, session.Status.ErrorCode);
         Assert.True(session.Error.HasError);
         Assert.Equal("camera disconnected", session.Error.Message);
-        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, session.Error.ErrorCode);
-        Assert.Equal(RecoveryActions.Deinitialize, session.Error.RecoveryAction);
+        Assert.Equal(CommandErrorCodes.RequiresReset, session.Error.ErrorCode);
+        Assert.Equal(RecoveryActions.Reset, session.Error.RecoveryAction);
 
-        var retry = await session.DeinitializeAsync();
+        var failedCleanup = await session.ResetAsync();
+        Assert.False(failedCleanup.Accepted);
+        Assert.Equal(CommandErrorCodes.CleanupFailed, failedCleanup.ErrorCode);
+        Assert.Equal(SystemStates.Faulted, failedCleanup.State);
+        var retry = await session.ResetAsync();
 
         Assert.True(retry.Accepted);
         Assert.Equal(SystemStates.Uninitialized, retry.State);
@@ -206,7 +209,7 @@ public sealed class SimulatorCoreStateMachineTests
         Assert.False(failed.Accepted);
         Assert.NotNull(failed.RecoveryStartedAt);
         Assert.Equal("native cleanup failed", failed.RecoveryDetails);
-        Assert.Equal(SystemStates.Deinitializing, session.Status.State);
+        Assert.Equal(SystemStates.Faulted, session.Status.State);
 
         var retry = await session.DeinitializeAsync();
 
@@ -307,7 +310,7 @@ public sealed class SimulatorCoreStateMachineTests
             var completed = await session.RunCompletedAsync();
 
             Assert.True(completed.Accepted);
-            Assert.Equal(SystemStates.Ready, session.Status.State);
+            Assert.Equal(SystemStates.Faulted, session.Status.State);
             Assert.Equal(1, imageGrabbedCount);
             Assert.Equal(0, resultCreatedCount);
             Assert.NotNull(error);

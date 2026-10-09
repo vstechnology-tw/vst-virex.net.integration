@@ -1,4 +1,4 @@
-# SystemStatus
+﻿# SystemStatus
 
 `SystemStatus` reports the current public lifecycle state.
 
@@ -22,7 +22,7 @@
 | --- | --- | --- | --- |
 | `state` | string | Yes | Current lifecycle state. |
 | `errorCode` | string | No | Stable machine-readable recovery or failure code. |
-| `recoveryAction` | string | No | Operator recovery action required by the state; recovery normally uses `Deinitialize`. Omitted when no action is required. |
+| `recoveryAction` | string | No | `Reset` for latched `Faulted`; `Deinitialize` while cleanup is in progress. Omitted when no action is required. |
 | `recoveryStartedAt` | string (date-time) | No | UTC timestamp at which the current recovery attempt began. |
 | `recoverySource` | string | No | Subsystem that reported the failure, such as `Acquisition`. |
 | `recoveryPhase` | string | No | Recovery phase currently in progress, such as `Deinitializing`. |
@@ -37,6 +37,7 @@ Ready
 UpdatingProductInfo
 Running
 Deinitializing
+Faulted
 ```
 
 ## Use location

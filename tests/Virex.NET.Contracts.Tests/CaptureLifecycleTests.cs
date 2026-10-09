@@ -208,6 +208,7 @@ public sealed class CaptureLifecycleTests
         if (fault)
         {
             await fixture.Session.SimulateAcquisitionFaultAsync("simulated source fault");
+            await fixture.Client.ResetAsync();
             await fixture.Session.InitializeAsync();
         }
         else await fixture.Client.StopAsync();

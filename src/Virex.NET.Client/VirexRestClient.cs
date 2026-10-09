@@ -16,6 +16,20 @@ public sealed class VirexRestClient
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
 
+    /// <summary>Reads an owned Alarm catalog snapshot of exact names for TCP event subscription.
+    /// Query/parse/timeout failures throw VirexQueryException; caller cancellation is preserved.
+    /// Concurrent calls are supported. This client borrows HttpClient; the caller owns its disposal.</summary>
+    public Task<AlarmCatalog> GetAlarmsAsync(CancellationToken cancellationToken = default) =>
+        GetDataSourceQueryAsync<AlarmCatalog>(RestRoutes.ApiAlarms, ["appId", "instanceId", "timestamp", "sources"], cancellationToken, AlarmJson.ReadCatalog);
+
+    /// <summary>
+    /// Stops work and completes cleanup, returning Uninitialized on success. Explicit Initialize is still required.
+    /// HTTP failures throw VirexClientException; caller cancellation cancels the wait and does not undo server cleanup.
+    /// Concurrent calls are supported. This client borrows HttpClient; the caller owns its disposal.
+    /// </summary>
+    public Task<CommandResponse> ResetAsync(CancellationToken cancellationToken = default) =>
+        PostAsync(RestRoutes.ApiSystemReset, cancellationToken);
+
     /// <summary>Reads exact source names and current-work availability. Throws VirexQueryException on API/response failures.</summary>
     public Task<DataSourceCatalog> GetDataSourcesAsync(CancellationToken cancellationToken = default) =>
         GetDataSourceQueryAsync<DataSourceCatalog>(RestRoutes.ApiDataSources, ["appId", "instanceId", "timestamp", "sources"], cancellationToken, DataSourceJson.ReadCatalog);
@@ -154,7 +168,7 @@ public sealed class VirexRestClient
 
     private async Task<CommandResponse> PostAsync(string route, CancellationToken cancellationToken)
     {
-        var response = await _http.PostAsync(route.TrimStart('/'), null, cancellationToken).ConfigureAwait(false);
+        using var response = await _http.PostAsync(route.TrimStart('/'), null, cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         return ProtocolJson.Deserialize<CommandResponse>(json) ?? new CommandResponse();
@@ -162,7 +176,7 @@ public sealed class VirexRestClient
 
     private async Task<CommandResponse> PostAsync<T>(string route, T payload, CancellationToken cancellationToken)
     {
-        var response = await _http.PostAsync(route.TrimStart('/'), JsonContent(payload), cancellationToken).ConfigureAwait(false);
+        using var response = await _http.PostAsync(route.TrimStart('/'), JsonContent(payload), cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
         return ProtocolJson.Deserialize<CommandResponse>(json) ?? new CommandResponse();

@@ -9,7 +9,7 @@ public sealed partial class SimulatorSession
     {
         "statusChanged", "productInfoChanged", "operationModeChanged", "captureReady",
         "captureCompleted", "imageGrabbed", "runStarted", "runCompleted", "resultCreated",
-        "errorChanged", "commandRejected",
+        "errorChanged", "commandRejected", CleanupAlarmName, AcquisitionAlarmName, PersistenceAlarmName,
     };
     public string AppId { get; private set; } = "simulator";
     public string InstanceId { get; } = Guid.NewGuid().ToString("N");
@@ -65,9 +65,15 @@ public sealed partial class SimulatorSession
         }
     }
 
-    /// <summary>Explicit synthetic producer. No unknown name or non-object payload is emitted.</summary>
+    /// <summary>Explicit synthetic event producer. Alarm names require their classified producer;
+    /// unknown/Alarm names or non-object payloads throw ArgumentException. The caller owns its input;
+    /// the session clones payloads and serializes delivery under the event gate.</summary>
     public void EmitEvent(string name, string payloadJson, string? requestId = null,
         string? jobId = null, string? captureId = null, string? resultId = null)
+        => EmitEventCore(name, payloadJson, requestId, jobId, captureId, resultId, alarmProducer: false);
+
+    private void EmitEventCore(string name, string payloadJson, string? requestId,
+        string? jobId, string? captureId, string? resultId, bool alarmProducer)
     {
         using var document = System.Text.Json.JsonDocument.Parse(payloadJson);
         if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object)
@@ -76,6 +82,8 @@ public sealed partial class SimulatorSession
         {
             if (_shutdownRequested) throw new InvalidOperationException("Simulator host is shutting down.");
             if (!_eventNames.Contains(name)) throw new ArgumentException("Unknown event name.", nameof(name));
+            if (!alarmProducer && _alarmSources.ContainsKey(name))
+                throw new ArgumentException("Alarm names require their classified producer.", nameof(name));
             EventProduced?.Invoke(this, new EventEnvelope
             {
                 Name = name, EventId = Guid.NewGuid().ToString("N"), Timestamp = DateTimeOffset.UtcNow,

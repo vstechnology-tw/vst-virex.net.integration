@@ -57,11 +57,20 @@ public sealed partial class SimulatorSession
         if (CheckOperationSource("Deinitialize", source) is { } denied) return Task.FromResult(denied);
         lock (_deinitializationGate)
         {
+            if (_activeReset is { IsCompleted: false } reset) return JoinResetAsDeinitializeAsync(reset);
             if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization) return activeDeinitialization;
             // Cleanup remains a single shared operation, independent of caller cancellation.
             _activeDeinitialization = HandleDeinitializeAsync(CancellationToken.None, source);
             return _activeDeinitialization;
         }
+    }
+
+    private static async Task<CommandResponse> JoinResetAsDeinitializeAsync(Task<CommandResponse> reset)
+    {
+        // Each caller owns its response; never rename the shared reset result in place.
+        var response = ProtocolJson.Deserialize<CommandResponse>(ProtocolJson.Serialize(await reset.ConfigureAwait(false)))!;
+        response.Command = "Deinitialize";
+        return response;
     }
 
     public Task<CommandResponse> SetProductInfoFromSourceAsync(ProductInfo info, OperationSource source, CancellationToken cancellationToken = default) =>

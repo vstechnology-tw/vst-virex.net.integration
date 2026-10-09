@@ -1,4 +1,6 @@
-# RESTful API
+﻿# RESTful API
+
+See [Alarm sources and two-stage recovery](alarms.md) for `GET /api/alarms`, exact-name TCP subscriptions, `Faulted`, and `POST /api/system/reset`.
 
 Version 2.3.0 adds [read-only Recipe and exact result detail queries](read-only-queries.md): `GET /api/recipes`, `GET /api/recipes/current`, `GET /api/recipes/current/parameters`, and `GET /api/results/{resultId}`. Existing endpoints remain compatible.
 

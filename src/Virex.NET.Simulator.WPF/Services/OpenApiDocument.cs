@@ -6,6 +6,10 @@ internal static class OpenApiDocument
 {
     private static readonly string[] RequiredProductInfoFields = ["waferID", "lotID", "recipe", "slot", "foupID", "chamberID"];
     private static readonly string[] ParameterTypes = ["string", "boolean", "integer", "number"];
+    private static readonly string[] AlarmCategoryValues = [AlarmCategories.Fault, AlarmCategories.Defect, AlarmCategories.CriticalDefect];
+    private static readonly string[] RequiredAlarmCatalogFields = ["appId", "instanceId", "timestamp", "sources"];
+    private static readonly string[] RequiredAlarmSourceFields = ["name", "source", "category"];
+    private static readonly string[] RequiredAlarmNotificationFields = ["name", "source", "category", "message", "state", "timestamp", "appId", "instanceId"];
 
     public static object Create(string baseUrl) => new
     {
@@ -18,6 +22,8 @@ internal static class OpenApiDocument
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
         {
+            [RestRoutes.ApiAlarms] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Discover actual Alarm producers and their exact TCP event names", "AlarmCatalog") },
+            [RestRoutes.ApiSystemReset] = new Dictionary<string, object> { ["post"] = CommandOperation("Reset after stop and required cleanup", "External source; Local rejects without side effects. Concurrent requests join cleanup; successful reset returns Uninitialized, never Ready. Cleanup failure remains Faulted. Caller disconnect/cancellation does not abandon admitted cleanup; explicit Initialize is required.") },
             [RestRoutes.ApiDataSources] = new Dictionary<string, object> { ["get"] = DataSourceQueryOperation("Discover source names, kinds, JSON types and current-work availability", "DataSourceCatalog") },
             [RestRoutes.ApiDataSourceValue] = new Dictionary<string, object> { ["get"] = DataSourceQueryOperation("Read one exact live source or explicitly selected committed result source", "DataSourceValue", valueQuery: true) },
             [RestRoutes.ApiCurrentResult] = new Dictionary<string, object> { ["get"] = DataSourceQueryOperation("Read the current committed result identity; no implicit result value", "ResultReference") },
@@ -39,7 +45,7 @@ internal static class OpenApiDocument
                 ["post"] = ProductInfoUpdateOperation(),
             },
             [RestRoutes.ApiSystemInitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Initialize simulator", "Moves the simulator from Uninitialized to Ready.") },
-            [RestRoutes.ApiSystemDeinitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Deinitialize simulator", "Moves the simulator from Ready to Uninitialized and retries cleanup from public Deinitializing recovery state.") },
+            [RestRoutes.ApiSystemDeinitialize] = new Dictionary<string, object> { ["post"] = CommandOperation("Deinitialize simulator", "Moves Ready or Faulted to Uninitialized after cleanup; failures remain Faulted. Overlapping Reset shares its cleanup owner.") },
             [RestRoutes.ApiSystemStart] = new Dictionary<string, object> { ["post"] = CommandOperation("Start run", "Starts a simulated run.", Ref("SystemStartRequest")) },
             [RestRoutes.ApiSystemStop] = new Dictionary<string, object> { ["post"] = CommandOperation("Stop run", "Stops the current simulated run.", Ref("SystemStopRequest")) },
             [RestRoutes.ApiRecipes] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("List available recipes", "RecipeList") },
@@ -69,6 +75,23 @@ internal static class OpenApiDocument
         {
             schemas = new Dictionary<string, object>
             {
+                ["AlarmCatalog"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
+                    ["sources"] = new { type = "array", items = Ref("AlarmSourceDescriptor") },
+                }, RequiredAlarmCatalogFields),
+                ["AlarmSourceDescriptor"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["name"] = new { type = "string", description = "Exact case-sensitive event/producer name. No SDK whitelist or customer ID." },
+                    ["source"] = StringSchema(), ["category"] = new { type = "string", @enum = AlarmCategoryValues },
+                }, RequiredAlarmSourceFields),
+                ["AlarmNotification"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["name"] = StringSchema(), ["source"] = StringSchema(), ["category"] = new { type = "string", @enum = AlarmCategoryValues },
+                    ["message"] = StringSchema(), ["state"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
+                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["requestId"] = StringSchema(),
+                    ["jobId"] = StringSchema(), ["captureId"] = StringSchema(), ["resultId"] = StringSchema(),
+                }, RequiredAlarmNotificationFields),
                 ["DataSourceCatalog"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),

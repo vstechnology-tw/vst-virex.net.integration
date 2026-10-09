@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Virex.NET.Client;
@@ -51,7 +51,7 @@ public sealed class DataSourceTests
         var events = new System.Collections.Concurrent.ConcurrentQueue<EventEnvelope>();
         using var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["resultCreated"], events.Enqueue);
         var old = await fixture.Client.StartAsync(new SystemStartRequest { RequestId = "old", RunMode = ControlRunModes.Continue });
-        if (fault) { await fixture.Session.SimulateAcquisitionFaultAsync("synthetic source fault"); await fixture.Client.InitializeAsync(); }
+        if (fault) { await fixture.Session.SimulateAcquisitionFaultAsync("synthetic source fault"); await fixture.Client.ResetAsync(); await fixture.Client.InitializeAsync(); }
         else await fixture.Client.StopAsync();
         await Failure(() => fixture.Client.GetCurrentResultAsync(), "no_current_result", 409);
         var next = await fixture.Client.StartAsync(new SystemStartRequest { RequestId = "next", RunMode = ControlRunModes.Continue });

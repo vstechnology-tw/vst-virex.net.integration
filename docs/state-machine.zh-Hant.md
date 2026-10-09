@@ -14,6 +14,7 @@ ProductInfo 完成順序與取消準備中的 Start，請參閱[2.2.3 命令完�
 | `UpdatingProductInfo` | ProductInfo 更新已接受，等待完成事件。 |
 | `Running` | 執行中。內部執行階段不對外公開。 |
 | `Deinitializing` | 反初始化執行中，或是可重試的復原狀態；在完成前用戶端必須保持反初始化可操作。 |
+| `Faulted` | 已分類故障保持鎖定。Reset／Deinitialize 清理成功後，才可明確 Initialize。 |
 
 ## 命令與事件
 
@@ -35,7 +36,8 @@ ProductInfo 完成順序與取消準備中的 Start，請參閱[2.2.3 命令完�
 | `SetProductInfo` | `Ready` | 進入 `UpdatingProductInfo`；`ProductInfoUpdateCompleted` 讓狀態回到 `Ready`。 |
 | `Start` | `Ready` | 保存目前 ProductInfo 快照，並進入 `Running`。 |
 | `Stop` | `Running` | 停止目前執行，並讓狀態回到 `Ready`。 |
-| `Deinitialize` | `Ready` 或 `Deinitializing`（復原重試） | 進入或維持 `Deinitializing`；成功完成後狀態變成 `Uninitialized`。 |
+| `Deinitialize` | `Ready`、`Faulted` 或 `Deinitializing` | 執行清理，成功回 `Uninitialized`，失敗保持 `Faulted`。 |
+| `Reset` | `Running`、`Ready`、`Faulted` 或 `Deinitializing`；在 `Uninitialized` 可重複 | 停止、等待取消工作並清理。成功回 `Uninitialized`，仍須明確 Initialize。 |
 
 ## 拒絕的命令
 
@@ -45,10 +47,9 @@ ProductInfo 完成順序與取消準備中的 Start，請參閱[2.2.3 命令完�
 
 ## 復原契約
 
-若內部 acquisition fault 使目前來源不再可信，對外不得公開 `Faulted`。系統會先投影為
-`Deinitializing`，並在 `CommandResponse`、`SystemStatus` 或 `ErrorInfo` 帶上
-`recoveryAction: "Deinitialize"`。客戶應保持 Deinitialize 可操作；第一次自動反初始化失敗時，
-客戶仍可重試相同命令。只有 Deinitialize 重試仍無法完成時，重新啟動 App 才是最後手段。
+acquisition、persistence 與 cleanup 分類故障鎖定公開 `Faulted`，帶 `recoveryAction: "Reset"`。
+不自動回到 Uninitialized。見 [Alarm 來源與兩段復機](alarms.zh-Hant.md)。Reset 完成停止／清理才回 Uninitialized，
+其後明確 Initialize 真正完成才回 Ready。
 
 復原 payload 也可能包含選填的 `recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的 `recoveryDetails`，以及錯誤/命令使用的穩定 `errorCode`。這些都是 additive 欄位；用戶端應忽略未知欄位。
 

@@ -200,11 +200,11 @@ internal sealed class PublicTransportFixture : IAsyncDisposable
     private readonly EmbeddedMqttBroker _broker;
     private readonly MqttSimulatorPublisher _publisher;
 
-    private PublicTransportFixture(bool managed)
+    private PublicTransportFixture(bool managed, string? resultRootDirectory = null)
     {
         Root = Path.Combine(Path.GetTempPath(), "virex-public-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Root);
-        Session = new SimulatorSession(Root, managed);
+        Session = new SimulatorSession(resultRootDirectory ?? Root, managed);
         var options = new VirexClientOptions { RestBaseUrl = "http://127.0.0.1:" + FreePort() + "/", TcpPort = FreePort(), MqttPort = FreePort(), MqttTopic = "test-" + Guid.NewGuid().ToString("N") };
         Client = new VirexClient(options);
         Http = new HttpClient { BaseAddress = new Uri(options.RestBaseUrl) };
@@ -219,9 +219,9 @@ internal sealed class PublicTransportFixture : IAsyncDisposable
     public VirexClient Client { get; }
     public HttpClient Http { get; }
 
-    public static async Task<PublicTransportFixture> CreateAsync(bool managed)
+    public static async Task<PublicTransportFixture> CreateAsync(bool managed, string? resultRootDirectory = null)
     {
-        var fixture = new PublicTransportFixture(managed);
+        var fixture = new PublicTransportFixture(managed, resultRootDirectory);
         await fixture._rest.StartAsync();
         await fixture._tcp.StartAsync();
         await fixture._broker.StartAsync();

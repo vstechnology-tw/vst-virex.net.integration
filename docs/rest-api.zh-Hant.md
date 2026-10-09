@@ -1,4 +1,6 @@
-# RESTful API
+﻿# RESTful API
+
+`GET /api/alarms`、完整名稱 TCP 訂閱、`Faulted` 與 `POST /api/system/reset` 見 [Alarm 來源與兩段復機](alarms.zh-Hant.md)。
 
 2.3.0 版本新增 [Recipe 與精確結果明細唯讀查詢](read-only-queries.zh-Hant.md)：`GET /api/recipes`、`GET /api/recipes/current`、`GET /api/recipes/current/parameters`、`GET /api/results/{resultId}`。下列既有端點保持相容。
 

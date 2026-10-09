@@ -36,7 +36,7 @@ ProductInfo completes before `productInfoChanged` is emitted. Start is rejected
 while ProductInfo is updating. An accepted Start retains that product snapshot
 for its results. Stop requires Running; a service with source preparation may
 also accept Stop to cancel an outstanding Start before it enters Running.
-Deinitialize requires Ready or an active/retryable deinitialization.
+Deinitialize requires Ready, Faulted, or an active deinitialization. Classified faults use [explicit two-stage recovery](alarms.md): Reset completes stop/cleanup and returns Uninitialized; Initialize completes separately before Ready.
 
 `imageGrabbed.captureId` identifies the acquisition group and is shared by related
 result summaries. Multi-source image events may share a captureId and include

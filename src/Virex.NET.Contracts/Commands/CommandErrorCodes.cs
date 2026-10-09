@@ -2,6 +2,8 @@
 
 public static class CommandErrorCodes
 {
+    public const string CleanupFailed = "cleanup_failed";
+    public const string RequiresReset = "requires_reset";
     public const string CapturePreparationFailed = "capture_preparation_failed";
     public const string InvalidOperationMode = "invalid_operation_mode";
     public const string InvalidOperationSource = "invalid_operation_source";

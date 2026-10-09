@@ -28,17 +28,16 @@ public sealed class EventSubscriptionTests
         {
             if (producer == "acquisition")
             {
-                fixture.Session.ConfigureDeinitializeFailures(1);
                 await fixture.Client.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue, InspectionMode = InspectionModes.CaptureOnly });
                 Assert.False((await fixture.Session.SimulateAcquisitionFaultAsync("synthetic recovery fault")).Accepted);
-                Assert.Equal(SystemStates.Deinitializing, (await fixture.Client.GetStatusAsync()).State);
+                Assert.Equal(SystemStates.Faulted, (await fixture.Client.GetStatusAsync()).State);
             }
             else
             {
                 fixture.Session.EmitError("synthetic error");
                 fixture.Session.EmitError("synthetic error"); // No change: must not duplicate the transition.
             }
-            Assert.True((await fixture.Client.DeinitializeAsync()).Accepted);
+            Assert.True((await fixture.Client.ResetAsync()).Accepted);
             fixture.Session.EmitEvent("test.Barrier", "{}");
             await drained.Task.WaitAsync(TimeSpan.FromSeconds(3));
             Assert.Equal(new[] { true, false }, observed.Select(value => value.Payload.GetProperty("hasError").GetBoolean()));
@@ -78,7 +77,7 @@ public sealed class EventSubscriptionTests
             Assert.Equal(started.CaptureId, terminal.CaptureId);
             Assert.Equal(ending == "complete" ? 1 : 0, observed.Count(value => value.Name == "captureCompleted"));
             Assert.DoesNotContain(observed, value => value.Name == "resultCreated");
-            Assert.Equal(ending == "fault" ? SystemStates.Uninitialized : SystemStates.Ready, (await fixture.Client.GetStatusAsync()).State);
+            Assert.Equal(ending == "fault" ? SystemStates.Faulted : SystemStates.Ready, (await fixture.Client.GetStatusAsync()).State);
         }
         finally { await subscription.CloseAsync(); }
     }

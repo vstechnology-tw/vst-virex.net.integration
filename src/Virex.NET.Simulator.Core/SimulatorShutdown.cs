@@ -1,4 +1,4 @@
-using Virex.NET.Contracts;
+﻿using Virex.NET.Contracts;
 using System.Runtime.ExceptionServices;
 
 namespace Virex.NET.Simulator.Core;
@@ -92,6 +92,19 @@ public sealed partial class SimulatorSession
                 failures.AddRange(aggregate.Flatten().InnerExceptions);
             else
                 failures.Add(ex);
+        }
+
+        Task<CommandResponse>? reset;
+        lock (_deinitializationGate) reset = _activeReset;
+        if (reset is not null)
+        {
+            try
+            {
+                var response = await reset.ConfigureAwait(false);
+                if (!response.Accepted && response.ErrorCode == CommandErrorCodes.CleanupFailed)
+                    failures.Add(new InvalidOperationException(response.Message));
+            }
+            catch (Exception ex) { failures.Add(ex); }
         }
 
         if (failures.Count == 1)

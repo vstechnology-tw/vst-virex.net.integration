@@ -154,6 +154,7 @@ nav:
       - Capture Lifecycle: capture-lifecycle.md
       - Recipe / Result Queries: read-only-queries.md
       - Data Sources: data-sources.md
+      - Alarm / Recovery: alarms.md
       - TCP Socket: tcp-socket.md
       - MQTT Protocol: mqtt-events.md
   - Payload Reference:
