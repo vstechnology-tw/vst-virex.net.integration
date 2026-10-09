@@ -1,4 +1,6 @@
-# Version
+﻿# Version
+
+The current 2.4.0 source is an unpublished candidate. Use [candidate acceptance](candidate-acceptance.md) and the `samples/csharp-sdk-24` for REST commands/queries, exact-name TCP subscriptions, live/explicit result sources and two-stage recovery. Earlier version notes below describe historical capabilities; old SDK/wire compatibility is not a required 2.4.0 gate.
 
 Use semantic versioning for public package and protocol changes.
 

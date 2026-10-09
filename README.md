@@ -5,7 +5,7 @@
 
 This repository contains the public Virex.NET integration contract, C# client SDK, local simulator, samples, and documentation. It does not include private Virex.NET production internals.
 
-The simulator and production-compatible services are expected to expose the same public contract. A vendor integration that works with `Virex.NET.Simulator.WPF` should be able to target a production Virex.NET endpoint by changing endpoint settings.
+The current source targets an unpublished 2.4.0 candidate: REST commands/queries, exact-name TCP event subscriptions, live/explicit result sources, and two-stage Alarm recovery. See [candidate acceptance](docs/candidate-acceptance.md) and the [ordinary NuGet consumer sample](samples/csharp-sdk-24/README.md). Published package badges describe the public feed, not this local candidate. Simulator acceptance requires separate real App and equipment acceptance.
 
 ## Projects
 
@@ -42,6 +42,8 @@ Default simulator endpoints:
 
 ```text
 GET  /api/status
+GET  /api/events
+GET  /api/alarms
 GET  /api/data-sources
 GET  /api/data-sources/value?name={name}&resultId={explicitResultId}
 GET  /api/data-sources/current-result
@@ -55,13 +57,16 @@ GET  /api/recipes/current
 GET  /api/recipes/current/parameters
 POST /api/system/initialize
 POST /api/system/deinitialize
+POST /api/system/reset
 POST /api/system/start
 POST /api/system/stop
 GET  /api/results
 GET  /api/results/{resultId}
 ```
 
-## Current Public Event Names
+## Built-in Event Name Examples
+
+Discover the actual producer names with `GET /api/events`. Subscribe to multiple exact case-sensitive names with TCP/NDJSON. This list is not an SDK whitelist. Alarm event names are discovered with `GET /api/alarms`.
 
 ```text
 statusChanged
@@ -82,6 +87,9 @@ commandRejected
 Start here:
 
 - [Documentation Index](docs/index.md)
+- [2.4.0 Candidate Acceptance](docs/candidate-acceptance.md)
+- [Exact-name Event Subscriptions](docs/event-subscriptions.md)
+- [Alarm Sources and Two-stage Recovery](docs/alarms.md)
 - [RESTful API](docs/rest-api.md)
 - [System State Machine](docs/state-machine.md)
 - [Command Completion and Errors (2.2.3)](docs/communication-errors.md)

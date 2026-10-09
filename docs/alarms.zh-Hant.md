@@ -19,3 +19,5 @@
 Simulator 使用合成來源。內建實際 producer 是 `simulator.acquisitionFault`（`SimulateAcquisitionFaultAsync`）、`simulator.persistenceFailed`（dummy artifact 寫入失敗）與 `simulator.cleanupFailed`（清理失敗）。它們都列入 catalog 並透過 TCP 通知。`ConfigureAlarmSourceAsync` 在初始化前複製自訂描述並註冊來源；`RaiseAlarmAsync` 明確產生合成通知。任意完整名稱不需更新 SDK。舊 expected JobId、未知／未提交／已被新工作取代的結果及已關閉 host 不通知，不借用上一工作結果。內建名稱不能由此方法手動注入。通用 EmitEvent 也不能繞過 Alarm producer。`EmitError` 只產生診斷 ErrorInfo，不代表完整分類 Alarm。
 
 本機 Simulator 行為與編譯成功不代表真實設備故障、native cleanup、正式客戶配置、硬體或 Machine 已驗收。
+
+ResultId 是選用欄位。指定時，RaiseAlarmAsync 要求目前已提交結果。未指定時，实际目前工作的 defect／criticalDefect 通知仍合法；它不等於 ResultCreated／DefectResult，也不借用上一筆結果。

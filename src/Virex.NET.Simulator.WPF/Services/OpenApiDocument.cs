@@ -17,7 +17,7 @@ internal static class OpenApiDocument
         info = new
         {
             title = "Virex.NET Simulator API",
-            version = "2.2.3",
+            version = typeof(CommandResponse).Assembly.GetName().Version?.ToString(3) ?? "unknown",
         },
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>

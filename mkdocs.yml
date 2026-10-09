@@ -178,6 +178,7 @@ nav:
               - ResultList: payloads/results/result-list.md
   - SDK:
       - C# SDK Guide: csharp-sdk.md
+  - Candidate Acceptance: candidate-acceptance.md
   - Samples: samples.md
   - Validation Checklist: validation-checklist.md
   - Versioning: protocol-versioning.md

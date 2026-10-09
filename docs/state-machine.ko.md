@@ -1,4 +1,4 @@
-# 시스템 상태 머신
+﻿# 시스템 상태 머신
 
 상태 머신은 각 시스템 수명주기 상태에서 유효한 명령을 정의합니다. 클라이언트는 명령을 보내기 전에 현재 상태를 사용하여 해당 명령이 허용되는지 여부를 결정해야 합니다.
 
@@ -11,7 +11,8 @@
 | `Ready` | 대기 상태입니다. ProductInfo 업데이트, 시작 및 초기화 취소 명령이 유효합니다. |
 | `UpdatingProductInfo` | ProductInfo 업데이트가 수락되었으며 시스템이 완료 이벤트를 기다리고 있습니다. |
 | `Running` | 실행이 활성화되었습니다. 내부 실행 단계는 공개 상태가 아닙니다. |
-| `Deinitializing` | Deinitialize가 실행 중이거나 재시도 가능한 복구 상태입니다. 정리가 완료될 때까지 Deinitialize를 사용할 수 있어야 합니다. |
+| `Deinitializing` | Reset/Deinitialize cleanup is in progress. |
+| `Faulted` | Classified fault latched; Reset cleanup and explicit Initialize are required. |
 
 ## 명령 및 이벤트
 
@@ -33,7 +34,8 @@
 | `SetProductInfo` | `Ready` | `UpdatingProductInfo` 상태로 전환됩니다. `ProductInfoUpdateCompleted`는 상태를 `Ready`로 되돌립니다. |
 | `Start` | `Ready` | 현재 ProductInfo 스냅샷을 캡처하고 `Running` 상태로 전환됩니다. |
 | `Stop` | `Running` | 활성 실행을 중지하고 상태를 `Ready`로 반환합니다. |
-| `Deinitialize` | `Ready` 또는 `Deinitializing`(복구 재시도) | `Deinitializing`으로 전환하거나 재시도하며, 성공하면 `Uninitialized`가 됩니다. |
+| `Deinitialize` | `Ready`, `Faulted`, `Deinitializing` | success → `Uninitialized`; cleanup failure → `Faulted`. |
+| `Reset` | `Running`, `Ready`, `Faulted`, `Deinitializing`; idempotent in `Uninitialized` | stop + cleanup → `Uninitialized`; explicit Initialize → `Ready`. |
 
 ## 거부된 명령
 
@@ -43,7 +45,7 @@
 
 ## 복구 계약
 
-내부 acquisition fault로 현재 소스를 신뢰할 수 없게 되어도 `Faulted`를 클라이언트에 공개하지 않습니다. 공개 상태는 `Deinitializing`으로 투영되고 `CommandResponse`, `SystemStatus` 또는 `ErrorInfo`에 `recoveryAction: "Deinitialize"`가 포함됩니다. 자동 정리가 실패해도 Deinitialize는 계속 사용할 수 있으며 재시도할 수 있습니다. 재시도로도 완료되지 않을 때만 앱 재시작을 마지막 수단으로 사용합니다.
+2.4.0 분류된 장애는 공개 상태 `Faulted`와 `recoveryAction: "Reset"`을 반환합니다. Reset은 중지와 필요한 정리를 완료하며 성공하면 `Uninitialized`가 됩니다. `cleanup_failed`는 `Faulted`를 유지합니다. 이후 명시적 Initialize만 `Ready`로 돌아가며 이전 작업을 재개하지 않습니다. 실제 state, errorCode와 복구 정보를 확인하십시오. `RequiresDeinitialize`는 공개 상태가 아닙니다.
 
 복구 페이로드에는 선택적 `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails` 및 오류/명령에 대한 안정적인 `errorCode`가 포함될 수 있습니다. 이는 추가 필드이므로 클라이언트는 알 수 없는 필드를 무시해야 합니다.
 

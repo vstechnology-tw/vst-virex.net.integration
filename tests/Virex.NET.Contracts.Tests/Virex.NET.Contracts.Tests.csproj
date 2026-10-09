@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\samples\csharp-sdk-24\CommittedResultReader.cs" Link="Samples\CommittedResultReader.cs" />
     <ProjectReference Include="..\..\src\Virex.NET.Contracts\Virex.NET.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Virex.NET.Client\Virex.NET.Client.csproj" />
     <ProjectReference Include="..\..\src\Virex.NET.Simulator.Core\Virex.NET.Simulator.Core.csproj" />

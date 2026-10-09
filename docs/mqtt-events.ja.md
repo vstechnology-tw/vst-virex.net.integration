@@ -1,4 +1,4 @@
-# MQTT プロトコル
+﻿# MQTT プロトコル
 
 
 ## 完全なサンプル
@@ -630,4 +630,4 @@ virex/commandRejected
 MQTT イベントには、HTTP ステータス コードがありません。不正な形式の JSON、不明なトピック、ブローカーの切断、およびサブスクリプションの失敗は、トランスポート層のエラーとして扱う必要があります。 `commandRejected` は、Virex.NET 互換サービスによって報告されるアプリケーション層の拒否です。
 ## 2.2.2 復旧エンベロープ
 
-復旧中、`statusChanged`、`errorChanged`、`commandRejected` は同じ任意フィールド（`recoveryAction`、`errorCode`、`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、サニタイズ済み `recoveryDetails`）を使用します。公開状態は `Deinitializing` のままで、内部の `Faulted`、`RequiresDeinitialize`、`RestartApp` は公開しません。Deinitialize は再試行可能なままにし、アプリ再起動は UI の最終手段だけです。
+2.4.0 の分類済み障害は公開状態 `Faulted` と `recoveryAction: "Reset"` を返します。Reset は停止と必要なクリーンアップを完了し、成功すると `Uninitialized` になります。`cleanup_failed` は `Faulted` を維持します。その後の明示的 Initialize だけが `Ready` に戻し、旧作業は再開しません。実際の state、errorCode と復旧情報を確認してください。`RequiresDeinitialize` は公開状態ではありません。

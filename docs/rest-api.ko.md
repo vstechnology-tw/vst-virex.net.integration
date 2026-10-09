@@ -1,4 +1,6 @@
-# RESTful API
+﻿# RESTful API
+
+현재 2.4.0 소스는 미공개 후보입니다. [후보 검증(영문)](candidate-acceptance.md) 및 `samples/csharp-sdk-24`는 REST, 정확한 이름의 TCP 이벤트, 명시적 ResultId, Alarm 및 두 단계 복구를 사용합니다. 이전 SDK/wire 호환성은 2.4.0 필수 검증이 아닙니다.
 
 2.3.0 버전은 `GET /api/recipes`, `GET /api/recipes/current`, `GET /api/recipes/current/parameters`, `GET /api/results/{resultId}`를 추가합니다. [읽기 전용 쿼리 계약(영문)](read-only-queries.md)을 참고하세요. 기존 API는 호환성을 유지합니다.
 
@@ -29,7 +31,7 @@ RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령�
 | ProductInfo | GET | `/api/product-info` | 현재 ProductInfo를 읽습니다. | 모두 | [ProductInfo](payloads/product/product-info.ko.md) |
 | ProductInfo | POST | `/api/product-info` | 현재 ProductInfo를 업데이트합니다. | `Ready` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 시스템 | POST | `/api/system/initialize` | 시스템을 초기화합니다. | `Uninitialized` | [CommandResponse](payloads/commands/command-response.ko.md) |
-| 시스템 | POST | `/api/system/deinitialize` | 시스템 초기화를 해제하거나 복구 정리를 재시도합니다. | `Ready` 또는 공개 복구 상태 `Deinitializing` | [CommandResponse](payloads/commands/command-response.ko.md) |
+| 시스템 | POST | `/api/system/deinitialize` | 시스템 초기화를 해제하거나 복구 정리를 재시도합니다. | `Ready`, `Faulted`, `Deinitializing` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 시스템 | POST | `/api/system/start` | 실행을 시작합니다. | `Ready` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 시스템 | POST | `/api/system/stop` | 현재 실행을 중지합니다. | `Running` | [CommandResponse](payloads/commands/command-response.ko.md) |
 | 결과 | GET | `/api/results` | 결과 요약을 조회합니다. | 모두 | [ResultList](payloads/results/result-list.ko.md) |
@@ -598,7 +600,7 @@ RESTful API는 상태를 읽고, ProductInfo를 관리하고, 시스템 명령�
 
 ### 상태 제한
 
-`Ready`에서 호출할 수 있습니다. 공개 복구 상태 `Deinitializing`에서도 자동 복구가 실패한 정리를 재시도하기 위해 허용됩니다.
+2.4.0 분류된 장애는 공개 상태 `Faulted`와 `recoveryAction: "Reset"`을 반환합니다. Reset은 중지와 필요한 정리를 완료하며 성공하면 `Uninitialized`가 됩니다. `cleanup_failed`는 `Faulted`를 유지합니다. 이후 명시적 Initialize만 `Ready`로 돌아가며 이전 작업을 재개하지 않습니다. 실제 state, errorCode와 복구 정보를 확인하십시오. `RequiresDeinitialize`는 공개 상태가 아닙니다.
 
 ### 오류 처리
 

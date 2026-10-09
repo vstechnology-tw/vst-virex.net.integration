@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <VirexPackageVersion Condition="'$(VirexPackageVersion)' == ''">2.4.0</VirexPackageVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Virex.NET.Client" Version="[$(VirexPackageVersion)]" />
+  </ItemGroup>
+</Project>

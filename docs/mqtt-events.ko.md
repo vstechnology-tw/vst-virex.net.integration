@@ -1,4 +1,4 @@
-# MQTT 프로토콜
+﻿# MQTT 프로토콜
 
 
 ## 전체 예제
@@ -630,4 +630,4 @@ virex/commandRejected
 MQTT 이벤트에는 HTTP 상태 코드가 없습니다. 잘못된 JSON, 알 수 없는 토픽, 브로커 연결 끊김 및 구독 실패는 전송 계층 오류로 처리되어야 합니다. `commandRejected`는 Virex.NET 호환 서비스에서 보고한 애플리케이션 계층 거부입니다.
 ## 2.2.2 복구 엔벌로프
 
-복구 중 `statusChanged`, `errorChanged`, `commandRejected`는 동일한 선택 필드(`recoveryAction`, `errorCode`, `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, 정리된 `recoveryDetails`)를 사용합니다. 공개 상태는 `Deinitializing`이며 내부 `Faulted`, `RequiresDeinitialize`, `RestartApp` 값은 게시하지 않습니다. Deinitialize는 다시 시도할 수 있어야 하며 앱 재시작은 UI의 최종 수단입니다.
+2.4.0 분류된 장애는 공개 상태 `Faulted`와 `recoveryAction: "Reset"`을 반환합니다. Reset은 중지와 필요한 정리를 완료하며 성공하면 `Uninitialized`가 됩니다. `cleanup_failed`는 `Faulted`를 유지합니다. 이후 명시적 Initialize만 `Ready`로 돌아가며 이전 작업을 재개하지 않습니다. 실제 state, errorCode와 복구 정보를 확인하십시오. `RequiresDeinitialize`는 공개 상태가 아닙니다.

@@ -1,4 +1,6 @@
-# RESTful API
+﻿# RESTful API
+
+現在の 2.4.0 ソースは未公開の候補です。[候補の検証（英語）](candidate-acceptance.md) と `samples/csharp-sdk-24` は REST、完全一致 TCP イベント、明示的 ResultId、Alarm と二段階復旧を使用します。旧 SDK／wire の互換性は 2.4.0 の必須検証ではありません。
 
 バージョン 2.3.0 では `GET /api/recipes`、`GET /api/recipes/current`、`GET /api/recipes/current/parameters`、`GET /api/results/{resultId}` を追加します。[読み取り専用クエリの契約（英語）](read-only-queries.md)を参照してください。既存 API は互換性を維持します。
 
@@ -29,7 +31,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 | ProductInfo | GET | `/api/product-info` |現在の ProductInfo を読み取ります。 |すべて | [ProductInfo](payloads/product/product-info.ja.md) |
 | ProductInfo | POST | `/api/product-info` |現在の ProductInfo を更新します。 | `Ready` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |システム | POST | `/api/system/initialize` | システムを初期化します。 | `Uninitialized` | [CommandResponse](payloads/commands/command-response.ja.md) |
-|システム | POST | `/api/system/deinitialize` | システムの初期化を解除、または復旧クリーンアップを再試行します。 | `Ready` または公開復旧状態 `Deinitializing` | [CommandResponse](payloads/commands/command-response.ja.md) |
+|システム | POST | `/api/system/deinitialize` | システムの初期化を解除、または復旧クリーンアップを再試行します。 | `Ready`, `Faulted`, `Deinitializing` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |システム | POST | `/api/system/start` |実行を開始します。 | `Ready` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |システム | POST | `/api/system/stop` |現在の実行を停止します。 | `Running` | [CommandResponse](payloads/commands/command-response.ja.md) |
 |結果 | GET | `/api/results` |結果の概要を照会します。 |すべて | [ResultList](payloads/results/result-list.ja.md) |
@@ -598,7 +600,7 @@ RESTful API は、状態の読み取り、ProductInfo の管理、システム �
 
 ### 状態の制約
 
-`Ready` で有効です。公開復旧状態 `Deinitializing` でも、自動復旧に失敗したクリーンアップを再試行するために受け付けます。
+2.4.0 の分類済み障害は公開状態 `Faulted` と `recoveryAction: "Reset"` を返します。Reset は停止と必要なクリーンアップを完了し、成功すると `Uninitialized` になります。`cleanup_failed` は `Faulted` を維持します。その後の明示的 Initialize だけが `Ready` に戻し、旧作業は再開しません。実際の state、errorCode と復旧情報を確認してください。`RequiresDeinitialize` は公開状態ではありません。
 
 ### エラー処理
 

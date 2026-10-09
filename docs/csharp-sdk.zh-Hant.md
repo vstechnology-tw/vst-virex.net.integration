@@ -1,4 +1,6 @@
-# C# SDK 指南
+﻿# C# SDK 指南
+
+目前 2.4.0 source 是尚未發布的候選。REST 命令／查詢、完整名稱 TCP 訂閱、即時／明確結果來源與兩段復機，請使用 [候選驗收](candidate-acceptance.zh-Hant.md) 及 `samples/csharp-sdk-24`。下方早期版本說明保留歷史能力；舊 SDK／wire 相容性不是本輪必要 gate。
 
 2.3.0 版本在 VirexRestClient 與 VirexClient 新增 `GetRecipesAsync`、`GetCurrentRecipeAsync`、`GetCurrentRecipeParametersAsync`、`GetResultDetailAsync`。詳見 [唯讀查詢 DTO、快照與錯誤語義](read-only-queries.zh-Hant.md)。
 
@@ -87,18 +89,19 @@ var results = await client.QueryResultsAsync(lotID: "LOT-001");
 
 ## 復原與 Deinitialize 重試
 
-如果來源或清理失敗需要復原，公開狀態會是 `Deinitializing`，回應/狀態會帶有 `recoveryAction: "Deinitialize"`。客戶端必須保持 Deinitialize 可操作；清理被拒絕時可再次重試，只有 Deinitialize 無法完成後，App 重啟才是 UI 層的最後手段：
+2.4.0 分類故障公開 `Faulted`，帶 `recoveryAction: "Reset"`。Reset 停止並完成必要清理；成功回 `Uninitialized`，`cleanup_failed` 保持 `Faulted`。其後明確 Initialize 才回 `Ready`，不續跑舊工作。請讀取實際 state、errorCode 與復原內容。`RequiresDeinitialize` 不是公開狀態。
 
 ```csharp
 var status = await client.GetStatusAsync();
-if (status.RecoveryAction == RecoveryActions.Deinitialize)
+if (status.RecoveryAction == RecoveryActions.Reset)
 {
-    var cleanup = await client.DeinitializeAsync();
+    var cleanup = await client.ResetAsync();
+    if (cleanup.Accepted) await client.InitializeAsync();
     Console.WriteLine($"Recovery: accepted={cleanup.Accepted}, phase={cleanup.RecoveryPhase}, details={cleanup.RecoveryDetails}");
 }
 ```
 
-`Faulted` 與 `RequiresDeinitialize` 不是提供給客戶的生命週期狀態。請讀取 `state`、`recoveryAction` 與選用的復原內容欄位，不要等待內部狀態名稱。
+2.4.0 分類故障公開 `Faulted`，帶 `recoveryAction: "Reset"`。Reset 停止並完成必要清理；成功回 `Uninitialized`，`cleanup_failed` 保持 `Faulted`。其後明確 Initialize 才回 `Ready`，不續跑舊工作。請讀取實際 state、errorCode 與復原內容。`RequiresDeinitialize` 不是公開狀態。
 
 ## TCP 事件
 

@@ -1,4 +1,4 @@
-# Troubleshooting
+﻿# Troubleshooting
 
 ## RESTful API Request Failed
 
@@ -23,10 +23,7 @@ Examples:
 
 Read `GET /api/status` first, then send the command when the state allows it.
 
-If the response state is `Deinitializing`, read `recoveryAction`,
-`recoveryStartedAt`, `recoverySource`, `recoveryPhase`, sanitized
-`recoveryDetails`, and `errorCode` when present. Keep Deinitialize enabled and
-retry it; do not wait for the internal `Faulted` or `RequiresDeinitialize` names.
+2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state.
 
 ## No Results Returned
 

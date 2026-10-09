@@ -1,5 +1,7 @@
 ﻿# RESTful API
 
+The current 2.4.0 source is an unpublished candidate. Use [candidate acceptance](candidate-acceptance.md) and the `samples/csharp-sdk-24` for REST commands/queries, exact-name TCP subscriptions, live/explicit result sources and two-stage recovery. Earlier version notes below describe historical capabilities; old SDK/wire compatibility is not a required 2.4.0 gate.
+
 See [Alarm sources and two-stage recovery](alarms.md) for `GET /api/alarms`, exact-name TCP subscriptions, `Faulted`, and `POST /api/system/reset`.
 
 Version 2.3.0 adds [read-only Recipe and exact result detail queries](read-only-queries.md): `GET /api/recipes`, `GET /api/recipes/current`, `GET /api/recipes/current/parameters`, and `GET /api/results/{resultId}`. Existing endpoints remain compatible.
@@ -600,9 +602,7 @@ De-initialization system. The API will wait until `DeinitializationCompleted` be
 
 ### State Restrictions
 
-Calls are allowed at `Ready`. They are also accepted at public recovery state
-`Deinitializing` so the client can retry cleanup after an automatic recovery
-attempt fails.
+2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state.
 
 ### Error handling
 

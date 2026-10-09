@@ -1,4 +1,4 @@
-# 검증 체크리스트
+﻿# 검증 체크리스트
 
 이 체크리스트를 사용하여 벤더 통합이 시뮬레이터에서 운영 환경 호환 엔드포인트로 이동할 준비가 되었는지 확인하세요.
 
@@ -12,7 +12,7 @@
 | 시작 | `POST /api/system/start`는 `Ready`에서 허용되며 `Running`를 반환합니다. |
 | 중지 | `POST /api/system/stop`는 `Running`에서 허용되며 `Ready`를 반환합니다. |
 | Deinitialize | `POST /api/system/deinitialize`는 `Ready`에서 허용되며, 정리 실패를 주입한 후에도 `Deinitializing`에서 재시도할 수 있고 성공하면 `Uninitialized`를 반환합니다. |
-| 복구 투영 | 복구 중 `/api/status`, `/api/error` 및 명령 응답은 `state: Deinitializing`, `recoveryAction: Deinitialize`, 선택적 시작 시각/소스/단계/정리된 세부 정보와 해당되는 안정적인 오류 코드를 제공하며 내부 `Faulted` 또는 `RequiresDeinitialize` 상태는 노출하지 않습니다. |
+| 2.4.0 recovery | 2.4.0 분류된 장애는 공개 상태 `Faulted`와 `recoveryAction: "Reset"`을 반환합니다. Reset은 중지와 필요한 정리를 완료하며 성공하면 `Uninitialized`가 됩니다. `cleanup_failed`는 `Faulted`를 유지합니다. 이후 명시적 Initialize만 `Ready`로 돌아가며 이전 작업을 재개하지 않습니다. 실제 state, errorCode와 복구 정보를 확인하십시오. `RequiresDeinitialize`는 공개 상태가 아닙니다. |
 | 잘못된 명령 | 잘못된 명령은 `accepted=false`, `errorCode=invalid_state` 및 현재 `state`를 반환합니다. |
 | 결과 | `GET /api/results`는 ProductInfo 스냅샷 필드와 일치하는 요약을 반환합니다. |
 

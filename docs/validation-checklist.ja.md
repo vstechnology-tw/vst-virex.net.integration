@@ -1,4 +1,4 @@
-# 検証チェックリスト
+﻿# 検証チェックリスト
 
 このチェックリストを使用して、ベンダー統合をシミュレーターから運用互換エンドポイントに移行する準備ができているかどうかを判断します。
 
@@ -12,7 +12,7 @@
 |開始 | `POST /api/system/start` は `Ready` で受け入れられ、`Running` を返します。 |
 |停止 | `POST /api/system/stop` は `Running` で受け入れられ、`Ready` を返します。 |
 | Deinitialize | `POST /api/system/deinitialize` は `Ready` で受け入れられ、クリーンアップ失敗を注入した後も `Deinitializing` で再試行でき、成功すると `Uninitialized` を返します。 |
-| 復旧投影 | 復旧中、`/api/status`、`/api/error`、およびコマンド応答は `state: Deinitializing`、`recoveryAction: Deinitialize`、任意の開始時刻/ソース/フェーズ/サニタイズ済み詳細、該当する安定したエラーコードを公開し、内部の `Faulted` または `RequiresDeinitialize` 状態は公開しません。 |
+| 2.4.0 recovery | 2.4.0 の分類済み障害は公開状態 `Faulted` と `recoveryAction: "Reset"` を返します。Reset は停止と必要なクリーンアップを完了し、成功すると `Uninitialized` になります。`cleanup_failed` は `Faulted` を維持します。その後の明示的 Initialize だけが `Ready` に戻し、旧作業は再開しません。実際の state、errorCode と復旧情報を確認してください。`RequiresDeinitialize` は公開状態ではありません。 |
 |無効なコマンド |無効なコマンドは、`accepted=false`、`errorCode=invalid_state`、および現在の `state` を返します。 |
 |結果 | `GET /api/results` は、ProductInfo スナップショット フィールドに一致する概要を返します。 |
 

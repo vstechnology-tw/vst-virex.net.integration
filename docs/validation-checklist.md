@@ -1,4 +1,4 @@
-# Validation Checklist
+﻿# Validation Checklist
 
 Use this checklist to determine whether a vendor integration is ready to move from the simulator to a production-compatible endpoint.
 
@@ -16,7 +16,7 @@ Cross-target HTTP smoke: build `tests/Virex.NET.QuerySmoke/Virex.NET.QuerySmoke.
 | Start | `POST /api/system/start` is accepted in `Ready` and returns `Running`. |
 | Stop | `POST /api/system/stop` is accepted in `Running` and returns `Ready`. |
 | Deinitialize | `POST /api/system/deinitialize` is accepted in `Ready`; after an injected cleanup failure it remains accepted in `Deinitializing` and a successful retry returns `Uninitialized`. |
-| Recovery projection | During recovery, `/api/status`, `/api/error`, and command responses expose `state: Deinitializing`, `recoveryAction: Deinitialize`, optional started-at/source/phase/sanitized-details context, and stable error codes where applicable; internal `Faulted` and `RequiresDeinitialize` states are never exposed. |
+| 2.4.0 recovery | 2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state. |
 | Invalid command | Invalid commands return `accepted=false`, `errorCode=invalid_state`, and the current `state`. |
 | Results | `GET /api/results` returns summaries matching the ProductInfo snapshot fields. |
 

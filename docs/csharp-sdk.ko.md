@@ -1,4 +1,6 @@
-# C# SDK 안내
+﻿# C# SDK 안내
+
+현재 2.4.0 소스는 미공개 후보입니다. [후보 검증(영문)](candidate-acceptance.md) 및 `samples/csharp-sdk-24`는 REST, 정확한 이름의 TCP 이벤트, 명시적 ResultId, Alarm 및 두 단계 복구를 사용합니다. 이전 SDK/wire 호환성은 2.4.0 필수 검증이 아닙니다.
 
 2.3.0 버전은 VirexClient와 VirexRestClient에 `GetRecipesAsync`, `GetCurrentRecipeAsync`, `GetCurrentRecipeParametersAsync`, `GetResultDetailAsync`를 추가합니다. [DTO 및 오류 계약(영문)](read-only-queries.md)을 참고하세요.
 
@@ -87,18 +89,19 @@ var results = await client.QueryResultsAsync(lotID: "LOT-001");
 
 ## 복구 및 Deinitialize 재시도
 
-소스 또는 정리 오류로 복구가 필요하면 공개 상태는 `Deinitializing`이며 응답/상태에 `recoveryAction: "Deinitialize"`가 포함됩니다. Deinitialize 명령을 계속 사용할 수 있게 하고, 정리 거부 후 다시 시도하십시오. 애플리케이션 재시작은 Deinitialize를 완료할 수 없을 때만 UI 수준의 최후 수단입니다.
+2.4.0 분류된 장애는 공개 상태 `Faulted`와 `recoveryAction: "Reset"`을 반환합니다. Reset은 중지와 필요한 정리를 완료하며 성공하면 `Uninitialized`가 됩니다. `cleanup_failed`는 `Faulted`를 유지합니다. 이후 명시적 Initialize만 `Ready`로 돌아가며 이전 작업을 재개하지 않습니다. 실제 state, errorCode와 복구 정보를 확인하십시오. `RequiresDeinitialize`는 공개 상태가 아닙니다.
 
 ```csharp
 var status = await client.GetStatusAsync();
-if (status.RecoveryAction == RecoveryActions.Deinitialize)
+if (status.RecoveryAction == RecoveryActions.Reset)
 {
-    var cleanup = await client.DeinitializeAsync();
+    var cleanup = await client.ResetAsync();
+    if (cleanup.Accepted) await client.InitializeAsync();
     Console.WriteLine($"Recovery: accepted={cleanup.Accepted}, phase={cleanup.RecoveryPhase}, details={cleanup.RecoveryDetails}");
 }
 ```
 
-`Faulted` 및 `RequiresDeinitialize`는 공개 수명 주기 상태가 아닙니다. 내부 상태 이름을 기다리지 말고 `state`, `recoveryAction` 및 선택적 복구 컨텍스트 필드를 읽으십시오.
+2.4.0 분류된 장애는 공개 상태 `Faulted`와 `recoveryAction: "Reset"`을 반환합니다. Reset은 중지와 필요한 정리를 완료하며 성공하면 `Uninitialized`가 됩니다. `cleanup_failed`는 `Faulted`를 유지합니다. 이후 명시적 Initialize만 `Ready`로 돌아가며 이전 작업을 재개하지 않습니다. 실제 state, errorCode와 복구 정보를 확인하십시오. `RequiresDeinitialize`는 공개 상태가 아닙니다.
 
 ## TCP 이벤트
 

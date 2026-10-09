@@ -1,4 +1,6 @@
-# 버전
+﻿# 버전
+
+현재 2.4.0 소스는 미공개 후보입니다. [후보 검증(영문)](candidate-acceptance.md) 및 `samples/csharp-sdk-24`는 REST, 정확한 이름의 TCP 이벤트, 명시적 ResultId, Alarm 및 두 단계 복구를 사용합니다. 이전 SDK/wire 호환성은 2.4.0 필수 검증이 아닙니다.
 
 공개 패키지 및 프로토콜 변경에 시맨틱 버전 관리를 사용합니다.
 

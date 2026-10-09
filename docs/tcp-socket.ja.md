@@ -1,4 +1,4 @@
-# TCP ソケットプロトコル
+﻿# TCP ソケットプロトコル
 
 
 TCP ソケットは、同じ単純なストリーミング プロトコルを介してコマンドを送信し、イベントを受信する必要があるクライアント用の双方向統合チャネルです。
@@ -29,17 +29,7 @@ TCP/NDJSON を読み取る場合、C# SDK はフレームごとにアイドル�
 
 ### 受信コマンドとクエリ
 
-|フレームタイプ |ペイロード |有効な状態 |結果 |
-| --- | --- | --- | --- |
-| `status` | `type` のみ |すべて |直接応答 `type: "status"` を返します。 |
-| `error` | `type` のみ |すべて |直接応答 `type: "error"` を返します。 |
-| `getProductInfo` | `type` のみ |すべて |直接応答 `type: "productInfo"` を返します。 |
-| `initialize` | [SystemInitializeRequest](payloads/commands/system-initialize-request.ja.md) と `type` | `Uninitialized` | `Initializing` に遷移します。完了後、`Ready` の `statusChanged` を送信します。 |
-| `deinitialize` | [SystemDeinitializeRequest](payloads/commands/system-deinitialize-request.ja.md) と `type` | `Ready` または公開復旧状態 `Deinitializing` | `Deinitializing` に遷移または再試行します。クリーンアップ成功後、`Uninitialized` の `statusChanged` を送信します。 |
-| `productInfo` | [ProductInfo](payloads/product/product-info.ja.md) と `type` | `Ready` | ProductInfo を更新し、`productInfoChanged` を発行します。 |
-| `start` | [SystemStartRequest](payloads/commands/system-start-request.ja.md) と `type` | `Ready` | `Running` に遷移します。完了はイベントと結果によって報告されます。 |
-| `stop` | [SystemStopRequest](payloads/commands/system-stop-request.ja.md) と `type` | `Running` |実行を停止し、`Ready` に戻ります。 |
-| `results` |結果クエリ条件と `type` |すべて |直接応答 `type: "results"` を返します。 |
+2.4.0 の分類済み障害は公開状態 `Faulted` と `recoveryAction: "Reset"` を返します。Reset は停止と必要なクリーンアップを完了し、成功すると `Uninitialized` になります。`cleanup_failed` は `Faulted` を維持します。その後の明示的 Initialize だけが `Ready` に戻し、旧作業は再開しません。実際の state、errorCode と復旧情報を確認してください。`RequiresDeinitialize` は公開状態ではありません。
 
 ### 発信イベント
 
@@ -237,14 +227,7 @@ TCP 経由でシステムを非初期化します。`DeinitializationCompleted` 
 
 ### エラー処理
 
-クリーンアップに失敗した場合、サービスは `errorCode: "requires_deinitialize"` と
-`recoveryAction: "Deinitialize"` を含む `commandRejected` を送信します。クライアントは
-Deinitialize を再試行できるようにします。その他の公開状態ではコマンドを拒否します。
-
-`statusChanged`、`errorChanged`、`commandRejected` は、任意の
-`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、サニタイズ済みの
-`recoveryDetails` を保持できます。エラーと拒否応答には安定した `errorCode` も
-含めることができます。`Faulted` と `RequiresDeinitialize` は公開されません。
+2.4.0 の分類済み障害は公開状態 `Faulted` と `recoveryAction: "Reset"` を返します。Reset は停止と必要なクリーンアップを完了し、成功すると `Uninitialized` になります。`cleanup_failed` は `Faulted` を維持します。その後の明示的 Initialize だけが `Ready` に戻し、旧作業は再開しません。実際の state、errorCode と復旧情報を確認してください。`RequiresDeinitialize` は公開状態ではありません。
 
 ## productInfo コマンド
 

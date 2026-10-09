@@ -1,5 +1,7 @@
 ﻿# RESTful API
 
+目前 2.4.0 source 是尚未發布的候選。REST 命令／查詢、完整名稱 TCP 訂閱、即時／明確結果來源與兩段復機，請使用 [候選驗收](candidate-acceptance.zh-Hant.md) 及 `samples/csharp-sdk-24`。下方早期版本說明保留歷史能力；舊 SDK／wire 相容性不是本輪必要 gate。
+
 `GET /api/alarms`、完整名稱 TCP 訂閱、`Faulted` 與 `POST /api/system/reset` 見 [Alarm 來源與兩段復機](alarms.zh-Hant.md)。
 
 2.3.0 版本新增 [Recipe 與精確結果明細唯讀查詢](read-only-queries.zh-Hant.md)：`GET /api/recipes`、`GET /api/recipes/current`、`GET /api/recipes/current/parameters`、`GET /api/results/{resultId}`。下列既有端點保持相容。
@@ -31,7 +33,7 @@ RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以�
 | ProductInfo | GET | `/api/product-info` | 讀取目前 ProductInfo。 | Any | [ProductInfo](payloads/product/product-info.zh-Hant.md) |
 | ProductInfo | POST | `/api/product-info` | 更新目前 ProductInfo。 | `Ready` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | System | POST | `/api/system/initialize` | 初始化系統。 | `Uninitialized` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
-| System | POST | `/api/system/deinitialize` | 反初始化系統或重試復原清理。 | `Ready` 或公開復原狀態 `Deinitializing` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
+| System | POST | `/api/system/deinitialize` | 反初始化系統或重試復原清理。 | `Ready`, `Faulted`, `Deinitializing` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | System | POST | `/api/system/start` | 啟動一次執行。 | `Ready` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | System | POST | `/api/system/stop` | 停止目前執行。 | `Running` | [CommandResponse](payloads/commands/command-response.zh-Hant.md) |
 | Results | GET | `/api/results` | 查詢結果摘要。 | Any | [ResultList](payloads/results/result-list.zh-Hant.md) |
@@ -600,7 +602,7 @@ RESTful API 用於讀取狀態、管理 ProductInfo、送出系統命令，以�
 
 ### 狀態限制
 
-`Ready` 合法；公開復原狀態 `Deinitializing` 也接受此命令，讓用戶端可以在自動復原失敗後重試清理。
+2.4.0 分類故障公開 `Faulted`，帶 `recoveryAction: "Reset"`。Reset 停止並完成必要清理；成功回 `Uninitialized`，`cleanup_failed` 保持 `Faulted`。其後明確 Initialize 才回 `Ready`，不續跑舊工作。請讀取實際 state、errorCode 與復原內容。`RequiresDeinitialize` 不是公開狀態。
 
 ### 錯誤處理
 

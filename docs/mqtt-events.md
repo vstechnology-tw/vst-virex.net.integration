@@ -630,18 +630,18 @@ Use this event to correlate RESTful API, TCP, or UI commands that were rejected.
 
 ## RecoveryAction and client recovery
 
-`statusChanged`, `errorChanged`, and `commandRejected` may include the optional `recoveryAction` field. When an acquisition failure requires cleanup, the public contract reports `state: "Deinitializing"` and `recoveryAction: "Deinitialize"`; the internal `Faulted` state is never exposed to clients.
+2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state.
 
 ```json
-{"state":"Deinitializing","recoveryAction":"Deinitialize"}
+{"state":"Faulted","recoveryAction":"Reset"}
 ```
 
 ```json
-{"hasError":true,"message":"Camera acquisition failed.","state":"Deinitializing","recoveryAction":"Deinitialize"}
+{"hasError":true,"message":"Camera acquisition failed.","state":"Faulted","recoveryAction":"Reset"}
 ```
 
 ```json
-{"accepted":false,"state":"Deinitializing","command":"Start","errorCode":"requires_deinitialize","recoveryAction":"Deinitialize","message":"Deinitialize is required before another command can be accepted."}
+{"accepted":false,"state":"Faulted","command":"Start","errorCode":"requires_reset","recoveryAction":"Reset","message":"Reset cleanup is required before initialization."}
 ```
 
 The client should keep the **Deinitialize** action enabled and retry it until the service returns `Uninitialized`. Restarting the application is a UI-only last resort after Deinitialize cannot recover the service.
@@ -651,7 +651,7 @@ The client should keep the **Deinitialize** action enabled and retry it until th
 MQTT events do not have HTTP status codes. Malformed JSON, unknown topics, broker disconnections, and subscription failures should be treated as transport-layer errors. `commandRejected` is an application-layer rejection reported by the Virex.NET compatible service.
 ## 2.2.2 recovery envelope
 
-During recovery, `statusChanged`, `errorChanged`, and `commandRejected` use the same optional fields: `recoveryAction`, `errorCode`, `recoveryStartedAt`, `recoverySource`, `recoveryPhase`, and sanitized `recoveryDetails`. The public state remains `Deinitializing`; internal `Faulted`, `RequiresDeinitialize`, and `RestartApp` values are never published. Keep Deinitialize enabled for retry; application restart is a UI-only final fallback.
+2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state.
 
 
 Capture readiness and whole-capture completion use captureReady/captureCompleted topics, with jobId/captureId correlation. See [Capture lifecycle](capture-lifecycle.md).

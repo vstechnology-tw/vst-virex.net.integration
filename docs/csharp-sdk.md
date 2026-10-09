@@ -1,4 +1,6 @@
-# C# SDK Guide
+﻿# C# SDK Guide
+
+The current 2.4.0 source is an unpublished candidate. Use [candidate acceptance](candidate-acceptance.md) and the `samples/csharp-sdk-24` for REST commands/queries, exact-name TCP subscriptions, live/explicit result sources and two-stage recovery. Earlier version notes below describe historical capabilities; old SDK/wire compatibility is not a required 2.4.0 gate.
 
 Version 2.3.0 adds `GetRecipesAsync`, `GetCurrentRecipeAsync`, `GetCurrentRecipeParametersAsync`, and `GetResultDetailAsync` on VirexRestClient and VirexClient. See [read-only query DTOs, snapshots and failures](read-only-queries.md).
 
@@ -87,18 +89,19 @@ var results = await client.QueryResultsAsync(lotID: "LOT-001");
 
 ## Recovery and Deinitialize retry
 
-If a source or cleanup failure requires recovery, the public state is `Deinitializing` and the response/status includes `recoveryAction: "Deinitialize"`. Keep the Deinitialize command available, retry after a rejected cleanup attempt, and use application restart only as a UI-level last resort:
+2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state.
 
 ```csharp
 var status = await client.GetStatusAsync();
-if (status.RecoveryAction == RecoveryActions.Deinitialize)
+if (status.RecoveryAction == RecoveryActions.Reset)
 {
-    var cleanup = await client.DeinitializeAsync();
+    var cleanup = await client.ResetAsync();
+    if (cleanup.Accepted) await client.InitializeAsync();
     Console.WriteLine($"Recovery: accepted={cleanup.Accepted}, phase={cleanup.RecoveryPhase}, details={cleanup.RecoveryDetails}");
 }
 ```
 
-`Faulted` and `RequiresDeinitialize` are not public lifecycle states. Clients should read `state`, `recoveryAction`, and the optional recovery context fields instead of waiting for an internal state name.
+2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state.
 
 ## TCP events
 

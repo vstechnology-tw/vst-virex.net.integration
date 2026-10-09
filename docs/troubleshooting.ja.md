@@ -1,4 +1,4 @@
-# トラブルシューティング
+﻿# トラブルシューティング
 
 ## RESTful API 要求が失敗しました
 
@@ -23,10 +23,7 @@
 
 最初に `GET /api/status` を読み取り、状態が許可したときにコマンドを送信します。
 
-応答状態が `Deinitializing` の場合は、存在する `recoveryAction`、
-`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、サニタイズ済みの
-`recoveryDetails`、`errorCode` を読み取ります。Deinitialize を使用可能なまま
-再試行し、内部状態名 `Faulted` または `RequiresDeinitialize` を待ちません。
+2.4.0 の分類済み障害は公開状態 `Faulted` と `recoveryAction: "Reset"` を返します。Reset は停止と必要なクリーンアップを完了し、成功すると `Uninitialized` になります。`cleanup_failed` は `Faulted` を維持します。その後の明示的 Initialize だけが `Ready` に戻し、旧作業は再開しません。実際の state、errorCode と復旧情報を確認してください。`RequiresDeinitialize` は公開状態ではありません。
 
 ## 結果は返されませんでした
 

@@ -1,4 +1,4 @@
-# 疑難排解
+﻿# 疑難排解
 
 ## RESTful API 要求失敗
 
@@ -23,10 +23,7 @@
 
 先讀 `GET /api/status`，等狀態允許後再送命令。
 
-如果回應狀態是 `Deinitializing`，請讀取存在的 `recoveryAction`、
-`recoveryStartedAt`、`recoverySource`、`recoveryPhase`、已清理的
-`recoveryDetails` 與 `errorCode`。保持 Deinitialize 可操作並重試，不要等待內部
-`Faulted` 或 `RequiresDeinitialize` 名稱。
+2.4.0 分類故障公開 `Faulted`，帶 `recoveryAction: "Reset"`。Reset 停止並完成必要清理；成功回 `Uninitialized`，`cleanup_failed` 保持 `Faulted`。其後明確 Initialize 才回 `Ready`，不續跑舊工作。請讀取實際 state、errorCode 與復原內容。`RequiresDeinitialize` 不是公開狀態。
 
 ## 沒有回傳結果
 

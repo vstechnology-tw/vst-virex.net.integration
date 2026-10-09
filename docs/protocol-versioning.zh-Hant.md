@@ -1,4 +1,6 @@
-# 版本
+﻿# 版本
+
+目前 2.4.0 source 是尚未發布的候選。REST 命令／查詢、完整名稱 TCP 訂閱、即時／明確結果來源與兩段復機，請使用 [候選驗收](candidate-acceptance.zh-Hant.md) 及 `samples/csharp-sdk-24`。下方早期版本說明保留歷史能力；舊 SDK／wire 相容性不是本輪必要 gate。
 
 公開套件與通訊協定變更使用語意化版本。
 

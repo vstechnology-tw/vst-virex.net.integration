@@ -239,10 +239,7 @@ The service sends:
 
 ### Error handling
 
-If cleanup is still unsuccessful, the service sends `commandRejected` with
-`errorCode: "requires_deinitialize"` and `recoveryAction: "Deinitialize"`;
-the client must keep Deinitialize enabled for another retry. Other public
-states reject the command as invalid.
+2.4.0 classified faults expose public `Faulted` with `recoveryAction: "Reset"`. Reset stops and completes required cleanup; success returns `Uninitialized`, while `cleanup_failed` remains `Faulted`. Only subsequent explicit Initialize returns `Ready`; old work is not resumed. Read the actual state, errorCode and recovery context. `RequiresDeinitialize` is not a public state.
 
 ## productInfo command
 

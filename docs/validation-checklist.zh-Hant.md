@@ -1,4 +1,4 @@
-# 驗證清單
+﻿# 驗證清單
 
 使用這份清單判斷廠商整合是否可以從模擬器切到正式相容端點。
 
@@ -16,7 +16,7 @@ Issue #44 的新查詢另驗證 [已載入 Recipe、參數與精確 ResultId](re
 | 啟動 | `POST /api/system/start` 在 `Ready` 被接受，回 `Running`。 |
 | 停止 | `POST /api/system/stop` 在 `Running` 被接受，回 `Ready`。 |
 | 反初始化 | `POST /api/system/deinitialize` 在 `Ready` 被接受；注入清理失敗後仍可在 `Deinitializing` 重試，成功後回 `Uninitialized`。 |
-| 復原投影 | 復原期間，`/api/status`、`/api/error` 與命令回應會提供 `state: Deinitializing`、`recoveryAction: Deinitialize`、可選的開始時間/來源/階段/已清理細節欄位，以及適用的穩定錯誤代碼；不會提供內部 `Faulted` 或 `RequiresDeinitialize` 狀態。 |
+| 2.4.0 recovery | 2.4.0 分類故障公開 `Faulted`，帶 `recoveryAction: "Reset"`。Reset 停止並完成必要清理；成功回 `Uninitialized`，`cleanup_failed` 保持 `Faulted`。其後明確 Initialize 才回 `Ready`，不續跑舊工作。請讀取實際 state、errorCode 與復原內容。`RequiresDeinitialize` 不是公開狀態。 |
 | 非法命令 | 非法命令回 `accepted=false`、`errorCode=invalid_state` 與目前 `state`。 |
 | 結果 | `GET /api/results` 回傳符合 ProductInfo 快照欄位的摘要。 |
 
