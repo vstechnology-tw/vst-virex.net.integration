@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using Virex.NET.Client;
 using Virex.NET.Contracts;
 
@@ -16,7 +16,10 @@ public sealed class VirexRestClientTests
         await client.StartAsync("golden-sample", ControlRunModes.Continue);
 
         Assert.Equal(RestRoutes.ApiSystemStart, handler.RequestUri?.AbsolutePath);
-        Assert.Equal("""{"condition":"golden-sample","runMode":"continue"}""", handler.RequestBody);
+        using var body = System.Text.Json.JsonDocument.Parse(handler.RequestBody);
+        Assert.Equal("golden-sample", body.RootElement.GetProperty("condition").GetString());
+        Assert.Equal("continue", body.RootElement.GetProperty("runMode").GetString());
+        Assert.True(Guid.TryParseExact(body.RootElement.GetProperty("requestId").GetString(), "N", out _));
     }
 
     [Fact]

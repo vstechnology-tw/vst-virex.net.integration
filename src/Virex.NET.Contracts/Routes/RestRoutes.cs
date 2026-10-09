@@ -2,6 +2,7 @@
 
 public static class RestRoutes
 {
+    public const string ApiEvents = "/api/events";
     public const string ApiOperationMode = "/api/operation-mode";
     public const string Health = "/health";
     public const string OpenApiJson = "/openapi/v1.json";

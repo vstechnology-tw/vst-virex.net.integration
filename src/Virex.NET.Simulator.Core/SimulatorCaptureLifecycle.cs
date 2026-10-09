@@ -60,5 +60,6 @@ public sealed partial class SimulatorSession
         _captureCycle?.Cancel();
         _captureCycle = null;
         _activeJobId = null;
+        _activeRequestId = null;
     }
 }

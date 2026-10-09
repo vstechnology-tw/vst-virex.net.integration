@@ -16,6 +16,15 @@ public sealed class VirexRestClient
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
 
+    public async Task<EventCatalog> GetEventCatalogAsync(CancellationToken cancellationToken = default)
+    {
+        var value = await GetQueryAsync<EventCatalog>(RestRoutes.ApiEvents, ["appId", "instanceId", "names"], cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(value.AppId) || string.IsNullOrWhiteSpace(value.InstanceId) || value.Names is null
+            || value.Names.Any(string.IsNullOrWhiteSpace) || value.Names.Distinct(StringComparer.Ordinal).Count() != value.Names.Length)
+            throw new InvalidDataException("Invalid event catalog response.");
+        return value;
+    }
+
     public Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default) =>
         GetAsync<OperationModeInfo>(RestRoutes.ApiOperationMode, cancellationToken);
 
@@ -69,7 +78,7 @@ public sealed class VirexRestClient
         PostAsync(RestRoutes.ApiSystemDeinitialize, cancellationToken);
 
     public Task<CommandResponse> StartAsync(CancellationToken cancellationToken = default) =>
-        PostAsync(RestRoutes.ApiSystemStart, cancellationToken);
+        StartAsync(new SystemStartRequest(), cancellationToken);
 
     public Task<CommandResponse> StartAsync(string? condition, CancellationToken cancellationToken = default) =>
         StartAsync(new SystemStartRequest { Condition = condition }, cancellationToken);

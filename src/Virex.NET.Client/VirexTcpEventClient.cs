@@ -5,7 +5,7 @@ using Virex.NET.Contracts;
 
 namespace Virex.NET.Client;
 
-public sealed class VirexTcpEventClient
+public sealed partial class VirexTcpEventClient
 {
     private readonly VirexClientOptions _options;
 
@@ -166,7 +166,7 @@ public sealed class VirexTcpEventClient
         }
     }
 
-    private async Task<string?> ReadFrameAsync(Stream stream, CancellationToken cancellationToken)
+    internal async Task<string?> ReadFrameAsync(Stream stream, CancellationToken cancellationToken)
     {
         var bytes = new List<byte>();
         var buffer = new byte[1];

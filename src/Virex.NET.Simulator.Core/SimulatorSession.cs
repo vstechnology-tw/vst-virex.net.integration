@@ -338,6 +338,7 @@ public sealed partial class SimulatorSession
             _activeRunProductInfo = ProductInfo.Snapshot();
             _activeRunCondition = condition;
             _activeRunInspectionMode = request.InspectionMode;
+            _activeRequestId = request.RequestId;
             _activeJobId = Guid.NewGuid().ToString("N");
             if (!PrepareCapture())
             {
@@ -360,6 +361,9 @@ public sealed partial class SimulatorSession
             var response = Accept("Start", "Started.");
             response.JobId = _activeJobId;
             response.CaptureId = _captureCycle!.CaptureId;
+            response.RequestId = _activeRequestId;
+            response.AppId = AppId;
+            response.InstanceId = InstanceId;
             return response;
         }
         finally
@@ -831,8 +835,18 @@ public sealed partial class SimulatorSession
 
     private void LogMessage(string message) => Log?.Invoke(this, message);
 
-    private void LogEvent<T>(string eventType, T payload) =>
-        LogMessage($"Event: {eventType} payload={ProtocolJson.Serialize(payload)}");
+    private void LogEvent<T>(string eventType, T payload)
+    {
+        var json = ProtocolJson.Serialize(payload);
+        LogMessage($"Event: {eventType} payload={json}");
+        var job = payload is ResultSummary result ? result.JobId : _activeJobId;
+        var capture = payload is ResultSummary summary ? summary.CaptureId
+            : payload is CaptureReadyInfo ready ? ready.CaptureId
+            : payload is CaptureCompletedInfo completed ? completed.CaptureId
+            : payload is ImageGrabbedInfo image ? image.CaptureId : _captureCycle?.CaptureId;
+        if (!_shutdownRequested)
+            EmitEvent(eventType, json, _activeRequestId, job, capture, (payload as ResultSummary)?.ResultId);
+    }
 
     private static bool Match(string value, string? filter) =>
         string.IsNullOrWhiteSpace(filter) || string.Equals(value, filter, StringComparison.OrdinalIgnoreCase);

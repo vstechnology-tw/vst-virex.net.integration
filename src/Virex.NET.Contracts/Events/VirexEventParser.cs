@@ -23,6 +23,10 @@ public static class VirexEventParser
             value.Type = type;
             switch (type)
             {
+                case "event":
+                    if (!EventEnvelopeJson.TryParse(json, out var envelope, out error)) return false;
+                    value.Envelope = envelope;
+                    break;
                 case "captureReady":
                     value.CaptureReady = CaptureEventJson.ReadReady(json);
                     break;

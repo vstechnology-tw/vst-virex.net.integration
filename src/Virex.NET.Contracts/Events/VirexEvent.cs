@@ -5,6 +5,7 @@ public sealed class VirexEvent
     public string Type { get; set; } = string.Empty;
 
     public string RawJson { get; set; } = string.Empty;
+    public EventEnvelope? Envelope { get; set; }
 
     public SystemStatus? Status { get; set; }
     public OperationModeInfo? OperationMode { get; set; }

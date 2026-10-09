@@ -40,6 +40,9 @@ public sealed class VirexClient : IDisposable
 
     public VirexMqttCommandClient MqttCommands { get; }
 
+    public Task<EventCatalog> GetEventCatalogAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetEventCatalogAsync(cancellationToken);
+
     public Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default) =>
         Rest.GetOperationModeAsync(cancellationToken);
 

@@ -18,6 +18,10 @@ internal static class OpenApiDocument
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
         {
+            [RestRoutes.ApiEvents] = new Dictionary<string, object>
+            {
+                ["get"] = Operation("List supported event names", "Exact case-sensitive producer names; App identity distinguishes instances and restarts.", Ref("EventCatalog")),
+            },
             [RestRoutes.ApiOperationMode] = new Dictionary<string, object>
             {
                 ["get"] = Operation("Get operation mode", "Independent of SystemStatus; managementEnabled is a host opt-in.", Ref("OperationModeInfo")),
@@ -62,6 +66,27 @@ internal static class OpenApiDocument
         {
             schemas = new Dictionary<string, object>
             {
+                ["EventCatalog"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["appId"] = StringSchema(),
+                    ["instanceId"] = StringSchema(),
+                    ["names"] = new { type = "array", uniqueItems = true, items = StringSchema() },
+                }, ["appId", "instanceId", "names"]),
+                ["EventEnvelope"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["type"] = new { type = "string", @enum = new[] { "event" } },
+                    ["name"] = StringSchema(),
+                    ["eventId"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
+                    ["appId"] = StringSchema(),
+                    ["instanceId"] = StringSchema(),
+                    ["connectionGeneration"] = StringSchema(),
+                    ["requestId"] = StringSchema(),
+                    ["jobId"] = StringSchema(),
+                    ["captureId"] = StringSchema(),
+                    ["resultId"] = StringSchema(),
+                    ["payload"] = new { type = "object", additionalProperties = true },
+                }, ["type", "name", "eventId", "timestamp", "appId", "instanceId", "connectionGeneration", "payload"]),
                 ["OperationModeInfo"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["mode"] = new { type = "string", @enum = new[] { OperationModes.Local, OperationModes.Remote } },
@@ -122,6 +147,8 @@ internal static class OpenApiDocument
                 }),
                 ["CommandResponse"] = ObjectSchema(new Dictionary<string, object>
                 {
+                    ["appId"] = NullableStringSchema(),
+                    ["instanceId"] = NullableStringSchema(),
                     ["jobId"] = NullableStringSchema(),
                     ["captureId"] = NullableStringSchema(),
                     ["operationMode"] = Ref("OperationModeInfo"),
@@ -139,6 +166,7 @@ internal static class OpenApiDocument
                 }),
                 ["SystemStartRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
+                    ["requestId"] = new { type = "string", minLength = 1, description = "Created before sending by the SDK; correlates racing acceptance and work events." },
                     ["condition"] = NullableStringSchema(),
                     ["runMode"] = NullableStringSchema(),
                     ["inspectionMode"] = new { type = "string", nullable = true, @enum = new[] { InspectionModes.CaptureOnly, InspectionModes.CaptureAndInspect }, description = "Optional per-start selection. Omitted/null preserves recipe behavior; independent of runMode." },

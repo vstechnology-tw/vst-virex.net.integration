@@ -75,6 +75,10 @@ public sealed class RestSimulatorServer
             {
                 await JsonAsync(context, new { status = "ok" }).ConfigureAwait(false);
             }
+            else if (path == RestRoutes.ApiEvents && context.Request.HttpMethod == "GET")
+            {
+                await JsonAsync(context, _session.GetEventCatalog()).ConfigureAwait(false);
+            }
             else if (path == RestRoutes.ApiStatus && context.Request.HttpMethod == "GET")
             {
                 await JsonAsync(context, _session.Status).ConfigureAwait(false);
