@@ -1,4 +1,4 @@
-# SystemStartRequest
+﻿# SystemStartRequest
 
 `SystemStartRequest` is the optional request body for starting a run.
 
@@ -6,8 +6,11 @@
 
 ```json
 {
+  "requestId": "work-request-1",
+  "recipeName": "RCP-A",
   "condition": "golden-sample",
-  "runMode": "continue"
+  "runMode": "continue",
+  "inspectionMode": "captureOnly"
 }
 ```
 
@@ -15,8 +18,11 @@
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
+| `requestId` | string | No | Correlates acceptance and work events. The SDK creates one before sending. |
+| `recipeName` | string | No | Catalog name of the Recipe requested for this work. Omitted or null keeps the current Recipe. This is separate from `condition`. |
 | `condition` | string | No | Start condition or related label. |
 | `runMode` | string | No | Run mode. When omitted or blank, `continue` is assumed. |
+| `inspectionMode` | string | No | Inspection policy, separate from run mode. Null uses the existing Recipe behavior. See [InspectionMode](../../inspection-mode.md). |
 
 ## Use location
 
@@ -26,3 +32,5 @@
 | TCP | Incoming `type: "start"` command frame. |
 
 See [ControlRunModes](control-run-modes.md) for allowed `runMode` values.
+
+The SDK transmits these options without preparing a Recipe itself. Acceptance does not establish capture readiness. Use the server's correlated readiness event before starting a scan. The simulator currently retains its existing Recipe behavior; this request-field addition does not simulate Recipe switching.

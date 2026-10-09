@@ -23,6 +23,24 @@ public sealed class VirexRestClientTests
     }
 
     [Fact]
+    public async Task StartAsyncPreservesRequestedRecipeWithoutOverloadingCondition()
+    {
+        var request = ProtocolJson.Deserialize<SystemStartRequest>("""{"requestId":"requested-recipe","recipeName":"RCP-A","condition":"golden-sample","inspectionMode":"captureOnly"}""");
+        var handler = new RecordingHandler("""{"accepted":true,"state":"Preparing","command":"Start","message":"Accepted."}""");
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("http://127.0.0.1:5088/") };
+        var client = new VirexRestClient(http);
+
+        await client.StartAsync(request!);
+
+        Assert.Equal(RestRoutes.ApiSystemStart, handler.RequestUri?.AbsolutePath);
+        using var body = System.Text.Json.JsonDocument.Parse(handler.RequestBody);
+        Assert.Equal("RCP-A", body.RootElement.GetProperty("recipeName").GetString());
+        Assert.Equal("golden-sample", body.RootElement.GetProperty("condition").GetString());
+        Assert.Equal("requested-recipe", body.RootElement.GetProperty("requestId").GetString());
+        Assert.Equal("captureOnly", body.RootElement.GetProperty("inspectionMode").GetString());
+    }
+
+    [Fact]
     public async Task SetProductInfoSendsProductInfoRoute()
     {
         var handler = new RecordingHandler("""{"accepted":true,"state":"Ready","command":"SetProductInfo","message":"ProductInfo updated."}""");
