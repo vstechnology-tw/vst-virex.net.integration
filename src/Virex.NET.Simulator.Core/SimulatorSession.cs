@@ -134,8 +134,7 @@ public sealed partial class SimulatorSession
             if (State == SimulatorState.Running)
             {
                 StopActiveRunTimers();
-                InvalidateCapture();
-                await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
+                await EndRunTransitionAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
                 LogMessage("Stopped. reason=Simulated acquisition fault");
             }
 
@@ -175,7 +174,7 @@ public sealed partial class SimulatorSession
             BeginRecovery(safeMessage, "Simulator", "Error", "simulated_error");
         else
             ClearRecovery();
-        Error = new ErrorInfo
+        var error = new ErrorInfo
         {
             HasError = true,
             Message = safeMessage,
@@ -188,8 +187,7 @@ public sealed partial class SimulatorSession
             RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
         };
         LogMessage("Error emitted: " + safeMessage);
-        LogEvent("errorChanged", Error);
-        ErrorChanged?.Invoke(this, Error);
+        PublishError(error);
     }
 
     public ResultSummary[] QueryResults(string? lotID, string? waferID, string? recipe) =>
@@ -315,20 +313,20 @@ public sealed partial class SimulatorSession
 
     internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
-        if (CheckOperationSource("Start", source) is { } sourceDenied) return sourceDenied;
-        if (State != SimulatorState.Ready) return Reject("Start");
+        if (CheckOperationSource("Start", source, request.RequestId) is { } sourceDenied) return sourceDenied;
+        if (State != SimulatorState.Ready) return Reject("Start", requestId: request.RequestId);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (CheckOperationSource("Start", source) is { } denied) return denied;
+            if (CheckOperationSource("Start", source, request.RequestId) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.Start))
-                return Reject("Start");
+                return Reject("Start", requestId: request.RequestId);
 
             if (!ControlRunModes.TryNormalize(request.RunMode, out var runMode))
-                return Reject("Start", CommandErrorCodes.InvalidRunMode, "Invalid run mode.");
+                return Reject("Start", CommandErrorCodes.InvalidRunMode, "Invalid run mode.", request.RequestId);
 
             if (!InspectionModes.IsValid(request.InspectionMode))
-                return Reject("Start", CommandErrorCodes.InvalidInspectionMode, "Invalid inspection mode.");
+                return Reject("Start", CommandErrorCodes.InvalidInspectionMode, "Invalid inspection mode.", request.RequestId);
 
             var condition = NormalizeCondition(request.Condition);
             if (condition.Length > 0)
@@ -343,7 +341,7 @@ public sealed partial class SimulatorSession
             if (!PrepareCapture())
             {
                 InvalidateCapture();
-                return Reject("Start", CommandErrorCodes.CapturePreparationFailed, "Simulated source preparation failed.");
+                return Reject("Start", CommandErrorCodes.CapturePreparationFailed, "Simulated source preparation failed.", request.RequestId);
             }
             await FireAsync(SimulatorTrigger.Start).ConfigureAwait(false);
             AnnounceCaptureReady();
@@ -390,8 +388,7 @@ public sealed partial class SimulatorSession
     {
         if (!CanFire(SimulatorTrigger.Stop)) return Reject("Stop");
         StopActiveRunTimers();
-        InvalidateCapture();
-        await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
+        await EndRunTransitionAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
         LogMessage(string.IsNullOrWhiteSpace(request.Reason) ? "Stopped." : "Stopped. reason=" + request.Reason);
         return Accept("Stop", "Stopped.");
     }
@@ -423,14 +420,12 @@ public sealed partial class SimulatorSession
                 StopActiveRunTimers();
                 if (!EmitCapture())
                 {
-                    await FireAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
-                    InvalidateCapture();
+                    await EndRunTransitionAsync(SimulatorTrigger.Stop).ConfigureAwait(false);
                     return Accept(command, "Run completed with errors.");
                 }
             }
 
-            await FireAsync(trigger).ConfigureAwait(false);
-            InvalidateCapture();
+            await EndRunTransitionAsync(trigger).ConfigureAwait(false);
             return Accept(command, command + ".");
         }
         finally
@@ -534,7 +529,7 @@ public sealed partial class SimulatorSession
     private void SetError(string? message)
     {
         var hasError = !string.IsNullOrWhiteSpace(message);
-        Error = new ErrorInfo
+        PublishError(new ErrorInfo
         {
             HasError = hasError,
             Message = hasError ? message : null,
@@ -545,8 +540,20 @@ public sealed partial class SimulatorSession
             RecoverySource = RecoveryActionFor(State) is null ? null : _recoverySource,
             RecoveryPhase = RecoveryActionFor(State) is null ? null : _recoveryPhase,
             RecoveryDetails = RecoveryActionFor(State) is null ? null : _recoveryDetails,
-        };
-        ErrorChanged?.Invoke(this, Error);
+        });
+    }
+
+    private void PublishError(ErrorInfo next)
+    {
+        lock (_eventGate)
+        {
+            // One actual public value change feeds both generic and typed transports.
+            var changed = ProtocolJson.Serialize(Error) != ProtocolJson.Serialize(next);
+            Error = next;
+            if (!changed) return;
+            LogEvent("errorChanged", next);
+            ErrorChanged?.Invoke(this, next);
+        }
     }
 
     private void BeginRecovery(
@@ -839,13 +846,21 @@ public sealed partial class SimulatorSession
     {
         var json = ProtocolJson.Serialize(payload);
         LogMessage($"Event: {eventType} payload={json}");
-        var job = payload is ResultSummary result ? result.JobId : _activeJobId;
+        if (payload is CommandResponse response)
+        {
+            // A rejected command has its own scope; it never borrows an active run.
+            if (!_shutdownRequested)
+                EmitEvent(eventType, json, response.RequestId, response.JobId, response.CaptureId);
+            return;
+        }
+        var work = _terminalEventScope ?? SnapshotActiveWork();
+        var job = payload is ResultSummary result ? result.JobId : work?.JobId;
         var capture = payload is ResultSummary summary ? summary.CaptureId
             : payload is CaptureReadyInfo ready ? ready.CaptureId
             : payload is CaptureCompletedInfo completed ? completed.CaptureId
-            : payload is ImageGrabbedInfo image ? image.CaptureId : _captureCycle?.CaptureId;
+            : payload is ImageGrabbedInfo image ? image.CaptureId : work?.CaptureId;
         if (!_shutdownRequested)
-            EmitEvent(eventType, json, _activeRequestId, job, capture, (payload as ResultSummary)?.ResultId);
+            EmitEvent(eventType, json, work?.RequestId, job, capture, (payload as ResultSummary)?.ResultId);
     }
 
     private static bool Match(string value, string? filter) =>

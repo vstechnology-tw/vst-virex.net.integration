@@ -73,17 +73,17 @@ public sealed partial class SimulatorSession
     public Task<CommandResponse> StopFromSourceAsync(SystemStopRequest request, OperationSource source, CancellationToken cancellationToken = default) =>
         HandleStopAsync(request, cancellationToken, source);
 
-    private CommandResponse? CheckOperationSource(string command, OperationSource source)
+    private CommandResponse? CheckOperationSource(string command, OperationSource source, string? requestId = null)
     {
         if (_shutdownRequested)
-            return Reject(command, CommandErrorCodes.InvalidState, "Simulator host is shutting down.");
+            return Reject(command, CommandErrorCodes.InvalidState, "Simulator host is shutting down.", requestId);
 
         if (source is not OperationSource.Local and not OperationSource.External)
-            return Reject(command, CommandErrorCodes.InvalidOperationSource, "Invalid operation source.");
+            return Reject(command, CommandErrorCodes.InvalidOperationSource, "Invalid operation source.", requestId);
         if (_operationManagementEnabled &&
             ((_operationMode == OperationModes.Local && source == OperationSource.External) ||
              (_operationMode == OperationModes.Remote && source == OperationSource.Local)))
-            return Reject(command, CommandErrorCodes.OperationNotAllowed, "Operation source is not allowed in the applied mode.");
+            return Reject(command, CommandErrorCodes.OperationNotAllowed, "Operation source is not allowed in the applied mode.", requestId);
         return null;
     }
 }

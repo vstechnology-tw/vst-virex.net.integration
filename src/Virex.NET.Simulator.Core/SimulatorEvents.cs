@@ -14,7 +14,33 @@ public sealed partial class SimulatorSession
     public string AppId { get; private set; } = "simulator";
     public string InstanceId { get; } = Guid.NewGuid().ToString("N");
     private string? _activeRequestId;
+    private string? _activeCaptureId;
+    private EventWorkScope? _terminalEventScope;
     public event EventHandler<EventEnvelope>? EventProduced;
+
+    // Metadata only: the snapshot cannot admit source callbacks or restart a capture.
+    private sealed class EventWorkScope
+    {
+        public EventWorkScope(string? requestId, string jobId, string? captureId)
+        { RequestId = requestId; JobId = jobId; CaptureId = captureId; }
+        public string? RequestId { get; }
+        public string JobId { get; }
+        public string? CaptureId { get; }
+    }
+
+    private EventWorkScope? SnapshotActiveWork() => _activeJobId is null ? null
+        : new EventWorkScope(_activeRequestId, _activeJobId, _activeCaptureId);
+
+    // Called under the session gate. Invalidate first; expose identity only while producing
+    // the terminal transition, then discard it before a subsequent work can be admitted.
+    private async Task EndRunTransitionAsync(SimulatorTrigger trigger)
+    {
+        var ending = SnapshotActiveWork();
+        InvalidateCapture();
+        _terminalEventScope = ending;
+        try { await FireAsync(trigger).ConfigureAwait(false); }
+        finally { _terminalEventScope = null; }
+    }
 
     public EventCatalog GetEventCatalog()
     {

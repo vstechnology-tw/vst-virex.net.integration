@@ -10,6 +10,119 @@ namespace Virex.NET.Contracts.Tests;
 
 public sealed class EventSubscriptionTests
 {
+    [Theory]
+    [InlineData("emitted")]
+    [InlineData("acquisition")]
+    public async Task ErrorProducerPublishesFaultAndRecoveryClearExactlyOnceThroughTcp(string producer)
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.Session.ConfigureEvents("synthetic-app", ["test.Barrier"]);
+        await fixture.Client.InitializeAsync();
+        var observed = new ConcurrentQueue<EventEnvelope>();
+        var drained = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["errorChanged", "test.Barrier"], value =>
+        {
+            if (value.Name == "test.Barrier") drained.TrySetResult(); else observed.Enqueue(value);
+        });
+        try
+        {
+            if (producer == "acquisition")
+            {
+                fixture.Session.ConfigureDeinitializeFailures(1);
+                await fixture.Client.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue, InspectionMode = InspectionModes.CaptureOnly });
+                Assert.False((await fixture.Session.SimulateAcquisitionFaultAsync("synthetic recovery fault")).Accepted);
+                Assert.Equal(SystemStates.Deinitializing, (await fixture.Client.GetStatusAsync()).State);
+            }
+            else
+            {
+                fixture.Session.EmitError("synthetic error");
+                fixture.Session.EmitError("synthetic error"); // No change: must not duplicate the transition.
+            }
+            Assert.True((await fixture.Client.DeinitializeAsync()).Accepted);
+            fixture.Session.EmitEvent("test.Barrier", "{}");
+            await drained.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Equal(new[] { true, false }, observed.Select(value => value.Payload.GetProperty("hasError").GetBoolean()));
+            Assert.False(observed.Last().Payload.TryGetProperty("message", out _));
+            Assert.False((await fixture.Client.GetErrorAsync()).HasError);
+        }
+        finally { await subscription.CloseAsync(); }
+    }
+    [Theory]
+    [InlineData("stop")]
+    [InlineData("fault")]
+    [InlineData("complete")]
+    public async Task TerminalEventsRetainWorkScopeAfterCaptureInvalidationAndLateTimersCannotCompleteStoppedWork(string ending)
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.Session.ConfigureEvents("synthetic-app", ["test.Barrier"]);
+        await fixture.Client.InitializeAsync();
+        var started = await fixture.Client.StartAsync(new SystemStartRequest { RequestId = "terminal-request", RunMode = ControlRunModes.Continue, InspectionMode = InspectionModes.CaptureOnly });
+        var observed = new ConcurrentQueue<EventEnvelope>();
+        var drained = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["runCompleted", "captureCompleted", "resultCreated", "test.Barrier"], value =>
+        {
+            if (value.Name == "test.Barrier") drained.TrySetResult(); else observed.Enqueue(value);
+        }, scope: new EventSubscriptionScope { RequestId = started.RequestId, JobId = started.JobId });
+        try
+        {
+            if (ending == "stop") await fixture.Client.StopAsync();
+            else if (ending == "fault") await fixture.Session.SimulateAcquisitionFaultAsync("synthetic acquisition fault");
+            else await fixture.Session.RunCompletedAsync();
+            // Cross the cancelled timer's former deadline, then drain the actual TCP stream.
+            await Task.Delay(1200);
+            fixture.Session.EmitEvent("test.Barrier", "{}", requestId: started.RequestId, jobId: started.JobId);
+            await drained.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            var terminal = Assert.Single(observed.Where(value => value.Name == "runCompleted"));
+            Assert.Equal(started.RequestId, terminal.RequestId);
+            Assert.Equal(started.JobId, terminal.JobId);
+            Assert.Equal(started.CaptureId, terminal.CaptureId);
+            Assert.Equal(ending == "complete" ? 1 : 0, observed.Count(value => value.Name == "captureCompleted"));
+            Assert.DoesNotContain(observed, value => value.Name == "resultCreated");
+            Assert.Equal(ending == "fault" ? SystemStates.Uninitialized : SystemStates.Ready, (await fixture.Client.GetStatusAsync()).State);
+        }
+        finally { await subscription.CloseAsync(); }
+    }
+    [Fact]
+    public async Task RejectedStartUsesItsOwnRequestAndDoesNotLeakRunningWorkIntoScopedSubscribers()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.Session.ConfigureEvents("synthetic-app", ["test.Barrier"]);
+        await fixture.Client.InitializeAsync();
+        var aEvents = new ConcurrentQueue<EventEnvelope>();
+        var bEvents = new ConcurrentQueue<EventEnvelope>();
+        var aDrained = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var bDrained = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var a = await fixture.Client.TcpEvents.SubscribeAsync(["commandRejected", "test.Barrier"], value =>
+        {
+            if (value.Name == "test.Barrier") aDrained.TrySetResult(); else aEvents.Enqueue(value);
+        }, scope: new EventSubscriptionScope { RequestId = "request-A" });
+        var b = await fixture.Client.TcpEvents.SubscribeAsync(["commandRejected", "test.Barrier"], value =>
+        {
+            if (value.Name == "test.Barrier") bDrained.TrySetResult(); else bEvents.Enqueue(value);
+        }, scope: new EventSubscriptionScope { RequestId = "request-B" });
+        try
+        {
+            var accepted = await fixture.Client.StartAsync(new SystemStartRequest { RequestId = "request-A", RunMode = ControlRunModes.Continue, InspectionMode = InspectionModes.CaptureOnly });
+            var rejected = await Assert.ThrowsAsync<VirexClientException>(() => fixture.Client.StartAsync(new SystemStartRequest { RequestId = "request-B" }));
+            Assert.Equal(409, rejected.StatusCode);
+            fixture.Session.EmitEvent("test.Barrier", "{}", requestId: "request-A");
+            fixture.Session.EmitEvent("test.Barrier", "{}", requestId: "request-B");
+            await Task.WhenAll(aDrained.Task, bDrained.Task).WaitAsync(TimeSpan.FromSeconds(3));
+            var response = ProtocolJson.Deserialize<CommandResponse>(rejected.ResponseBody)!;
+            Assert.Equal("request-B", response.RequestId);
+            Assert.Null(response.JobId);
+            Assert.Null(response.CaptureId);
+            Assert.Empty(aEvents);
+            var evt = Assert.Single(bEvents);
+            Assert.Equal("request-B", evt.RequestId);
+            Assert.Null(evt.JobId);
+            Assert.Null(evt.CaptureId);
+            Assert.Equal("request-B", evt.Payload.GetProperty("requestId").GetString());
+            Assert.NotNull(accepted.JobId);
+            Assert.Equal(SystemStates.Running, (await fixture.Client.GetStatusAsync()).State);
+        }
+        finally { await a.CloseAsync(); await b.CloseAsync(); }
+    }
     [Fact]
     public async Task CloseJoinsActiveAndQueuedUnsubscribeBeforeReleasingSynchronizationResources()
     {
