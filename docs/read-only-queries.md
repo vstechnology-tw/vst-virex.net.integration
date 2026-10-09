@@ -50,7 +50,8 @@ Non-200 responses use `QueryError`, e.g. `{"errorCode":"no_current_recipe","mess
 | 405 | `invalid_query` | GET only |
 | 409 | `no_current_recipe` | No recipe loaded, or unloaded |
 | 409 | `query_not_ready` | Snapshot unavailable during loading, update or deinitialization/recovery |
-| 404 | `result_not_found` | Unknown ID, not committed/published, or outside retained history; no existence claim |
+| 404 | `result_not_found` | Unknown ID or outside retained history; no existence claim |
+| 409 | `result_not_committed` | Known retained capture without a committed result (2.4.0 candidate) |
 | 410 | `result_deleted` | Indexed committed result artifact deleted |
 | 503 | `query_failed` | Snapshot read failed, corrupt or inconsistent artifact |
 

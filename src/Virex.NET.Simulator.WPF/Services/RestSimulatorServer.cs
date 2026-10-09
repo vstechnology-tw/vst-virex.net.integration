@@ -100,6 +100,21 @@ public sealed class RestSimulatorServer
             {
                 await JsonAsync(context, _session.ProductInfo).ConfigureAwait(false);
             }
+            else if (path == RestRoutes.ApiDataSourceValue)
+            {
+                if (context.Request.HttpMethod != "GET")
+                {
+                    context.Response.Headers["Allow"] = "GET";
+                    await QueryErrorAsync(context, 405, QueryErrorCodes.InvalidQuery, "This endpoint supports GET only.").ConfigureAwait(false);
+                }
+                else if (context.Request.QueryString.AllKeys.Any(key => key is not "name" and not "resultId") ||
+                    context.Request.QueryString.GetValues("name")?.Length != 1 ||
+                    context.Request.QueryString.GetValues("resultId")?.Length > 1)
+                    await QueryErrorAsync(context, 400, QueryErrorCodes.InvalidQuery, "Supply one exact name and at most one explicit resultId.").ConfigureAwait(false);
+                else
+                    await JsonAsync(context, await _session.ReadDataSourceAsync(context.Request.QueryString["name"]!,
+                        context.Request.QueryString["resultId"]).ConfigureAwait(false)).ConfigureAwait(false);
+            }
             else if (IsDetailQuery(path))
             {
                 if (context.Request.HttpMethod != "GET")
@@ -117,6 +132,10 @@ public sealed class RestSimulatorServer
                     await JsonAsync(context, _session.GetCurrentRecipe()).ConfigureAwait(false);
                 else if (path == RestRoutes.ApiCurrentRecipeParameters)
                     await JsonAsync(context, _session.GetCurrentRecipeParameters()).ConfigureAwait(false);
+                else if (path == RestRoutes.ApiDataSources)
+                    await JsonAsync(context, await _session.GetDataSourcesAsync().ConfigureAwait(false)).ConfigureAwait(false);
+                else if (path == RestRoutes.ApiCurrentResult)
+                    await JsonAsync(context, await _session.GetCurrentResultAsync().ConfigureAwait(false)).ConfigureAwait(false);
                 else
                 {
 #if NET10_0_OR_GREATER
@@ -215,6 +234,7 @@ public sealed class RestSimulatorServer
     }
 
     private static bool IsDetailQuery(string path) =>
+        path == RestRoutes.ApiDataSources || path == RestRoutes.ApiDataSourceValue || path == RestRoutes.ApiCurrentResult ||
         path == RestRoutes.ApiRecipes || path == RestRoutes.ApiCurrentRecipe ||
         path == RestRoutes.ApiCurrentRecipeParameters || path.StartsWith(RestRoutes.ApiResults + "/", StringComparison.Ordinal);
 

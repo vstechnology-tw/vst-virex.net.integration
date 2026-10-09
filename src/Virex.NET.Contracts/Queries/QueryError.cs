@@ -9,6 +9,12 @@ public sealed class QueryError
 
 public static class QueryErrorCodes
 {
+    public const string UnknownSource = "unknown_source";
+    public const string NoCurrentResult = "no_current_result";
+    public const string ResultNotCommitted = "result_not_committed";
+    public const string SourceUnavailable = "source_unavailable";
+    public const string SourceValueMissing = "source_value_missing";
+    public const string ApiFailed = "api_failed";
     public const string NoCurrentRecipe = "no_current_recipe";
     public const string QueryNotReady = "query_not_ready";
     public const string ResultNotFound = "result_not_found";

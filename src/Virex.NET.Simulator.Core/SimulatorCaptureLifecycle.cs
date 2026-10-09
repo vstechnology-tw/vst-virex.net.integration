@@ -40,6 +40,7 @@ public sealed partial class SimulatorSession
         var captureId = $"{SanitizePathSegment(info.LotIDOr, "LOT-UNKNOWN")}-{SanitizePathSegment(info.WaferIDOr, "WAFER-UNKNOWN")}-{SanitizePathSegment(info.SlotOr, "SLOT-UNKNOWN")}-{DateTime.Now:yyyyMMdd_HHmmss}_{sequence:000}";
         _captureCycle = new SimulatorCaptureCycle(_activeJobId!, captureId, _captureSources);
         _activeCaptureId = captureId;
+        TrackUncommittedResult(captureId);
         return true;
     }
 

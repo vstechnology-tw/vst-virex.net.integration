@@ -42,6 +42,9 @@ Default simulator endpoints:
 
 ```text
 GET  /api/status
+GET  /api/data-sources
+GET  /api/data-sources/value?name={name}&resultId={explicitResultId}
+GET  /api/data-sources/current-result
 GET  /api/error
 GET  /api/product-info
 POST /api/product-info
@@ -83,6 +86,7 @@ Start here:
 - [System State Machine](docs/state-machine.md)
 - [Command Completion and Errors (2.2.3)](docs/communication-errors.md)
 - [Recipe and Result Queries](docs/read-only-queries.md)
+- [Live and Result Data Sources](docs/data-sources.md)
 - [Per-start Inspection Mode](docs/inspection-mode.md)
 - [Local and Remote Operation Mode](docs/operation-mode.md)
 - [Capture Lifecycle](docs/capture-lifecycle.md)

@@ -111,7 +111,7 @@ public sealed class ReadOnlyQueryTests : IAsyncLifetime
         var first = await CompleteResult();
         Assert.NotNull(uncommitted);
         var pendingFailure = await Assert.ThrowsAsync<SimulatorQueryException>(() => uncommitted!);
-        Assert.Equal(QueryErrorCodes.ResultNotFound, pendingFailure.ErrorCode);
+        Assert.Equal(QueryErrorCodes.ResultNotCommitted, pendingFailure.ErrorCode);
         var second = await CompleteResult();
         Assert.NotEqual(first.ResultId, second.ResultId);
         var listed = await _client.QueryResultsAsync("SAME", "SAME");

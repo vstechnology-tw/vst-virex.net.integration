@@ -343,6 +343,8 @@ public sealed partial class SimulatorSession
                 InvalidateCapture();
                 return Reject("Start", CommandErrorCodes.CapturePreparationFailed, "Simulated source preparation failed.", request.RequestId);
             }
+            // Admission under _gate: rejected requests leave the preceding current result intact.
+            _currentResultId = null;
             await FireAsync(SimulatorTrigger.Start).ConfigureAwait(false);
             AnnounceCaptureReady();
             if (runMode == ControlRunModes.SingleRun)
@@ -707,8 +709,14 @@ public sealed partial class SimulatorSession
         lock (_results)
         {
             _results.Insert(0, result);
+            _resultRequestIds[result.ResultId] = _activeRequestId;
+            _uncommittedResultIds.Remove(result.ResultId);
+            if (_activeJobId == result.JobId) _currentResultId = result.ResultId;
             if (_results.Count > 100)
+            {
+                _resultRequestIds.Remove(_results[_results.Count - 1].ResultId);
                 _results.RemoveAt(_results.Count - 1);
+            }
         }
         LogEvent("resultCreated", result);
 

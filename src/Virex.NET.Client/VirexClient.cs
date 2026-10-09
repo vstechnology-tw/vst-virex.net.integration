@@ -43,6 +43,15 @@ public sealed class VirexClient : IDisposable
     public Task<EventCatalog> GetEventCatalogAsync(CancellationToken cancellationToken = default) =>
         Rest.GetEventCatalogAsync(cancellationToken);
 
+    public Task<DataSourceCatalog> GetDataSourcesAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetDataSourcesAsync(cancellationToken);
+
+    public Task<ResultReference> GetCurrentResultAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetCurrentResultAsync(cancellationToken);
+
+    public Task<DataSourceValue> ReadDataSourceAsync(string name, string? resultId = null, CancellationToken cancellationToken = default) =>
+        Rest.ReadDataSourceAsync(name, resultId, cancellationToken);
+
     public Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default) =>
         Rest.GetOperationModeAsync(cancellationToken);
 

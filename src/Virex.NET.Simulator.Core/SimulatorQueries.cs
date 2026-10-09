@@ -73,13 +73,19 @@ public sealed partial class SimulatorSession
             throw new SimulatorQueryException(400, QueryErrorCodes.InvalidQuery, "A result identifier is required.");
 
         string path;
+        string? jobId;
+        string captureId;
         lock (_results)
         {
             var result = _results.FirstOrDefault(x => string.Equals(x.ResultId, resultId, StringComparison.Ordinal));
             if (result is null)
-                throw new SimulatorQueryException(404, QueryErrorCodes.ResultNotFound, "The result is unknown, uncommitted, or outside retained history.");
+                throw _uncommittedResultIds.Contains(resultId)
+                    ? new SimulatorQueryException(409, QueryErrorCodes.ResultNotCommitted, "This capture has no committed result.")
+                    : new SimulatorQueryException(404, QueryErrorCodes.ResultNotFound, "The result is unknown or outside retained history.");
             // Only an indexed result may select a file. The request never becomes a filesystem path.
             path = result.ResultPath;
+            jobId = result.JobId;
+            captureId = result.CaptureId;
         }
 
         try
@@ -90,7 +96,8 @@ public sealed partial class SimulatorSession
                 throw new JsonException("Missing result detail.");
             var detail = QueryPayloadJson.ReadResultDetail(element);
             if (detail is null || detail.SchemaVersion != ResultDetail.CurrentSchemaVersion ||
-                detail.ResultId != resultId || detail.Summary is null || detail.Summary.ResultId != resultId || detail.Findings is null)
+                detail.ResultId != resultId || detail.Summary is null || detail.Summary.ResultId != resultId ||
+                detail.Summary.JobId != jobId || detail.Summary.CaptureId != captureId || detail.Findings is null)
                 throw new JsonException("Invalid result detail identity or schema.");
             return detail;
         }

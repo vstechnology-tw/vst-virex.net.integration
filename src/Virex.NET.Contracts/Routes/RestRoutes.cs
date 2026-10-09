@@ -2,6 +2,17 @@
 
 public static class RestRoutes
 {
+    public const string ApiDataSources = "/api/data-sources";
+    public const string ApiDataSourceValue = "/api/data-sources/value";
+    public const string ApiCurrentResult = "/api/data-sources/current-result";
+
+    public static string DataSourceValue(string name, string? resultId = null)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("A source name is required.", nameof(name));
+        if (resultId is not null && string.IsNullOrWhiteSpace(resultId)) throw new ArgumentException("An explicit result identifier must not be blank.", nameof(resultId));
+        return ApiDataSourceValue + "?name=" + Uri.EscapeDataString(name)
+            + (resultId is null ? string.Empty : "&resultId=" + Uri.EscapeDataString(resultId));
+    }
     public const string ApiEvents = "/api/events";
     public const string ApiOperationMode = "/api/operation-mode";
     public const string Health = "/health";

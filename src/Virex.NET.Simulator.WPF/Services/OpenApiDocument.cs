@@ -18,6 +18,9 @@ internal static class OpenApiDocument
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
         {
+            [RestRoutes.ApiDataSources] = new Dictionary<string, object> { ["get"] = DataSourceQueryOperation("Discover source names, kinds, JSON types and current-work availability", "DataSourceCatalog") },
+            [RestRoutes.ApiDataSourceValue] = new Dictionary<string, object> { ["get"] = DataSourceQueryOperation("Read one exact live source or explicitly selected committed result source", "DataSourceValue", valueQuery: true) },
+            [RestRoutes.ApiCurrentResult] = new Dictionary<string, object> { ["get"] = DataSourceQueryOperation("Read the current committed result identity; no implicit result value", "ResultReference") },
             [RestRoutes.ApiEvents] = new Dictionary<string, object>
             {
                 ["get"] = Operation("List supported event names", "Exact case-sensitive producer names; App identity distinguishes instances and restarts.", Ref("EventCatalog")),
@@ -66,6 +69,32 @@ internal static class OpenApiDocument
         {
             schemas = new Dictionary<string, object>
             {
+                ["DataSourceCatalog"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
+                    ["sources"] = new { type = "array", items = Ref("DataSourceDescriptor") },
+                }, ["appId", "instanceId", "timestamp", "sources"]),
+                ["DataSourceDescriptor"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["name"] = StringSchema(),
+                    ["kind"] = new { type = "string", @enum = new[] { DataSourceKinds.Live, DataSourceKinds.Result } },
+                    ["type"] = new { type = "string", @enum = new[] { "string", "boolean", "integer", "number", "object", "array" } },
+                    ["availability"] = new { type = "string", @enum = new[] { DataSourceAvailability.Available, DataSourceAvailability.NoCurrentResult, DataSourceAvailability.Unavailable, DataSourceAvailability.MissingValue } },
+                }, ["name", "kind", "type", "availability"]),
+                ["DataSourceValue"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
+                    ["name"] = StringSchema(), ["kind"] = new { type = "string", @enum = new[] { DataSourceKinds.Live, DataSourceKinds.Result } },
+                    ["type"] = new { type = "string", @enum = new[] { "string", "boolean", "integer", "number", "object", "array" } },
+                    ["state"] = StringSchema(), ["requestId"] = StringSchema(), ["jobId"] = StringSchema(),
+                    ["captureId"] = StringSchema(), ["resultId"] = StringSchema(),
+                    ["value"] = new { description = "Owned JSON snapshot matching the declared type. Null is a failure. Result sources require jobId, captureId and the exact requested resultId." },
+                }, ["appId", "instanceId", "timestamp", "name", "kind", "type", "state", "value"]),
+                ["ResultReference"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
+                    ["requestId"] = StringSchema(), ["jobId"] = StringSchema(), ["captureId"] = StringSchema(), ["resultId"] = StringSchema(),
+                }, ["appId", "instanceId", "timestamp", "jobId", "captureId", "resultId"]),
                 ["EventCatalog"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["appId"] = StringSchema(),
@@ -267,11 +296,32 @@ internal static class OpenApiDocument
         {
             ["200"] = JsonResponse("Snapshot; an empty findings array is valid.", Ref(schema)),
             ["400"] = JsonResponse("invalid_query: query parameters or empty identifier.", Ref("QueryError")),
-            ["404"] = JsonResponse("result_not_found: unknown, uncommitted or outside retained history.", Ref("QueryError")),
+            ["404"] = JsonResponse("result_not_found: unknown or outside retained history.", Ref("QueryError")),
             ["405"] = JsonResponse("invalid_query: GET only; Allow: GET.", Ref("QueryError")),
-            ["409"] = JsonResponse("no_current_recipe or query_not_ready: no loaded recipe or snapshot unavailable during transition.", Ref("QueryError")),
+            ["409"] = JsonResponse("no_current_recipe, query_not_ready or result_not_committed: unavailable snapshot or known capture without a committed result.", Ref("QueryError")),
             ["410"] = JsonResponse("result_deleted: indexed committed artifact deleted.", Ref("QueryError")),
             ["503"] = JsonResponse("query_failed: snapshot read failed, corrupt or inconsistent artifact.", Ref("QueryError")),
+        },
+    };
+
+    private static object DataSourceQueryOperation(string summary, string schema, bool valueQuery = false) => new
+    {
+        summary,
+        description = "Read-only. Names and ResultIds are exact case-sensitive strings. Result values require explicit resultId; no latest-result fallback. Other query parameters and writes are rejected.",
+        parameters = valueQuery ? new object[]
+        {
+            new { name = "name", @in = "query", required = true, schema = StringSchema() },
+            new { name = "resultId", @in = "query", required = false, schema = StringSchema(), description = "Required for a result source; forbidden for a live source." },
+        } : Array.Empty<object>(),
+        responses = new Dictionary<string, object>
+        {
+            ["200"] = JsonResponse("Typed snapshot; empty findings and real zero values are valid.", Ref(schema)),
+            ["400"] = JsonResponse("invalid_query", Ref("QueryError")),
+            ["404"] = JsonResponse("unknown_source or result_not_found", Ref("QueryError")),
+            ["405"] = JsonResponse("invalid_query; Allow: GET", Ref("QueryError")),
+            ["409"] = JsonResponse("no_current_result, result_not_committed, source_unavailable or source_value_missing", Ref("QueryError")),
+            ["410"] = JsonResponse("result_deleted", Ref("QueryError")),
+            ["503"] = JsonResponse("query_failed", Ref("QueryError")),
         },
     };
 

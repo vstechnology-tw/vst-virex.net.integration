@@ -16,6 +16,50 @@ public sealed class VirexRestClient
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
 
+    /// <summary>Reads exact source names and current-work availability. Throws VirexQueryException on API/response failures.</summary>
+    public Task<DataSourceCatalog> GetDataSourcesAsync(CancellationToken cancellationToken = default) =>
+        GetDataSourceQueryAsync<DataSourceCatalog>(RestRoutes.ApiDataSources, ["appId", "instanceId", "timestamp", "sources"], cancellationToken, DataSourceJson.ReadCatalog);
+
+    /// <summary>Reads current committed identity only, or no_current_result. Reading a value still requires explicit ResultId.</summary>
+    public Task<ResultReference> GetCurrentResultAsync(CancellationToken cancellationToken = default) =>
+        GetDataSourceQueryAsync<ResultReference>(RestRoutes.ApiCurrentResult, ["appId", "instanceId", "timestamp", "jobId", "captureId", "resultId"], cancellationToken, DataSourceJson.ReadResultReference);
+
+    /// <summary>
+    /// Reads an exact source name without a whitelist. Result sources require resultId; live sources forbid it.
+    /// Returns an owned JSON snapshot. Concurrent calls use HttpClient safely; caller cancellation is preserved.
+    /// Local blank selectors throw ArgumentException; typed query/API failures throw VirexQueryException.
+    /// </summary>
+    public Task<DataSourceValue> ReadDataSourceAsync(string name, string? resultId = null, CancellationToken cancellationToken = default) =>
+        GetDataSourceQueryAsync<DataSourceValue>(RestRoutes.DataSourceValue(name, resultId), ["appId", "instanceId", "name", "kind", "type", "state", "timestamp", "value"], cancellationToken, root =>
+        {
+            var value = DataSourceJson.ReadValue(root);
+            if (value.Name != name || value.ResultId != resultId || (value.Kind == DataSourceKinds.Result && resultId is null)
+                || (value.Kind == DataSourceKinds.Live && resultId is not null))
+                throw new JsonException("The source response does not match the exact query identity.");
+            return value;
+        });
+
+    private async Task<T> GetDataSourceQueryAsync<T>(string route, string[] required, CancellationToken cancellationToken, Func<JsonElement, T>? reader = null)
+    {
+        try { return await GetQueryAsync<T>(route, required, cancellationToken, reader).ConfigureAwait(false); }
+        catch (VirexClientException ex)
+        {
+            QueryError? error = null;
+            try { error = ProtocolJson.Deserialize<QueryError>(ex.ResponseBody); } catch (JsonException) { }
+            if (error is null || string.IsNullOrWhiteSpace(error.ErrorCode) || string.IsNullOrWhiteSpace(error.Message))
+                error = new QueryError { ErrorCode = QueryErrorCodes.ApiFailed, Message = "The API did not return a typed query failure." };
+            throw new VirexQueryException(ex.StatusCode, error, ex.ResponseBody, ex);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidOperationException)
+        {
+            throw new VirexQueryException(0, new QueryError { ErrorCode = QueryErrorCodes.ApiFailed, Message = "The API query or response failed." }, innerException: ex);
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new VirexQueryException(0, new QueryError { ErrorCode = QueryErrorCodes.ApiFailed, Message = "The API query timed out or was cancelled by the transport." }, innerException: ex);
+        }
+    }
+
     public async Task<EventCatalog> GetEventCatalogAsync(CancellationToken cancellationToken = default)
     {
         var value = await GetQueryAsync<EventCatalog>(RestRoutes.ApiEvents, ["appId", "instanceId", "names"], cancellationToken).ConfigureAwait(false);
