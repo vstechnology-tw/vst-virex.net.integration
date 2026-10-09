@@ -33,4 +33,4 @@
 
 許可される `runMode` 値については、[ControlRunModes](control-run-modes.ja.md) を参照してください。
 
-SDK は選択項目を送信し、Recipe 自体を準備しません。受理応答は撮影準備完了を示しません。スキャン前にサーバーの該当作業の準備イベントを待ってください。シミュレーターは現在、既存の Recipe 動作を維持し、このフィールド追加では Recipe 切り替えを模擬しません。
+REST SDK は選択項目を送信し、Recipe 自体を準備しません。現在 `recipeName` は REST の `StartAsync(SystemStartRequest)` で送信されます。既存の MQTT/TCP SDK メソッドはこのフィールドを送信しません。受理応答は撮影準備完了を示しません。スキャン前にサーバーの該当作業の準備イベントを待ってください。シミュレーターは現在、既存の Recipe 動作を維持し、このフィールド追加では Recipe 切り替えを模擬しません。

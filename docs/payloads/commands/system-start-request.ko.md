@@ -33,4 +33,4 @@
 
 허용되는 `runMode` 값은 [ControlRunModes](control-run-modes.ko.md)를 참조하세요.
 
-SDK는 옵션을 전송하며 Recipe를 직접 준비하지 않습니다. 수락은 촬영 준비 완료를 뜻하지 않습니다. 스캔 전에 서버의 해당 작업 준비 이벤트를 기다리세요. 시뮬레이터는 현재 기존 Recipe 동작을 유지하며 이번 필드 추가는 Recipe 전환을 시뮬레이션하지 않습니다.
+REST SDK는 옵션을 전송하며 Recipe를 직접 준비하지 않습니다. 현재 `recipeName`은 REST `StartAsync(SystemStartRequest)`로 전송됩니다. 기존 MQTT/TCP SDK 메서드는 이 필드를 전송하지 않습니다. 수락은 촬영 준비 완료를 뜻하지 않습니다. 스캔 전에 서버의 해당 작업 준비 이벤트를 기다리세요. 시뮬레이터는 현재 기존 Recipe 동작을 유지하며 이번 필드 추가는 Recipe 전환을 시뮬레이션하지 않습니다.

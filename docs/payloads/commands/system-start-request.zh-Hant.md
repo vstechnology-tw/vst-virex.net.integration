@@ -33,4 +33,4 @@
 
 允許的 `runMode` 值請看 [ControlRunModes](control-run-modes.zh-Hant.md)。
 
-SDK 傳送這些選項，本身不準備 Recipe。受理回覆不代表可以掃描；開始掃描前須等待伺服器的關聯可掃描事件。Simulator 目前沿用原有 Recipe 行為；此次欄位新增尚未模擬 Recipe 切換。
+REST SDK 傳送這些選項，本身不準備 Recipe。目前 `recipeName` 由 REST 的 `StartAsync(SystemStartRequest)` 傳送；既有 MQTT／TCP SDK 方法尚未傳送此欄位。受理回覆不代表可以掃描；開始掃描前須等待伺服器的關聯可掃描事件。Simulator 目前沿用原有 Recipe 行為；此次欄位新增尚未模擬 Recipe 切換。

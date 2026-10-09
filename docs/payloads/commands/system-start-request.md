@@ -33,4 +33,4 @@
 
 See [ControlRunModes](control-run-modes.md) for allowed `runMode` values.
 
-The SDK transmits these options without preparing a Recipe itself. Acceptance does not establish capture readiness. Use the server's correlated readiness event before starting a scan. The simulator currently retains its existing Recipe behavior; this request-field addition does not simulate Recipe switching.
+The REST SDK transmits these options without preparing a Recipe itself. `recipeName` is currently supported by the REST `StartAsync(SystemStartRequest)` method. The existing MQTT/TCP SDK methods do not transmit this field. Acceptance does not establish capture readiness. Use the server's correlated readiness event before starting a scan. The simulator currently retains its existing Recipe behavior; this request-field addition does not simulate Recipe switching.
