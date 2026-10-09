@@ -54,6 +54,20 @@ public sealed class CandidateSampleTests(ITestOutputHelper output)
         Assert.Equal(name, (await fixture.Client.ReadDataSourceAsync(name)).Name);
     }
 
+    [Theory]
+    [InlineData("?name=system.state")]
+    [InlineData("name=system.state&%6Eame=system.state")]
+    [InlineData("name=system.state&%72esultId=a&resultId=b")]
+    public async Task Utf8QueryParsingKeepsUnknownAndDuplicateKeysInvalid(string query)
+    {
+        await using var fixture = await PublicTransportFixture.CreateAsync(false);
+        using var response = await fixture.Http.GetAsync(RestRoutes.ApiDataSourceValue + "?" + query);
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+        var error = ProtocolJson.Deserialize<QueryError>(await response.Content.ReadAsStringAsync())!;
+        Assert.Equal(QueryErrorCodes.InvalidQuery, error.ErrorCode);
+        Assert.Equal(SystemStates.Uninitialized, (await fixture.Client.GetStatusAsync()).State);
+    }
+
     [Fact]
     public async Task SampleRejectsAnotherWorksResultEvenWhenThatResultIsCommitted()
     {

@@ -248,7 +248,7 @@ public sealed class RestSimulatorServer
         // Public source names are UTF-8 URL components and must not depend on the request body charset.
         var query = new NameValueCollection(StringComparer.Ordinal);
         if (rawQuery.Length == 0) return query;
-        foreach (var component in rawQuery.TrimStart('?').Split('&'))
+        foreach (var component in (rawQuery[0] == '?' ? rawQuery.Substring(1) : rawQuery).Split('&'))
         {
             var separator = component.IndexOf('=');
             var key = separator < 0 ? component : component.Substring(0, separator);
