@@ -33,3 +33,17 @@ dotnet test Virex.NET.Integration.slnx
 ```
 
 If `.NET Framework 4.8` reference assemblies or Windows desktop SDK support are missing, report the exact build failure instead of claiming success.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in this repository's GitHub Issues; use the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five canonical triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repository using root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
