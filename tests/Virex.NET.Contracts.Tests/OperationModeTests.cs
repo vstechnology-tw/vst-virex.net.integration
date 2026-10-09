@@ -25,9 +25,9 @@ public sealed class OperationModeTests
         var first = session.DeinitializeFromSourceAsync(OperationSource.Local);
         var second = session.DeinitializeFromSourceAsync(OperationSource.Local);
         Assert.Same(first, second);
-        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, (await first).ErrorCode);
-        Assert.Equal(CommandErrorCodes.RequiresDeinitialize, (await second).ErrorCode);
-        Assert.Equal(SimulatorState.Deinitializing, session.State);
+        Assert.Equal(CommandErrorCodes.CleanupFailed, (await first).ErrorCode);
+        Assert.Equal(CommandErrorCodes.CleanupFailed, (await second).ErrorCode);
+        Assert.Equal(SimulatorState.Faulted, session.State);
         Assert.True((await session.DeinitializeFromSourceAsync(OperationSource.Local)).Accepted);
         Assert.Equal(SimulatorState.Uninitialized, session.State);
     }
@@ -42,10 +42,10 @@ public sealed class OperationModeTests
         try
         {
             await session.InitializeFromSourceAsync(OperationSource.Local);
-            session.StatusChanged += (_, status) => { if (status.State == SystemStates.Ready) stopped.TrySetResult(); };
+            session.EventProduced += (_, value) => { if (value.Name == "simulator.persistenceFailed") stopped.TrySetResult(); };
             Assert.True((await session.StartFromSourceAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue }, OperationSource.Local)).Accepted);
             await stopped.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            Assert.Equal(SimulatorState.Ready, session.State);
+            Assert.Equal(SimulatorState.Faulted, session.State);
             Assert.True(session.Error.HasError);
             Assert.Empty(session.Results);
         }

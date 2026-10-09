@@ -128,9 +128,13 @@ public sealed class InspectionModeTests
         Assert.True((await fixture.StartAsync(new SystemStartRequest { InspectionMode = InspectionModes.CaptureOnly })).Accepted);
         await fixture.Session.RunCompletedAsync();
         Assert.True(fixture.Session.Error.HasError);
+        Assert.Equal(SimulatorState.Faulted, fixture.Session.State);
         Assert.Empty(fixture.Session.Results);
         File.Delete(fixture.Root);
         Directory.CreateDirectory(fixture.Root);
+        using var recovery = new VirexClient(new VirexClientOptions { RestBaseUrl = fixture.Prefix });
+        Assert.Equal(SystemStates.Uninitialized, (await recovery.ResetAsync()).State);
+        Assert.Equal(SystemStates.Ready, (await recovery.InitializeAsync()).State);
         Assert.True((await fixture.StartAsync(new SystemStartRequest())).Accepted);
         await fixture.Session.RunCompletedAsync();
         Assert.Single(fixture.Session.Results);
