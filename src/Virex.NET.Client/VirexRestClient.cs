@@ -16,6 +16,12 @@ public sealed class VirexRestClient
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
         GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
 
+    /// <summary>Reads the addressed App's actual software version using REST. Does not initialize or modify it.
+    /// Returns an owned snapshot. Concurrent calls are supported. Caller cancellation is preserved;
+    /// API, timeout and invalid-response failures throw VirexQueryException. HttpClient remains caller-owned.</summary>
+    public Task<SoftwareVersionInfo> GetSoftwareVersionAsync(CancellationToken cancellationToken = default) =>
+        GetDataSourceQueryAsync<SoftwareVersionInfo>(RestRoutes.ApiSoftwareVersion, ["version"], cancellationToken, QueryPayloadJson.ReadSoftwareVersion);
+
     /// <summary>Reads an owned Alarm catalog snapshot of exact names for TCP event subscription.
     /// Query/parse/timeout failures throw VirexQueryException; caller cancellation is preserved.
     /// Concurrent calls are supported. This client borrows HttpClient; the caller owns its disposal.</summary>

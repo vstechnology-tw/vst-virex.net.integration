@@ -49,6 +49,7 @@ internal static class OpenApiDocument
             [RestRoutes.ApiSystemStart] = new Dictionary<string, object> { ["post"] = CommandOperation("Start run", "Starts a simulated run.", Ref("SystemStartRequest")) },
             [RestRoutes.ApiSystemStop] = new Dictionary<string, object> { ["post"] = CommandOperation("Stop run", "Stops the current simulated run.", Ref("SystemStopRequest")) },
             [RestRoutes.ApiRecipes] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("List available recipes", "RecipeList") },
+            [RestRoutes.ApiSoftwareVersion] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Read the actual server software version, including build suffix", "SoftwareVersionInfo") },
             [RestRoutes.ApiCurrentRecipe] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Read the actually loaded recipe", "RecipeInfo") },
             [RestRoutes.ApiCurrentRecipeParameters] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Read one loaded parameter snapshot; compare recipe and revision across calls", "RecipeParameters") },
             [RestRoutes.ApiResultDetail] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Read the exact committed ResultId; never select by Lot/Wafer or latest result", "ResultDetail", resultDetail: true) },
@@ -77,24 +78,37 @@ internal static class OpenApiDocument
             {
                 ["AlarmCatalog"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
+                    ["appId"] = StringSchema(),
+                    ["instanceId"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
                     ["sources"] = new { type = "array", items = Ref("AlarmSourceDescriptor") },
                 }, RequiredAlarmCatalogFields),
                 ["AlarmSourceDescriptor"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["name"] = new { type = "string", description = "Exact case-sensitive event/producer name. No SDK whitelist or customer ID." },
-                    ["source"] = StringSchema(), ["category"] = new { type = "string", @enum = AlarmCategoryValues },
+                    ["source"] = StringSchema(),
+                    ["category"] = new { type = "string", @enum = AlarmCategoryValues },
                 }, RequiredAlarmSourceFields),
                 ["AlarmNotification"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["name"] = StringSchema(), ["source"] = StringSchema(), ["category"] = new { type = "string", @enum = AlarmCategoryValues },
-                    ["message"] = StringSchema(), ["state"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
-                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["requestId"] = StringSchema(),
-                    ["jobId"] = StringSchema(), ["captureId"] = StringSchema(), ["resultId"] = StringSchema(),
+                    ["name"] = StringSchema(),
+                    ["source"] = StringSchema(),
+                    ["category"] = new { type = "string", @enum = AlarmCategoryValues },
+                    ["message"] = StringSchema(),
+                    ["state"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
+                    ["appId"] = StringSchema(),
+                    ["instanceId"] = StringSchema(),
+                    ["requestId"] = StringSchema(),
+                    ["jobId"] = StringSchema(),
+                    ["captureId"] = StringSchema(),
+                    ["resultId"] = StringSchema(),
                 }, RequiredAlarmNotificationFields),
                 ["DataSourceCatalog"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
+                    ["appId"] = StringSchema(),
+                    ["instanceId"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
                     ["sources"] = new { type = "array", items = Ref("DataSourceDescriptor") },
                 }, ["appId", "instanceId", "timestamp", "sources"]),
                 ["DataSourceDescriptor"] = ObjectSchema(new Dictionary<string, object>
@@ -106,17 +120,28 @@ internal static class OpenApiDocument
                 }, ["name", "kind", "type", "availability"]),
                 ["DataSourceValue"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
-                    ["name"] = StringSchema(), ["kind"] = new { type = "string", @enum = new[] { DataSourceKinds.Live, DataSourceKinds.Result } },
+                    ["appId"] = StringSchema(),
+                    ["instanceId"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
+                    ["name"] = StringSchema(),
+                    ["kind"] = new { type = "string", @enum = new[] { DataSourceKinds.Live, DataSourceKinds.Result } },
                     ["type"] = new { type = "string", @enum = new[] { "string", "boolean", "integer", "number", "object", "array" } },
-                    ["state"] = StringSchema(), ["requestId"] = StringSchema(), ["jobId"] = StringSchema(),
-                    ["captureId"] = StringSchema(), ["resultId"] = StringSchema(),
+                    ["state"] = StringSchema(),
+                    ["requestId"] = StringSchema(),
+                    ["jobId"] = StringSchema(),
+                    ["captureId"] = StringSchema(),
+                    ["resultId"] = StringSchema(),
                     ["value"] = new { description = "Owned JSON snapshot matching the declared type. Null is a failure. Result sources require jobId, captureId and the exact requested resultId." },
                 }, ["appId", "instanceId", "timestamp", "name", "kind", "type", "state", "value"]),
                 ["ResultReference"] = ObjectSchema(new Dictionary<string, object>
                 {
-                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["timestamp"] = StringSchema("date-time"),
-                    ["requestId"] = StringSchema(), ["jobId"] = StringSchema(), ["captureId"] = StringSchema(), ["resultId"] = StringSchema(),
+                    ["appId"] = StringSchema(),
+                    ["instanceId"] = StringSchema(),
+                    ["timestamp"] = StringSchema("date-time"),
+                    ["requestId"] = StringSchema(),
+                    ["jobId"] = StringSchema(),
+                    ["captureId"] = StringSchema(),
+                    ["resultId"] = StringSchema(),
                 }, ["appId", "instanceId", "timestamp", "jobId", "captureId", "resultId"]),
                 ["EventCatalog"] = ObjectSchema(new Dictionary<string, object>
                 {
@@ -253,6 +278,10 @@ internal static class OpenApiDocument
                     ["items"] = new { type = "array", items = Ref("ResultSummary") },
                     ["count"] = IntSchema(),
                 }),
+                ["SoftwareVersionInfo"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["version"] = StringSchema(),
+                }, ["version"]),
                 ["RecipeInfo"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["recipe"] = StringSchema(),

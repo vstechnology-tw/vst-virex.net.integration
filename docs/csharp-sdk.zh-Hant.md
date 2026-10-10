@@ -1,5 +1,7 @@
 ﻿# C# SDK 指南
 
+2.4.0 開發版新增只使用 REST 的 `GetSoftwareVersionAsync()`（`GET /api/software-version`），讀取指定 App 的實際版本，包含 build 後綴。API 或回應格式失敗會拋出 `VirexQueryException`；保留呼叫端取消。Simulator 回報目前 server 組件的版本。
+
 目前 2.4.0 source 是尚未發布的候選。REST 命令／查詢、完整名稱 TCP 訂閱、即時／明確結果來源與兩段復機，請使用 [候選驗收](candidate-acceptance.zh-Hant.md) 及 `samples/csharp-sdk-24`。下方早期版本說明保留歷史能力；舊 SDK／wire 相容性不是本輪必要 gate。
 
 2.3.0 版本在 VirexRestClient 與 VirexClient 新增 `GetRecipesAsync`、`GetCurrentRecipeAsync`、`GetCurrentRecipeParametersAsync`、`GetResultDetailAsync`。詳見 [唯讀查詢 DTO、快照與錯誤語義](read-only-queries.zh-Hant.md)。
