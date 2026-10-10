@@ -1,5 +1,7 @@
 ﻿# C# SDK Guide
 
+The 2.4.0 development API adds REST-only `GetSoftwareVersionAsync()` at `GET /api/software-version`. It reads the addressed App's actual version, including its build suffix. API or invalid-response failures throw `VirexQueryException`; caller cancellation is preserved. Simulator reports its running server assembly version.
+
 The current 2.4.0 source is an unpublished candidate. Use [candidate acceptance](candidate-acceptance.md) and the `samples/csharp-sdk-24` for REST commands/queries, exact-name TCP subscriptions, live/explicit result sources and two-stage recovery. Earlier version notes below describe historical capabilities; old SDK/wire compatibility is not a required 2.4.0 gate.
 
 Version 2.3.0 adds `GetRecipesAsync`, `GetCurrentRecipeAsync`, `GetCurrentRecipeParametersAsync`, and `GetResultDetailAsync` on VirexRestClient and VirexClient. See [read-only query DTOs, snapshots and failures](read-only-queries.md).

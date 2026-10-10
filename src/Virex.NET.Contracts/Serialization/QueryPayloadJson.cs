@@ -1,10 +1,19 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Virex.NET.Contracts;
 
 /// <summary>Reads new query payloads without replacing missing nested fields with DTO defaults.</summary>
 public static class QueryPayloadJson
 {
+    public static SoftwareVersionInfo ReadSoftwareVersion(JsonElement root)
+    {
+        RequireObject(root);
+        if (root.EnumerateObject().Count(property => string.Equals(property.Name, "version", StringComparison.OrdinalIgnoreCase)) != 1)
+            throw new JsonException("Exactly one version property is required.");
+        RequireString(Property(root, "version"), nonempty: true);
+        return ProtocolJson.Deserialize<SoftwareVersionInfo>(root.GetRawText())!;
+    }
+
     public static RecipeParameters ReadRecipeParameters(JsonElement root)
     {
         RequireObject(root);

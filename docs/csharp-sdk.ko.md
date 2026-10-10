@@ -1,5 +1,7 @@
 ﻿# C# SDK 안내
 
+2.4.0 개발 API의 `GetSoftwareVersionAsync()`(`GET /api/software-version`)는 REST만 사용하며 대상 App의 실제 버전과 빌드 접미사를 읽습니다. API/응답 형식 오류는 `VirexQueryException`으로 보고하며 호출자 취소를 유지합니다. Simulator는 실행 중인 server 어셈블리 버전을 반환합니다.
+
 현재 2.4.0 소스는 미공개 후보입니다. [후보 검증(영문)](candidate-acceptance.md) 및 `samples/csharp-sdk-24`는 REST, 정확한 이름의 TCP 이벤트, 명시적 ResultId, Alarm 및 두 단계 복구를 사용합니다. 이전 SDK/wire 호환성은 2.4.0 필수 검증이 아닙니다.
 
 2.3.0 버전은 VirexClient와 VirexRestClient에 `GetRecipesAsync`, `GetCurrentRecipeAsync`, `GetCurrentRecipeParametersAsync`, `GetResultDetailAsync`를 추가합니다. [DTO 및 오류 계약(영문)](read-only-queries.md)을 참고하세요.

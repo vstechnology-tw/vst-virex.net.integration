@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 using Virex.NET.Client;
 using Virex.NET.Contracts;
@@ -7,6 +7,34 @@ namespace Virex.NET.Contracts.Tests;
 
 public sealed class ReadOnlyQueryClientTests
 {
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"version\":null}")]
+    [InlineData("{\"version\":0}")]
+    [InlineData("{\"version\":\"\"}")]
+    [InlineData("{\"version\":\" \"}")]
+    [InlineData("{\"version\":\"2.3.1\",\"Version\":\"2.4.0\"}")]
+    public async Task MissingOrInvalidVersionCannotBecomeAPlannedVersion(string body)
+    {
+        using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, body)) { BaseAddress = new Uri("http://localhost/") };
+        var failure = await Assert.ThrowsAsync<VirexQueryException>(() => new VirexRestClient(http).GetSoftwareVersionAsync());
+        Assert.Equal(QueryErrorCodes.ApiFailed, failure.ErrorCode);
+    }
+
+    [Fact]
+    public async Task VersionQueryKeepsTheActualBuildSuffixAndPreservesCallerCancellation()
+    {
+        const string version = "2.3.1+actual-build";
+        var handler = new StubHandler(HttpStatusCode.OK, ProtocolJson.Serialize(new SoftwareVersionInfo { Version = version }));
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("http://localhost/") };
+        var client = new VirexRestClient(http);
+        Assert.Equal(version, (await client.GetSoftwareVersionAsync()).Version);
+        Assert.Equal(RestRoutes.ApiSoftwareVersion, handler.RequestUri!.AbsolutePath);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetSoftwareVersionAsync(cancellation.Token));
+    }
+
     [Theory]
     [InlineData("recipes")]
     [InlineData("current")]
@@ -132,8 +160,10 @@ public sealed class ReadOnlyQueryClientTests
 
     private static Task Query(VirexRestClient client, string query, CancellationToken token = default) => query switch
     {
-        "recipes" => client.GetRecipesAsync(token), "current" => client.GetCurrentRecipeAsync(token),
-        "parameters" => client.GetCurrentRecipeParametersAsync(token), _ => client.GetResultDetailAsync("ID", token),
+        "recipes" => client.GetRecipesAsync(token),
+        "current" => client.GetCurrentRecipeAsync(token),
+        "parameters" => client.GetCurrentRecipeParametersAsync(token),
+        _ => client.GetResultDetailAsync("ID", token),
     };
 
     private sealed class StubHandler(HttpStatusCode status, string body) : HttpMessageHandler
