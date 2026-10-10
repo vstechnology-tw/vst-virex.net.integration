@@ -171,6 +171,11 @@ public sealed class MqttSimulatorPublisher :
         MqttCommandRequest request;
         try
         {
+            if (childTopic == MqttTopics.CommandSystemStop)
+            {
+                using var stopDocument = System.Text.Json.JsonDocument.Parse(payload);
+                StopPayloadJson.ValidateOrdinaryTransport(stopDocument.RootElement, mqtt: true);
+            }
             request = CommandPayloadJson.ReadObject<MqttCommandRequest>(payload) ?? new MqttCommandRequest();
         }
         catch (System.Text.Json.JsonException)

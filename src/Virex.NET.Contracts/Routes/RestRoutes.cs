@@ -21,6 +21,7 @@ public static class RestRoutes
     public const string OpenApiJson = "/openapi/v1.json";
     public const string Scalar = "/scalar";
     public const string ApiStatus = "/api/status";
+    public const string ApiSoftwareVersion = "/api/software-version";
     public const string ApiError = "/api/error";
     public const string ApiProductInfo = "/api/product-info";
     public const string ApiSystemInitialize = "/api/system/initialize";

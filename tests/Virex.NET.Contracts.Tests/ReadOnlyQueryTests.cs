@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -16,6 +16,7 @@ public sealed class ReadOnlyQueryTests : IAsyncLifetime
     private readonly RestSimulatorServer _server;
     private readonly HttpClient _http;
     private readonly VirexClient _client;
+    private readonly string _prefix;
 
     public ReadOnlyQueryTests()
     {
@@ -25,12 +26,27 @@ public sealed class ReadOnlyQueryTests : IAsyncLifetime
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
         listener.Stop();
         var prefix = "http://127.0.0.1:" + port + "/";
+        _prefix = prefix;
         _server = new RestSimulatorServer(_session, prefix);
         _http = new HttpClient();
         _client = new VirexClient(new VirexClientOptions { RestBaseUrl = prefix }, _http);
     }
 
     public Task InitializeAsync() => _server.StartAsync();
+
+    [Fact]
+    public async Task VersionIsTheActualSimulatorAssemblyVersionWithoutChangingState()
+    {
+        var before = ProtocolJson.Serialize(_session.Status);
+        var expected = typeof(RestSimulatorServer).Assembly
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .Cast<System.Reflection.AssemblyInformationalVersionAttribute>().Single().InformationalVersion;
+
+        Assert.Equal(expected, (await _client.GetSoftwareVersionAsync()).Version);
+        Assert.Equal(before, ProtocolJson.Serialize(_session.Status));
+        using var post = await _http.PostAsync(_prefix + "api/software-version", new StringContent("{}"));
+        Assert.Equal(HttpStatusCode.MethodNotAllowed, post.StatusCode);
+    }
 
     public async Task DisposeAsync()
     {

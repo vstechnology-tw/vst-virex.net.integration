@@ -1,10 +1,48 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Virex.NET.Contracts;
 
 /// <summary>Reads new query payloads without replacing missing nested fields with DTO defaults.</summary>
 public static class QueryPayloadJson
 {
+    public static SystemStatus ReadSystemStatus(JsonElement root)
+    {
+        var capability = root.EnumerateObject().Where(property => string.Equals(property.Name, "recoveryStopSupported", StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (capability.Length > 1 || capability.Length == 1 && capability[0].Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            throw new JsonException("recoveryStopSupported must be one boolean when present.");
+        var state = RequireString(UniqueProperty(root, "state"), nonempty: true);
+        if (state is not (SystemStates.Uninitialized or SystemStates.Initializing or SystemStates.Ready
+            or SystemStates.UpdatingProductInfo or SystemStates.Running or SystemStates.Deinitializing or SystemStates.Faulted))
+            throw new JsonException("Unknown App system state.");
+        return ProtocolJson.Deserialize<SystemStatus>(root.GetRawText())!;
+    }
+
+    public static OperationModeInfo ReadOperationMode(JsonElement root)
+    {
+        if (!OperationModes.IsValid(RequireString(UniqueProperty(root, "mode"), nonempty: true)))
+            throw new JsonException("Unknown operation mode.");
+        if (UniqueProperty(root, "managementEnabled").ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            throw new JsonException("managementEnabled must be a boolean.");
+        return ProtocolJson.Deserialize<OperationModeInfo>(root.GetRawText())!;
+    }
+
+    private static JsonElement UniqueProperty(JsonElement root, string name)
+    {
+        RequireObject(root);
+        var properties = root.EnumerateObject().Where(property => string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (properties.Length != 1) throw new JsonException("Exactly one query property is required: " + name);
+        return properties[0].Value;
+    }
+
+    public static SoftwareVersionInfo ReadSoftwareVersion(JsonElement root)
+    {
+        RequireObject(root);
+        if (root.EnumerateObject().Count(property => string.Equals(property.Name, "version", StringComparison.OrdinalIgnoreCase)) != 1)
+            throw new JsonException("Exactly one version property is required.");
+        RequireString(Property(root, "version"), nonempty: true);
+        return ProtocolJson.Deserialize<SoftwareVersionInfo>(root.GetRawText())!;
+    }
+
     public static RecipeParameters ReadRecipeParameters(JsonElement root)
     {
         RequireObject(root);

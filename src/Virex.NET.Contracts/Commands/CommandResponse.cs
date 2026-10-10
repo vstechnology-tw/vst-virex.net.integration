@@ -3,6 +3,9 @@
 public sealed class CommandResponse
 {
     public bool Accepted { get; set; }
+    /// <summary>True only for accepted recovery Stop after atomic barrier/revocation and joined stop cleanup.
+    /// Requires matching App/instance identity and RecoveryAction.Reset. Ordinary Stop and rejection return false.</summary>
+    public bool RecoveryStopApplied { get; set; }
     public string? AppId { get; set; }
     public string? InstanceId { get; set; }
     public string? JobId { get; set; }

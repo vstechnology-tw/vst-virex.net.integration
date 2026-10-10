@@ -48,6 +48,7 @@ public static class TcpSocketMessageParser
                 string.Equals(type, "setOperationMode", System.StringComparison.OrdinalIgnoreCase))
             {
                 message.Type = NormalizeType(type);
+                if (message.Type == "stop") StopPayloadJson.ValidateOrdinaryTransport(root, mqtt: false);
                 foreach (var property in new[] { "mode", "condition", "runMode", "inspectionMode", "reason", "lotID", "waferID", "recipe", "requestId" })
                 {
                     if (root.TryGetProperty(property, out var element)

@@ -14,7 +14,13 @@ public sealed class VirexRestClient
     }
 
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
+        GetDataSourceQueryAsync<SystemStatus>(RestRoutes.ApiStatus, ["state"], cancellationToken, QueryPayloadJson.ReadSystemStatus);
+
+    /// <summary>Reads the addressed App's actual software version using REST. Does not initialize or modify it.
+    /// Returns an owned snapshot. Concurrent calls are supported. Caller cancellation is preserved;
+    /// API, timeout and invalid-response failures throw VirexQueryException. HttpClient remains caller-owned.</summary>
+    public Task<SoftwareVersionInfo> GetSoftwareVersionAsync(CancellationToken cancellationToken = default) =>
+        GetDataSourceQueryAsync<SoftwareVersionInfo>(RestRoutes.ApiSoftwareVersion, ["version"], cancellationToken, QueryPayloadJson.ReadSoftwareVersion);
 
     /// <summary>Reads an owned Alarm catalog snapshot of exact names for TCP event subscription.
     /// Query/parse/timeout failures throw VirexQueryException; caller cancellation is preserved.
@@ -84,7 +90,7 @@ public sealed class VirexRestClient
     }
 
     public Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<OperationModeInfo>(RestRoutes.ApiOperationMode, cancellationToken);
+        GetDataSourceQueryAsync<OperationModeInfo>(RestRoutes.ApiOperationMode, ["mode", "managementEnabled"], cancellationToken, QueryPayloadJson.ReadOperationMode);
 
     public Task<CommandResponse> SetOperationModeAsync(string mode, CancellationToken cancellationToken = default) =>
         PostAsync(RestRoutes.ApiOperationMode, new SetOperationModeRequest { Mode = mode }, cancellationToken);
@@ -154,7 +160,7 @@ public sealed class VirexRestClient
         StopAsync(new SystemStopRequest { Reason = reason }, cancellationToken);
 
     public Task<CommandResponse> StopAsync(SystemStopRequest request, CancellationToken cancellationToken = default) =>
-        PostAsync(RestRoutes.ApiSystemStop, request, cancellationToken);
+        PostAsync(RestRoutes.ApiSystemStop, StopPayloadJson.ValidateAndSnapshot(request), cancellationToken);
 
     public Task<ResultList> QueryResultsAsync(
         string? lotID = null,
@@ -179,6 +185,8 @@ public sealed class VirexRestClient
         using var response = await _http.PostAsync(route.TrimStart('/'), JsonContent(payload), cancellationToken).ConfigureAwait(false);
         await EnsureSuccessAsync(response).ConfigureAwait(false);
         var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+        if (payload is SystemStopRequest { RequireReset: true } recovery)
+            return StopPayloadJson.ReadRecoveryResponse(json, recovery);
         return ProtocolJson.Deserialize<CommandResponse>(json) ?? new CommandResponse();
     }
 

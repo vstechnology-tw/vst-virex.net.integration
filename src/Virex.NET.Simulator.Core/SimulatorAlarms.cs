@@ -133,9 +133,23 @@ public sealed partial class SimulatorSession
 
     private async Task<CommandResponse> JoinDeinitializeAsResetAsync(Task<CommandResponse> cleanup)
     {
+        var generation = Volatile.Read(ref _alarmFaultGeneration);
         var response = ProtocolJson.Deserialize<CommandResponse>(ProtocolJson.Serialize(await cleanup.ConfigureAwait(false)))!;
         response.Command = "Reset";
-        return ResetResponse(response);
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (!response.Accepted) return ResetResponse(response);
+            if (CheckOperationSource("Reset", OperationSource.External) is { } denied) return ResetResponse(denied);
+            if (generation != _alarmFaultGeneration || State != SimulatorState.Uninitialized)
+                return ResetResponse(Reject("Reset", CommandErrorCodes.RequiresReset, "A newer recovery requires Reset."));
+            _recoveryStopRequired = false;
+            ClearRecovery();
+            LogEvent("statusChanged", Status);
+            StatusChanged?.Invoke(this, Status);
+            return ResetResponse(Accept("Reset", "Deinitialized."));
+        }
+        finally { _gate.Release(); }
     }
 
     private static async Task<CommandResponse> WaitForResetAsync(Task<CommandResponse> operation, CancellationToken cancellationToken)
@@ -161,7 +175,11 @@ public sealed partial class SimulatorSession
         try
         {
             if (CheckOperationSource("Reset", OperationSource.External) is { } denied) return denied;
-            if (State == SimulatorState.Uninitialized) return ResetResponse(Accept("Reset", "Already uninitialized."));
+            if (State == SimulatorState.Uninitialized)
+            {
+                _recoveryStopRequired = false;
+                return ResetResponse(Accept("Reset", "Already uninitialized."));
+            }
             work = SnapshotActiveWork();
             faultGeneration = _alarmFaultGeneration;
             if (State == SimulatorState.Running)
@@ -211,11 +229,18 @@ public sealed partial class SimulatorSession
     {
         var alarm = new AlarmNotification
         {
-            Name = descriptor.Name, Source = descriptor.Source, Category = descriptor.Category,
+            Name = descriptor.Name,
+            Source = descriptor.Source,
+            Category = descriptor.Category,
             Message = RecoveryMessageSanitizer.Sanitize(message) ?? "Simulated Alarm.",
-            State = SimulatorStateNames.ToDto(State), Timestamp = DateTimeOffset.UtcNow,
-            AppId = AppId, InstanceId = InstanceId, RequestId = work?.RequestId,
-            JobId = work?.JobId, CaptureId = work?.CaptureId, ResultId = resultId,
+            State = SimulatorStateNames.ToDto(State),
+            Timestamp = DateTimeOffset.UtcNow,
+            AppId = AppId,
+            InstanceId = InstanceId,
+            RequestId = work?.RequestId,
+            JobId = work?.JobId,
+            CaptureId = work?.CaptureId,
+            ResultId = resultId,
         };
         EmitEventCore(descriptor.Name, ProtocolJson.Serialize(alarm), alarm.RequestId, alarm.JobId, alarm.CaptureId, alarm.ResultId, alarmProducer: true);
     }
@@ -230,7 +255,9 @@ public sealed partial class SimulatorSession
         {
             return new AlarmCatalog
             {
-                AppId = AppId, InstanceId = InstanceId, Timestamp = DateTimeOffset.UtcNow,
+                AppId = AppId,
+                InstanceId = InstanceId,
+                Timestamp = DateTimeOffset.UtcNow,
                 Sources = _alarmSources.Values.OrderBy(x => x.Name, StringComparer.Ordinal).Select(x =>
                     new AlarmSourceDescriptor { Name = x.Name, Source = x.Source, Category = x.Category }).ToArray(),
             };

@@ -1,4 +1,4 @@
-﻿# Alarm 來源與兩段復機
+# Alarm 來源與兩段復機
 
 `GET /api/alarms` 回傳 `AlarmCatalog`，包含 App、Instance、讀取時間與來源清單。每個來源有完整字串 `name`、實際 producer 的 `source` 與 `category`。名稱區分大小寫，也是 `GET /api/events` 中可訂閱的事件名稱。SDK 沒有名稱 enum 或白名單。客戶 ID、wire 格式與整機處置由 consumer／Machine 負責。
 
@@ -21,3 +21,11 @@ Simulator 使用合成來源。內建實際 producer 是 `simulator.acquisitionF
 本機 Simulator 行為與編譯成功不代表真實設備故障、native cleanup、正式客戶配置、硬體或 Machine 已驗收。
 
 ResultId 是選用欄位。指定時，RaiseAlarmAsync 要求目前已提交結果。未指定時，实际目前工作的 defect／criticalDefect 通知仍合法；它不等於 ResultCreated／DefectResult，也不借用上一筆結果。
+
+Recovery Stop 僅支援 REST。先查 `SystemStatus.RecoveryStopSupported`；缺省／false 表示不支援，不得 fallback 普通 Stop。`SystemStopRequest` 使用 `RequireReset=true`、目前 catalog 的完整非空 `ExpectedAppId`／`ExpectedInstanceId`，以及最多兩個已知 `CancelStartRequestIds`。ID 採 exact ordinal，不 trim。沒有已知 Start ID 的故障可傳空集合。null array／item、空白、重複或超限回 `invalid_payload`。false 卻帶 ID 或 expected identity 也拒絕。`Reason` 只作診斷。
+
+接收端在副作用前核對 object shape、重複欄位（含大小寫別名）、型別、未知欄位、identity 及操作來源。Recovery Stop 在 Start 共用 gate 內建立持續屏障及撤銷 ID，再停止已受理工作，於 gate 外 join 原有 run cleanup。Ready／Uninitialized 也可建立屏障。只有 accepted、`RecoveryStopApplied=true`、expected App／instance identity 及 `RecoveryAction=Reset` 的回應能證明這些效果。State 必須是 `Ready`、`Uninitialized` 或 `Faulted`；SDK 拒絕 `Running`、`Initializing`、`UpdatingProductInfo` 及 `Deinitializing`，因為工作或清理可能尚未完成。它不代表 Reset 清理或初始化完成。失敗／取消不能降成普通 Stop，也不能重播。取消 client 等待不撤回已受理屏障。DTO array 在非同步受理前複製。
+
+只有成功明確 Reset 才解除屏障。Initial、普通 Stop、診斷訊息及普通 Deinitialize 都不能解除。Reset 失敗或較新 recovery 保留屏障。撤銷 ID 在同 App instance 的 Reset／Initial 後仍保留；明確 Reset→Initial 後可用新 ID。新 App instance 使用新 identity。TCP／MQTT 的 Stop 只支援普通語意；帶 recovery 欄位（包含 false／null）回 typed `invalid_payload`，不能忽略。
+
+`WorkCompletedInfo` 包含 exact 非空 `RequestId`、`JobId` 及實際 `Timestamp`。只有實際 runtime owner 在整個已受理工作的準備、取像、檢測、儲存及其持有的清理都靜止後才能產生。外層 `EventEnvelope` 提供 App／instance scope。事件名稱由配置決定，沒有固定事件名稱。`CaptureCompleted`、`ResultCreated`、舊 `runCompleted` 轉移或 Ready snapshot 都不能證明此事。Simulator 尚未產生這項事實；通用注入事件仍只算合成證據，不能證明實際 owner 清理。

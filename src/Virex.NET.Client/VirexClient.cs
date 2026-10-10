@@ -78,6 +78,10 @@ public sealed class VirexClient : IDisposable
     public Task<RecipeList> GetRecipesAsync(CancellationToken cancellationToken = default) =>
         Rest.GetRecipesAsync(cancellationToken);
 
+    /// <summary>REST-only query of the addressed App's version; it is independent of the selected command transport.</summary>
+    public Task<SoftwareVersionInfo> GetSoftwareVersionAsync(CancellationToken cancellationToken = default) =>
+        Rest.GetSoftwareVersionAsync(cancellationToken);
+
     public Task<RecipeInfo> GetCurrentRecipeAsync(CancellationToken cancellationToken = default) =>
         Rest.GetCurrentRecipeAsync(cancellationToken);
 

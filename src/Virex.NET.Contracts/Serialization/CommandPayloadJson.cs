@@ -7,6 +7,8 @@ public static class CommandPayloadJson
 {
     public static T? ReadObject<T>(string? json, bool allowEmpty = false)
     {
+        if (typeof(T) == typeof(SystemStopRequest))
+            return (T)(object)StopPayloadJson.ReadObject(json, allowEmpty);
         if (string.IsNullOrWhiteSpace(json))
         {
             if (allowEmpty) return default;

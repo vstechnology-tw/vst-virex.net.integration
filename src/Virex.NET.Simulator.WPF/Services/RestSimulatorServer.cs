@@ -134,6 +134,13 @@ public sealed class RestSimulatorServer
                     await JsonAsync(context, _session.GetCurrentRecipe()).ConfigureAwait(false);
                 else if (path == RestRoutes.ApiCurrentRecipeParameters)
                     await JsonAsync(context, _session.GetCurrentRecipeParameters()).ConfigureAwait(false);
+                else if (path == RestRoutes.ApiSoftwareVersion)
+                    await JsonAsync(context, new SoftwareVersionInfo
+                    {
+                        Version = typeof(RestSimulatorServer).Assembly
+                            .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                            .Cast<System.Reflection.AssemblyInformationalVersionAttribute>().Single().InformationalVersion,
+                    }).ConfigureAwait(false);
                 else if (path == RestRoutes.ApiDataSources)
                     await JsonAsync(context, await _session.GetDataSourcesAsync().ConfigureAwait(false)).ConfigureAwait(false);
                 else if (path == RestRoutes.ApiAlarms)
@@ -261,7 +268,7 @@ public sealed class RestSimulatorServer
     private static bool IsDetailQuery(string path) =>
         path == RestRoutes.ApiAlarms ||
         path == RestRoutes.ApiDataSources || path == RestRoutes.ApiDataSourceValue || path == RestRoutes.ApiCurrentResult ||
-        path == RestRoutes.ApiRecipes || path == RestRoutes.ApiCurrentRecipe ||
+        path == RestRoutes.ApiSoftwareVersion || path == RestRoutes.ApiRecipes || path == RestRoutes.ApiCurrentRecipe ||
         path == RestRoutes.ApiCurrentRecipeParameters || path.StartsWith(RestRoutes.ApiResults + "/", StringComparison.Ordinal);
 
     private static Task QueryErrorAsync(HttpListenerContext context, int statusCode, string errorCode, string message)

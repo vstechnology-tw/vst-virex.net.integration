@@ -63,6 +63,7 @@ public sealed partial class SimulatorSession
 
     public SystemStatus Status => new SystemStatus
     {
+        RecoveryStopSupported = true,
         State = SimulatorStateNames.ToDto(State),
         RecoveryAction = RecoveryActionFor(State),
         ErrorCode = RecoveryActionFor(State) is null ? null : _recoveryErrorCode,
@@ -184,6 +185,7 @@ public sealed partial class SimulatorSession
         try
         {
             if (CheckOperationSource("Initialize", source) is { } denied) return denied;
+            if (_recoveryStopRequired) return Reject("Initialize", CommandErrorCodes.RequiresReset);
             if (!CanFire(SimulatorTrigger.Initialize))
                 return Reject("Initialize");
 
@@ -250,6 +252,7 @@ public sealed partial class SimulatorSession
                 failureMessage);
         }
 
+        if (command == "Reset") _recoveryStopRequired = false;
         ClearRecovery();
         ClearLoadedRecipe();
         await FireAsync(SimulatorTrigger.DeinitializationCompleted).ConfigureAwait(false);
@@ -300,6 +303,8 @@ public sealed partial class SimulatorSession
         try
         {
             if (CheckOperationSource("Start", source, request.RequestId) is { } denied) return denied;
+            if (_recoveryStopRequired || request.RequestId is not null && _revokedStartRequestIds.Contains(request.RequestId))
+                return Reject("Start", CommandErrorCodes.RequiresReset, "Start has been fenced or revoked.", request.RequestId);
             if (!CanFire(SimulatorTrigger.Start))
                 return Reject("Start", requestId: request.RequestId);
 
@@ -356,6 +361,9 @@ public sealed partial class SimulatorSession
 
     internal async Task<CommandResponse> HandleStopAsync(SystemStopRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
     {
+        try { request = StopPayloadJson.ValidateAndSnapshot(request); }
+        catch (ArgumentException) { return Reject("Stop", CommandErrorCodes.InvalidPayload, "Invalid Stop request."); }
+        if (request.RequireReset) return await RecoveryStopAsync(request, source, cancellationToken).ConfigureAwait(false);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -517,8 +525,8 @@ public sealed partial class SimulatorSession
         return response;
     }
 
-    private static string? RecoveryActionFor(SimulatorState state) =>
-        state == SimulatorState.Faulted ? RecoveryActions.Reset
+    private string? RecoveryActionFor(SimulatorState state) =>
+        _recoveryStopRequired || state == SimulatorState.Faulted ? RecoveryActions.Reset
             : state == SimulatorState.Deinitializing ? RecoveryActions.Deinitialize : null;
 
     private void SetError(string? message)
