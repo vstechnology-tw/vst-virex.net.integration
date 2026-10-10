@@ -5,6 +5,32 @@ namespace Virex.NET.Contracts;
 /// <summary>Reads new query payloads without replacing missing nested fields with DTO defaults.</summary>
 public static class QueryPayloadJson
 {
+    public static SystemStatus ReadSystemStatus(JsonElement root)
+    {
+        var state = RequireString(UniqueProperty(root, "state"), nonempty: true);
+        if (state is not (SystemStates.Uninitialized or SystemStates.Initializing or SystemStates.Ready
+            or SystemStates.UpdatingProductInfo or SystemStates.Running or SystemStates.Deinitializing or SystemStates.Faulted))
+            throw new JsonException("Unknown App system state.");
+        return ProtocolJson.Deserialize<SystemStatus>(root.GetRawText())!;
+    }
+
+    public static OperationModeInfo ReadOperationMode(JsonElement root)
+    {
+        if (!OperationModes.IsValid(RequireString(UniqueProperty(root, "mode"), nonempty: true)))
+            throw new JsonException("Unknown operation mode.");
+        if (UniqueProperty(root, "managementEnabled").ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            throw new JsonException("managementEnabled must be a boolean.");
+        return ProtocolJson.Deserialize<OperationModeInfo>(root.GetRawText())!;
+    }
+
+    private static JsonElement UniqueProperty(JsonElement root, string name)
+    {
+        RequireObject(root);
+        var properties = root.EnumerateObject().Where(property => string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (properties.Length != 1) throw new JsonException("Exactly one query property is required: " + name);
+        return properties[0].Value;
+    }
+
     public static SoftwareVersionInfo ReadSoftwareVersion(JsonElement root)
     {
         RequireObject(root);

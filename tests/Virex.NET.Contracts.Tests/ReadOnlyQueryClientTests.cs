@@ -8,6 +8,33 @@ namespace Virex.NET.Contracts.Tests;
 public sealed class ReadOnlyQueryClientTests
 {
     [Theory]
+    [InlineData("status", "{}")]
+    [InlineData("status", "{\"state\":null}")]
+    [InlineData("status", "{\"state\":0}")]
+    [InlineData("status", "{\"state\":\"Unknown\"}")]
+    [InlineData("status", "{\"state\":\"Ready\",\"State\":\"Faulted\"}")]
+    [InlineData("mode", "{}")]
+    [InlineData("mode", "{\"mode\":\"remote\"}")]
+    [InlineData("mode", "{\"mode\":null,\"managementEnabled\":true}")]
+    [InlineData("mode", "{\"mode\":\"unknown\",\"managementEnabled\":true}")]
+    [InlineData("mode", "{\"mode\":\"local\",\"managementEnabled\":\"true\"}")]
+    [InlineData("mode", "{\"mode\":\"local\",\"Mode\":\"remote\",\"managementEnabled\":true}")]
+    [InlineData("mode", "{\"mode\":\"local\",\"managementEnabled\":true,\"ManagementEnabled\":false}")]
+    public async Task MissingOrAmbiguousStatusCannotBecomeDefaultAppState(string query, string body)
+    {
+        using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, body)) { BaseAddress = new Uri("http://localhost/") };
+        var client = new VirexRestClient(http);
+
+        var error = await Assert.ThrowsAsync<VirexQueryException>(async () =>
+        {
+            if (query == "status") await client.GetStatusAsync();
+            else await client.GetOperationModeAsync();
+        });
+
+        Assert.Equal(QueryErrorCodes.ApiFailed, error.ErrorCode);
+    }
+
+    [Theory]
     [InlineData("{}")]
     [InlineData("{\"version\":null}")]
     [InlineData("{\"version\":0}")]

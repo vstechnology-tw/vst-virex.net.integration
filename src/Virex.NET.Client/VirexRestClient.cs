@@ -14,7 +14,7 @@ public sealed class VirexRestClient
     }
 
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
+        GetDataSourceQueryAsync<SystemStatus>(RestRoutes.ApiStatus, ["state"], cancellationToken, QueryPayloadJson.ReadSystemStatus);
 
     /// <summary>Reads the addressed App's actual software version using REST. Does not initialize or modify it.
     /// Returns an owned snapshot. Concurrent calls are supported. Caller cancellation is preserved;
@@ -90,7 +90,7 @@ public sealed class VirexRestClient
     }
 
     public Task<OperationModeInfo> GetOperationModeAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<OperationModeInfo>(RestRoutes.ApiOperationMode, cancellationToken);
+        GetDataSourceQueryAsync<OperationModeInfo>(RestRoutes.ApiOperationMode, ["mode", "managementEnabled"], cancellationToken, QueryPayloadJson.ReadOperationMode);
 
     public Task<CommandResponse> SetOperationModeAsync(string mode, CancellationToken cancellationToken = default) =>
         PostAsync(RestRoutes.ApiOperationMode, new SetOperationModeRequest { Mode = mode }, cancellationToken);
