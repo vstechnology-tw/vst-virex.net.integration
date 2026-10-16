@@ -10,6 +10,205 @@ namespace Virex.NET.Contracts.Tests;
 
 public sealed class EventSubscriptionTests
 {
+    [Fact]
+    public void WorkspaceIdentitySerializesOnlyItsThreeIdsAndInvalidEventScopeIsRejected()
+    {
+        using var payload = System.Text.Json.JsonDocument.Parse("{}");
+        var scope = new WorkspaceScopeIdentity
+        {
+            WorkspaceId = Guid.NewGuid(), RegistrationId = Guid.NewGuid(), ActivationId = Guid.NewGuid(),
+        };
+        var value = new EventEnvelope
+        {
+            Name = "custom.Alpha", EventId = "event-1", Timestamp = DateTimeOffset.UtcNow,
+            AppId = "app", InstanceId = "instance", ConnectionGeneration = "connection",
+            WorkspaceScope = scope, Payload = payload.RootElement.Clone(),
+        };
+        var json = ProtocolJson.Serialize(value);
+        Assert.DoesNotContain("isValid", json, StringComparison.OrdinalIgnoreCase);
+        Assert.True(EventEnvelopeJson.TryParse(json, out var parsed, out _));
+        Assert.True(scope.SameAs(parsed.WorkspaceScope));
+
+        value.WorkspaceScope = new WorkspaceScopeIdentity { WorkspaceId = scope.WorkspaceId };
+        Assert.False(EventEnvelopeJson.TryParse(ProtocolJson.Serialize(value), out _, out _));
+    }
+
+    [Fact]
+    public async Task StartAcceptanceAndFirstWorkEventShareFrozenWorkspaceAndWorkIdentity()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        var workspace = fixture.Session.CurrentWorkspaceScope;
+        await fixture.Client.InitializeAsync();
+        var ready = new TaskCompletionSource<EventEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["captureReady"], value => ready.TrySetResult(value),
+            scope: new EventSubscriptionScope { AppId = fixture.Session.AppId, InstanceId = fixture.Session.InstanceId,
+                WorkspaceScope = workspace, RequestId = "accepted-request" });
+        try
+        {
+            var accepted = await fixture.Client.StartAsync(new SystemStartRequest
+            {
+                RequestId = "accepted-request", RunMode = ControlRunModes.Continue,
+                InspectionMode = InspectionModes.CaptureOnly,
+            });
+            var first = await ready.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.True(workspace.SameAs(accepted.WorkspaceScope));
+            Assert.True(workspace.SameAs(first.WorkspaceScope));
+            Assert.Equal(accepted.AppId, first.AppId);
+            Assert.Equal(accepted.InstanceId, first.InstanceId);
+            Assert.Equal(accepted.RequestId, first.RequestId);
+            Assert.Equal(accepted.JobId, first.JobId);
+            Assert.Equal(accepted.CaptureId, first.CaptureId);
+        }
+        finally { await subscription.CloseAsync(); }
+    }
+
+    [Fact]
+    public async Task CommittedResultEventRetainsAcceptedWorkspaceRequestJobAndResultIds()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        await fixture.Client.InitializeAsync();
+        var scope = fixture.Session.CurrentWorkspaceScope;
+        var completed = new TaskCompletionSource<EventEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["resultCreated"],
+            value => completed.TrySetResult(value), scope: new EventSubscriptionScope
+            {
+                WorkspaceScope = scope, RequestId = "result-request",
+            });
+        try
+        {
+            var accepted = await fixture.Client.StartAsync(new SystemStartRequest
+            {
+                RequestId = "result-request", RunMode = ControlRunModes.SingleRun,
+                InspectionMode = InspectionModes.CaptureAndInspect,
+            });
+            var result = await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(scope.SameAs(result.WorkspaceScope));
+            Assert.Equal(accepted.RequestId, result.RequestId);
+            Assert.Equal(accepted.JobId, result.JobId);
+            Assert.Equal(accepted.CaptureId, result.CaptureId);
+            Assert.False(string.IsNullOrWhiteSpace(result.ResultId));
+        }
+        finally { await subscription.CloseAsync(); }
+    }
+
+    [Fact]
+    public async Task ScopedClientRejectsAcceptedSubscriptionWithoutWorkspaceIdentity()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var expected = new WorkspaceScopeIdentity
+        {
+            WorkspaceId = Guid.NewGuid(), RegistrationId = Guid.NewGuid(), ActivationId = Guid.NewGuid(),
+        };
+        var server = Task.Run(async () =>
+        {
+            using var socket = await listener.AcceptTcpClientAsync();
+            using var reader = new StreamReader(socket.GetStream());
+            using var writer = new StreamWriter(socket.GetStream()) { AutoFlush = true };
+            var request = ProtocolJson.Deserialize<EventSubscriptionRequest>((await reader.ReadLineAsync())!)!;
+            Assert.True(expected.SameAs(request.WorkspaceScope));
+            await writer.WriteLineAsync(ProtocolJson.Serialize(new EventSubscriptionResponse
+            {
+                RequestId = request.RequestId, Accepted = true, AppId = "app", InstanceId = "instance",
+                ConnectionGeneration = "generation", Names = ["custom.Alpha"],
+            }));
+        });
+        try
+        {
+            var client = new VirexTcpEventClient(new VirexClientOptions { TcpPort = ((IPEndPoint)listener.LocalEndpoint).Port });
+            await Assert.ThrowsAsync<InvalidDataException>(() => client.SubscribeAsync(["custom.Alpha"], _ => { },
+                scope: new EventSubscriptionScope { WorkspaceScope = expected }));
+            await server.WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        finally { listener.Stop(); }
+    }
+
+    [Fact]
+    public async Task SameProcessWorkspaceSwitchRejectsOldScopeAndLateEventDoesNotReachNewStation()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.Session.ConfigureEvents("synthetic-app", ["custom.Alpha", "custom.Barrier"]);
+        var workspaceA = Guid.NewGuid();
+        var registrationA = Guid.NewGuid();
+        await fixture.Session.SelectWorkspaceForTestsAsync(workspaceA, registrationA);
+        var scopeA = fixture.Session.CurrentWorkspaceScope;
+        var app = fixture.Session.AppId;
+        var instance = fixture.Session.InstanceId;
+        var oldEvents = new ConcurrentQueue<EventEnvelope>();
+        var oldDelivered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var old = await fixture.Client.TcpEvents.SubscribeAsync(["custom.Alpha"], value =>
+        {
+            oldEvents.Enqueue(value);
+            oldDelivered.TrySetResult();
+        }, scope: new EventSubscriptionScope { AppId = app, InstanceId = instance, WorkspaceScope = scopeA });
+        try
+        {
+            fixture.Session.EmitEvent("custom.Alpha", "{}", requestId: "request-A", jobId: "job-A");
+            await oldDelivered.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.True(scopeA.SameAs(Assert.Single(oldEvents).WorkspaceScope));
+
+            var workspaceB = Guid.NewGuid();
+            await fixture.Session.SelectWorkspaceForTestsAsync(workspaceB, Guid.NewGuid());
+            var scopeB = fixture.Session.CurrentWorkspaceScope;
+            Assert.Equal(app, fixture.Session.AppId);
+            Assert.Equal(instance, fixture.Session.InstanceId);
+            Assert.False(scopeA.SameAs(scopeB));
+            await old.Completion.WaitAsync(TimeSpan.FromSeconds(3));
+            var stale = await Assert.ThrowsAsync<VirexEventSubscriptionException>(() =>
+                fixture.Client.TcpEvents.SubscribeAsync(["custom.Alpha"], _ => { },
+                    scope: new EventSubscriptionScope { WorkspaceScope = scopeA }));
+            Assert.Equal(EventSubscriptionErrorCodes.StaleWorkspaceScope, stale.Response.ErrorCode);
+
+            var newEvents = new ConcurrentQueue<EventEnvelope>();
+            var issues = new ConcurrentQueue<EventStreamIssue>();
+            var drained = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var current = await fixture.Client.TcpEvents.SubscribeAsync(["custom.Alpha", "custom.Barrier"], value =>
+            {
+                if (value.Name == "custom.Barrier") drained.TrySetResult();
+                else newEvents.Enqueue(value);
+            }, issues.Enqueue, new EventSubscriptionScope { AppId = app, InstanceId = instance, WorkspaceScope = scopeB });
+            try
+            {
+                fixture.Session.EmitEvent("custom.Alpha", "{}", requestId: "request-A", jobId: "job-A",
+                    sourceScope: scopeA); // Old work arrives after the station has switched.
+                fixture.Session.EmitEvent("custom.Alpha", "{}", requestId: "request-B", jobId: "job-B");
+                fixture.Session.EmitEvent("custom.Barrier", "{}");
+                await drained.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                Assert.Equal("request-B", Assert.Single(newEvents).RequestId);
+                Assert.True(scopeB.SameAs(newEvents.Single().WorkspaceScope));
+                Assert.Contains(issues, issue => issue.Code == EventSubscriptionErrorCodes.StaleWorkspaceScope);
+                Assert.Single(oldEvents);
+            }
+            finally { await current.CloseAsync(); }
+
+            await fixture.Session.SelectWorkspaceForTestsAsync(workspaceA, registrationA);
+            Assert.False(scopeA.SameAs(fixture.Session.CurrentWorkspaceScope));
+        }
+        finally { await old.CloseAsync(); }
+    }
+
+    [Fact]
+    public async Task ExistingTcpSessionIsClosedWhenItsWorkspaceActivationEnds()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.Session.ConfigureEvents("synthetic-app", ["custom.Alpha", "custom.Barrier"]);
+        var scopeA = fixture.Session.CurrentWorkspaceScope;
+        using var socket = new TcpClient();
+        await socket.ConnectAsync("127.0.0.1", fixture.Client.Options.TcpPort);
+        using var reader = new StreamReader(socket.GetStream());
+        using var writer = new StreamWriter(socket.GetStream()) { AutoFlush = true };
+        await reader.ReadLineAsync(); await reader.ReadLineAsync();
+        await writer.WriteLineAsync(ProtocolJson.Serialize(new EventSubscriptionRequest
+        {
+            RequestId = "sub-A", WorkspaceScope = scopeA, Names = ["custom.Alpha"],
+        }));
+        var first = ProtocolJson.Deserialize<EventSubscriptionResponse>((await reader.ReadLineAsync())!)!;
+        Assert.True(first.Accepted);
+
+        await fixture.Session.SelectWorkspaceForTestsAsync(Guid.NewGuid(), Guid.NewGuid());
+        Assert.Null(await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(3)));
+    }
+
     [Theory]
     [InlineData("emitted")]
     [InlineData("acquisition")]

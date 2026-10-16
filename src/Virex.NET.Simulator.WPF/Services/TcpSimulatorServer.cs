@@ -87,6 +87,7 @@ public sealed class TcpSimulatorServer
             var generation = Guid.NewGuid().ToString("N");
             var explicitSubscription = false;
             var names = new HashSet<string>(StringComparer.Ordinal);
+            WorkspaceScopeIdentity? pinnedScope = null;
             void WriteLegacy(string frame)
             {
                 lock (writer) if (!explicitSubscription) SafeWrite(writer, frame);
@@ -95,12 +96,18 @@ public sealed class TcpSimulatorServer
             {
                 lock (writer)
                 {
-                    if (!explicitSubscription || !names.Contains(value.Name) || token.IsCancellationRequested) return;
+                    if (!explicitSubscription || !names.Contains(value.Name) || token.IsCancellationRequested ||
+                        (pinnedScope is not null && !pinnedScope.SameAs(_session.CurrentWorkspaceScope))) return;
                     // The shared producer envelope is immutable on this path; stamp a per-connection copy.
                     var frame = ProtocolJson.Deserialize<EventEnvelope>(ProtocolJson.Serialize(value))!;
                     frame.ConnectionGeneration = generation;
                     SafeWrite(writer, ProtocolJson.Serialize(frame) + "\n");
                 }
+            }
+            void OnWorkspaceScopeChanged(object? sender, WorkspaceScopeIdentity scope)
+            {
+                lock (writer)
+                    if (pinnedScope is not null && !pinnedScope.SameAs(scope)) client.Dispose();
             }
             var runActive = false;
             void OnStatus(object? sender, SystemStatus status)
@@ -137,6 +144,7 @@ public sealed class TcpSimulatorServer
             _session.ErrorChanged += OnError;
             _session.CommandRejected += OnRejected;
             _session.EventProduced += OnEvent;
+            _session.WorkspaceScopeChanged += OnWorkspaceScopeChanged;
 
             try
             {
@@ -165,13 +173,26 @@ public sealed class TcpSimulatorServer
                                 : !unsubscribe && requested.Any(names.Contains)
                                     ? EventSubscriptionErrorCodes.DuplicateName
                                 : unsubscribe && requested.Any(name => !names.Contains(name))
-                                    ? EventSubscriptionErrorCodes.NotSubscribed : null;
+                                    ? EventSubscriptionErrorCodes.NotSubscribed
+                                : pinnedScope is not null && subscription.WorkspaceScope is not null &&
+                                    !pinnedScope.SameAs(subscription.WorkspaceScope)
+                                    ? EventSubscriptionErrorCodes.StaleWorkspaceScope
+                                : subscription.WorkspaceScope is { IsValid: false }
+                                    ? EventSubscriptionErrorCodes.InvalidPayload
+                                : subscription.WorkspaceScope is not null &&
+                                    !subscription.WorkspaceScope.SameAs(catalog.WorkspaceScope)
+                                    ? EventSubscriptionErrorCodes.StaleWorkspaceScope : null;
                             if (code is null)
+                            {
                                 foreach (var name in requested!) { if (unsubscribe) names.Remove(name); else names.Add(name); }
+                                if (!unsubscribe && subscription.WorkspaceScope is not null)
+                                    pinnedScope ??= catalog.WorkspaceScope?.Snapshot();
+                            }
                             SafeWrite(writer, ProtocolJson.Serialize(new EventSubscriptionResponse
                             {
                                 RequestId = subscription.RequestId, Accepted = code is null, ErrorCode = code,
-                                AppId = catalog.AppId, InstanceId = catalog.InstanceId, ConnectionGeneration = generation,
+                                AppId = catalog.AppId, InstanceId = catalog.InstanceId,
+                                WorkspaceScope = catalog.WorkspaceScope?.Snapshot(), ConnectionGeneration = generation,
                                 Names = names.OrderBy(x => x, StringComparer.Ordinal).ToArray(),
                             }) + "\n");
                         }
@@ -237,6 +258,7 @@ public sealed class TcpSimulatorServer
             finally
             {
                 _session.EventProduced -= OnEvent;
+                _session.WorkspaceScopeChanged -= OnWorkspaceScopeChanged;
                 _session.StatusChanged -= OnStatus;
                 _session.OperationModeChanged -= OnOperationMode;
                 _session.CaptureReady -= OnCaptureReady;

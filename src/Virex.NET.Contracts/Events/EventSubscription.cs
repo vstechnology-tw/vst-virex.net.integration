@@ -7,6 +7,7 @@ public sealed class EventCatalog
 {
     public string AppId { get; set; } = string.Empty;
     public string InstanceId { get; set; } = string.Empty;
+    public WorkspaceScopeIdentity? WorkspaceScope { get; set; }
     public string[] Names { get; set; } = [];
 }
 
@@ -19,6 +20,7 @@ public sealed class EventEnvelope
     public DateTimeOffset Timestamp { get; set; }
     public string AppId { get; set; } = string.Empty;
     public string InstanceId { get; set; } = string.Empty;
+    public WorkspaceScopeIdentity? WorkspaceScope { get; set; }
     public string ConnectionGeneration { get; set; } = string.Empty;
     public string? RequestId { get; set; }
     public string? JobId { get; set; }
@@ -32,6 +34,7 @@ public sealed class EventSubscriptionRequest
 {
     public string Type { get; set; } = "subscribeEvents";
     public string RequestId { get; set; } = string.Empty;
+    public WorkspaceScopeIdentity? WorkspaceScope { get; set; }
     public string[] Names { get; set; } = [];
 }
 
@@ -43,6 +46,7 @@ public sealed class EventSubscriptionResponse
     public string? ErrorCode { get; set; }
     public string AppId { get; set; } = string.Empty;
     public string InstanceId { get; set; } = string.Empty;
+    public WorkspaceScopeIdentity? WorkspaceScope { get; set; }
     public string ConnectionGeneration { get; set; } = string.Empty;
     public string[] Names { get; set; } = [];
 }
@@ -53,4 +57,5 @@ public static class EventSubscriptionErrorCodes
     public const string DuplicateName = "duplicate_event_subscription";
     public const string InvalidPayload = "invalid_event_payload";
     public const string NotSubscribed = "event_not_subscribed";
+    public const string StaleWorkspaceScope = "stale_workspace_scope";
 }

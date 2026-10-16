@@ -19,6 +19,10 @@ public static class EventEnvelopeJson
             foreach (var field in new[] { "requestId", "jobId", "captureId", "resultId" })
                 if (root.TryGetProperty(field, out var item) && (item.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(item.GetString())))
                     throw new JsonException("Invalid event correlation: " + field);
+            if (root.TryGetProperty("workspaceScope", out var scope) &&
+                (scope.ValueKind != JsonValueKind.Object ||
+                 ProtocolJson.Deserialize<WorkspaceScopeIdentity>(scope.GetRawText())?.IsValid != true))
+                throw new JsonException("Invalid Workspace event scope.");
             if (root.GetProperty("type").GetString() != "event" || !root.GetProperty("timestamp").TryGetDateTimeOffset(out _)
                 || !root.TryGetProperty("payload", out var payload) || payload.ValueKind != JsonValueKind.Object)
                 throw new JsonException("Invalid event type, timestamp or object payload.");
