@@ -2,7 +2,8 @@
 
 `POST /api/control/scoped` is additive. Existing routes retain their existing behavior.
 Use scoped control when a command must address the exact process and Workspace activation
-previously observed in an event or DataSource catalog. A catalog read alone cannot protect a
+previously observed in an event or EventCatalog. DataSourceCatalog does not contain the full
+Workspace scope. A catalog read alone cannot protect a
 subsequent legacy mutation from a Workspace switch.
 
 ```json
