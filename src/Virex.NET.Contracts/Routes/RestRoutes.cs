@@ -2,6 +2,7 @@
 
 public static class RestRoutes
 {
+    public const string ApiScopedControl = "/api/control/scoped";
     public const string ApiAlarms = "/api/alarms";
     public const string ApiSystemReset = "/api/system/reset";
     public const string ApiDataSources = "/api/data-sources";

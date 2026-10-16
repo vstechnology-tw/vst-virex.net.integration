@@ -2,6 +2,7 @@
 
 public static class CommandErrorCodes
 {
+    public const string TargetMismatch = "target_mismatch";
     public const string CleanupFailed = "cleanup_failed";
     public const string RequiresReset = "requires_reset";
     public const string CapturePreparationFailed = "capture_preparation_failed";

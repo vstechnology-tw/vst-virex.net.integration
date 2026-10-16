@@ -4,7 +4,7 @@ using Virex.NET.Contracts;
 
 namespace Virex.NET.Client;
 
-public sealed class VirexRestClient
+public sealed partial class VirexRestClient
 {
     private readonly HttpClient _http;
 
