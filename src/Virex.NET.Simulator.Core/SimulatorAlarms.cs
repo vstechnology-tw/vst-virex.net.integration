@@ -72,7 +72,7 @@ public sealed partial class SimulatorSession
                 lock (_results) result = _results.FirstOrDefault(x => x.ResultId == resultId);
                 if (result is null || resultId != _currentResultId || result.JobId is null) return false;
                 work = new EventWorkScope(_resultRequestIds[resultId], result.JobId, result.CaptureId,
-                    _resultWorkspaceScopes[resultId].Snapshot());
+                    _resultWorkspaceScopes[resultId].Snapshot(), _resultOperationContexts[resultId]);
             }
             if (expectedJobId is not null && work?.JobId != expectedJobId) return false;
             if (source.Category == AlarmCategories.Fault)
@@ -219,7 +219,8 @@ public sealed partial class SimulatorSession
             JobId = work?.JobId, CaptureId = work?.CaptureId, ResultId = resultId,
         };
         EmitEventCore(descriptor.Name, ProtocolJson.Serialize(alarm), alarm.RequestId, alarm.JobId, alarm.CaptureId,
-            alarm.ResultId, alarmProducer: true, sourceScope: work?.WorkspaceScope);
+            alarm.ResultId, alarmProducer: true, sourceScope: work?.WorkspaceScope,
+            sourceOperationContext: work?.OperationContext);
     }
 
     /// <summary>Returns an owned catalog snapshot of exact producer names and categories.

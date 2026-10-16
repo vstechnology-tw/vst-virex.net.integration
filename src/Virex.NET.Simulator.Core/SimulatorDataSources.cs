@@ -28,6 +28,7 @@ public sealed partial class SimulatorSession
     }
     private readonly Dictionary<string, string?> _resultRequestIds = new Dictionary<string, string?>(StringComparer.Ordinal);
     private readonly Dictionary<string, WorkspaceScopeIdentity> _resultWorkspaceScopes = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string?> _resultOperationContexts = new(StringComparer.Ordinal);
     private string? _currentResultId;
 
     public async Task<ResultReference> GetCurrentResultAsync(CancellationToken cancellationToken = default)

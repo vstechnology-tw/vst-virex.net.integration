@@ -319,6 +319,7 @@ public sealed partial class SimulatorSession
             _activeRunInspectionMode = request.InspectionMode;
             _pendingPersistenceFault = null;
             _activeWorkspaceScope = CurrentWorkspaceScope;
+            _activeOperationContext = _operationContextForTests;
             _activeRequestId = request.RequestId;
             _activeJobId = Guid.NewGuid().ToString("N");
             if (!PrepareCapture())
@@ -347,6 +348,7 @@ public sealed partial class SimulatorSession
             response.RequestId = _activeRequestId;
             response.AppId = AppId;
             response.InstanceId = InstanceId;
+            response.OperationContext = _activeOperationContext;
             return response;
         }
         finally
@@ -706,12 +708,14 @@ public sealed partial class SimulatorSession
             _results.Insert(0, result);
             _resultRequestIds[result.ResultId] = _activeRequestId;
             _resultWorkspaceScopes[result.ResultId] = _activeWorkspaceScope?.Snapshot() ?? CurrentWorkspaceScope;
+            _resultOperationContexts[result.ResultId] = _activeOperationContext;
             _uncommittedResultIds.Remove(result.ResultId);
             if (_activeJobId == result.JobId) _currentResultId = result.ResultId;
             if (_results.Count > 100)
             {
                 _resultRequestIds.Remove(_results[_results.Count - 1].ResultId);
                 _resultWorkspaceScopes.Remove(_results[_results.Count - 1].ResultId);
+                _resultOperationContexts.Remove(_results[_results.Count - 1].ResultId);
                 _results.RemoveAt(_results.Count - 1);
             }
         }
@@ -852,7 +856,7 @@ public sealed partial class SimulatorSession
             // A rejected command has its own scope; it never borrows an active run.
             if (!_shutdownRequested)
                 EmitEvent(eventType, json, response.RequestId, response.JobId, response.CaptureId,
-                    sourceScope: CurrentWorkspaceScope);
+                    sourceScope: CurrentWorkspaceScope, sourceOperationContext: response.OperationContext);
             return;
         }
         var work = _terminalEventScope ?? SnapshotActiveWork();
@@ -863,7 +867,7 @@ public sealed partial class SimulatorSession
             : payload is ImageGrabbedInfo image ? image.CaptureId : work?.CaptureId;
         if (!_shutdownRequested)
             EmitEvent(eventType, json, work?.RequestId, job, capture, (payload as ResultSummary)?.ResultId,
-                work?.WorkspaceScope);
+                work?.WorkspaceScope, work?.OperationContext);
     }
 
     private static bool Match(string value, string? filter) =>

@@ -181,8 +181,11 @@ public sealed class AlarmTests
         var source = Assert.Single((await fixture.Client.GetAlarmsAsync()).Sources, x => x.Name == name);
         Assert.Equal(category, source.Category);
         await fixture.Client.InitializeAsync();
+        await fixture.Session.SetOperationContextForTestsAsync(OperationContexts.Local);
         var start = await fixture.Client.StartAsync(new SystemStartRequest { RequestId = "defect-work", RunMode = ControlRunModes.Continue });
+        Assert.Equal(OperationContexts.Local, start.OperationContext);
         await fixture.Session.RunCompletedAsync();
+        await fixture.Session.SetOperationContextForTestsAsync(OperationContexts.Remote);
         var received = new TaskCompletionSource<EventEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var subscription = await fixture.Client.TcpEvents.SubscribeAsync([name], e => received.TrySetResult(e));
         var before = DateTimeOffset.UtcNow;
@@ -194,10 +197,12 @@ public sealed class AlarmTests
         Assert.Equal(start.RequestId, alarm.RequestId); Assert.Equal(start.JobId, alarm.JobId);
         Assert.Equal(start.CaptureId, alarm.CaptureId); Assert.Equal(start.CaptureId, alarm.ResultId);
         Assert.Equal(alarm.ResultId, evt.ResultId); Assert.InRange(alarm.Timestamp, before, DateTimeOffset.UtcNow);
+        Assert.Equal(OperationContexts.Local, evt.OperationContext);
         Assert.Equal(SystemStates.Ready, alarm.State);
         Assert.False((await fixture.Client.GetErrorAsync()).HasError);
         Assert.Equal(SystemStates.Ready, (await fixture.Client.GetStatusAsync()).State);
         var next = await fixture.Client.StartAsync(new SystemStartRequest { RunMode = ControlRunModes.Continue, InspectionMode = InspectionModes.CaptureOnly });
+        Assert.Equal(OperationContexts.Remote, next.OperationContext);
         Assert.False(await fixture.Session.RaiseAlarmAsync(name, "late finding", expectedJobId: start.JobId, resultId: start.CaptureId));
         Assert.False(await fixture.Session.RaiseAlarmAsync(name, "uncommitted", resultId: next.CaptureId));
         Assert.False(await fixture.Session.RaiseAlarmAsync(name, "unknown result", resultId: "absent"));

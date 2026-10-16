@@ -23,6 +23,10 @@ public static class EventEnvelopeJson
                 (scope.ValueKind != JsonValueKind.Object ||
                  ProtocolJson.Deserialize<WorkspaceScopeIdentity>(scope.GetRawText())?.IsValid != true))
                 throw new JsonException("Invalid Workspace event scope.");
+            if (root.TryGetProperty("operationContext", out var context) &&
+                context.ValueKind != JsonValueKind.Null &&
+                (context.ValueKind != JsonValueKind.String || !OperationContexts.IsValid(context.GetString())))
+                throw new JsonException("Invalid accepted operation context.");
             if (root.GetProperty("type").GetString() != "event" || !root.GetProperty("timestamp").TryGetDateTimeOffset(out _)
                 || !root.TryGetProperty("payload", out var payload) || payload.ValueKind != JsonValueKind.Object)
                 throw new JsonException("Invalid event type, timestamp or object payload.");

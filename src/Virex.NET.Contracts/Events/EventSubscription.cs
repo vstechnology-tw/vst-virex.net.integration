@@ -22,6 +22,8 @@ public sealed class EventEnvelope
     public string InstanceId { get; set; } = string.Empty;
     public WorkspaceScopeIdentity? WorkspaceScope { get; set; }
     public string ConnectionGeneration { get; set; } = string.Empty;
+    /// <summary>Original accepted work context, independent of the current Workspace context.</summary>
+    public string? OperationContext { get; set; }
     public string? RequestId { get; set; }
     public string? JobId { get; set; }
     public string? CaptureId { get; set; }

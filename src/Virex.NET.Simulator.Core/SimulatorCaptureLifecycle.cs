@@ -65,5 +65,6 @@ public sealed partial class SimulatorSession
         _activeRequestId = null;
         _activeCaptureId = null;
         _activeWorkspaceScope = null;
+        _activeOperationContext = null;
     }
 }

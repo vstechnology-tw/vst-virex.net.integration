@@ -29,6 +29,15 @@ public sealed class EventSubscriptionTests
         Assert.True(EventEnvelopeJson.TryParse(json, out var parsed, out _));
         Assert.True(scope.SameAs(parsed.WorkspaceScope));
 
+        value.OperationContext = OperationContexts.Local;
+        Assert.True(EventEnvelopeJson.TryParse(ProtocolJson.Serialize(value), out parsed, out _));
+        Assert.Equal(OperationContexts.Local, parsed.OperationContext);
+        value.OperationContext = "Unknown";
+        Assert.False(EventEnvelopeJson.TryParse(ProtocolJson.Serialize(value), out _, out _));
+        value.OperationContext = null;
+        Assert.True(EventEnvelopeJson.TryParse(ProtocolJson.Serialize(value), out parsed, out _));
+        Assert.Null(parsed.OperationContext);
+
         value.WorkspaceScope = new WorkspaceScopeIdentity { WorkspaceId = scope.WorkspaceId };
         Assert.False(EventEnvelopeJson.TryParse(ProtocolJson.Serialize(value), out _, out _));
     }
@@ -87,6 +96,47 @@ public sealed class EventSubscriptionTests
             Assert.Equal(accepted.JobId, result.JobId);
             Assert.Equal(accepted.CaptureId, result.CaptureId);
             Assert.False(string.IsNullOrWhiteSpace(result.ResultId));
+        }
+        finally { await subscription.CloseAsync(); }
+    }
+
+    [Fact]
+    public async Task AcceptedContextStaysWithWorkAfterSameActivationChangesFromLocalToRemote()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        await fixture.Client.InitializeAsync();
+        await fixture.Session.SetOperationContextForTestsAsync(OperationContexts.Local);
+        var scope = fixture.Session.CurrentWorkspaceScope;
+        var completed = new TaskCompletionSource<EventEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["resultCreated"],
+            value => completed.TrySetResult(value), scope: new EventSubscriptionScope
+            {
+                WorkspaceScope = scope, RequestId = "context-local-work",
+            });
+        try
+        {
+            var accepted = await fixture.Client.StartAsync(new SystemStartRequest
+            {
+                RequestId = "context-local-work", RunMode = ControlRunModes.Continue,
+                InspectionMode = InspectionModes.CaptureAndInspect,
+            });
+            Assert.Equal(OperationContexts.Local, accepted.OperationContext);
+            await fixture.Session.SetOperationContextForTestsAsync(OperationContexts.Remote);
+            Assert.True(scope.SameAs(fixture.Session.CurrentWorkspaceScope));
+            await fixture.Session.RunCompletedAsync();
+            var result = await completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(OperationContexts.Local, result.OperationContext);
+            Assert.True(scope.SameAs(result.WorkspaceScope));
+            Assert.Equal(accepted.RequestId, result.RequestId);
+            Assert.Equal(accepted.JobId, result.JobId);
+            Assert.False(string.IsNullOrWhiteSpace(result.ResultId));
+
+            var remote = await fixture.Client.StartAsync(new SystemStartRequest
+            {
+                RequestId = "context-remote-work", RunMode = ControlRunModes.Continue,
+            });
+            Assert.True(scope.SameAs(remote.WorkspaceScope));
+            Assert.Equal(OperationContexts.Remote, remote.OperationContext);
         }
         finally { await subscription.CloseAsync(); }
     }
@@ -474,8 +524,10 @@ public sealed class EventSubscriptionTests
             var events = observed.ToArray();
             Assert.Equal(new[] { "captureReady", "captureCompleted", "resultCreated" }, events.Select(value => value.Name));
             Assert.Equal(request.RequestId, start.RequestId);
+            Assert.Null(start.OperationContext);
             Assert.All(events, value =>
             {
+                Assert.Null(value.OperationContext);
                 Assert.Equal(start.RequestId, value.RequestId);
                 Assert.Equal(start.JobId, value.JobId);
                 Assert.Equal(start.CaptureId, value.CaptureId);

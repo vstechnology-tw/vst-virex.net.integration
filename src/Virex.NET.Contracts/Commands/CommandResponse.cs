@@ -6,6 +6,8 @@ public sealed class CommandResponse
     public string? AppId { get; set; }
     public string? InstanceId { get; set; }
     public WorkspaceScopeIdentity? WorkspaceScope { get; set; }
+    /// <summary>Context captured when this work was accepted; null means unknown or legacy producer.</summary>
+    public string? OperationContext { get; set; }
     public string? JobId { get; set; }
     public string? CaptureId { get; set; }
     public OperationModeInfo? OperationMode { get; set; }

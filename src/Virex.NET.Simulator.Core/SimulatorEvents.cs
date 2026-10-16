@@ -18,6 +18,8 @@ public sealed partial class SimulatorSession
         WorkspaceId = Guid.NewGuid(), RegistrationId = Guid.NewGuid(), ActivationId = Guid.NewGuid(),
     };
     private WorkspaceScopeIdentity? _activeWorkspaceScope;
+    private string? _operationContextForTests;
+    private string? _activeOperationContext;
     private string? _activeRequestId;
     private string? _activeCaptureId;
     private EventWorkScope? _terminalEventScope;
@@ -27,21 +29,38 @@ public sealed partial class SimulatorSession
     // Metadata only: the snapshot cannot admit source callbacks or restart a capture.
     private sealed class EventWorkScope
     {
-        public EventWorkScope(string? requestId, string jobId, string? captureId, WorkspaceScopeIdentity workspaceScope)
-        { RequestId = requestId; JobId = jobId; CaptureId = captureId; WorkspaceScope = workspaceScope; }
+        public EventWorkScope(string? requestId, string jobId, string? captureId,
+            WorkspaceScopeIdentity workspaceScope, string? operationContext)
+        { RequestId = requestId; JobId = jobId; CaptureId = captureId; WorkspaceScope = workspaceScope;
+            OperationContext = operationContext; }
         public string? RequestId { get; }
         public string JobId { get; }
         public string? CaptureId { get; }
         public WorkspaceScopeIdentity WorkspaceScope { get; }
+        public string? OperationContext { get; }
     }
 
     private EventWorkScope? SnapshotActiveWork() => _activeJobId is null ? null
         : new EventWorkScope(_activeRequestId, _activeJobId, _activeCaptureId,
-            _activeWorkspaceScope?.Snapshot() ?? CurrentWorkspaceScope);
+            _activeWorkspaceScope?.Snapshot() ?? CurrentWorkspaceScope, _activeOperationContext);
 
     public WorkspaceScopeIdentity CurrentWorkspaceScope
     {
         get { lock (_eventGate) return _workspaceScope.Snapshot(); }
+    }
+
+    /// <summary>Simulator-only accepted-context input; never changes control mode or an active work snapshot.</summary>
+    public async Task SetOperationContextForTestsAsync(string? context, CancellationToken cancellationToken = default)
+    {
+        if (context is not null && !OperationContexts.IsValid(context))
+            throw new ArgumentException("Use Local, Remote, or null for an unknown synthetic context.", nameof(context));
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_shutdownRequested) throw new InvalidOperationException("Simulator host is shutting down.");
+            _operationContextForTests = context;
+        }
+        finally { _gate.Release(); }
     }
 
     /// <summary>Simulator-only station selection. One process keeps its InstanceId but gets a fresh activation.</summary>
@@ -60,6 +79,7 @@ public sealed partial class SimulatorSession
                 {
                     WorkspaceId = workspaceId, RegistrationId = registrationId, ActivationId = Guid.NewGuid(),
                 };
+            _operationContextForTests = null;
             _currentResultId = null;
             WorkspaceScopeChanged?.Invoke(this, CurrentWorkspaceScope);
         }
@@ -106,14 +126,16 @@ public sealed partial class SimulatorSession
     /// the session clones payloads and serializes delivery under the event gate.</summary>
     public void EmitEvent(string name, string payloadJson, string? requestId = null,
         string? jobId = null, string? captureId = null, string? resultId = null,
-        WorkspaceScopeIdentity? sourceScope = null)
+        WorkspaceScopeIdentity? sourceScope = null, string? sourceOperationContext = null)
         => EmitEventCore(name, payloadJson, requestId, jobId, captureId, resultId,
-            alarmProducer: false, sourceScope: sourceScope);
+            alarmProducer: false, sourceScope: sourceScope, sourceOperationContext: sourceOperationContext);
 
     private void EmitEventCore(string name, string payloadJson, string? requestId,
         string? jobId, string? captureId, string? resultId, bool alarmProducer,
-        WorkspaceScopeIdentity? sourceScope = null)
+        WorkspaceScopeIdentity? sourceScope = null, string? sourceOperationContext = null)
     {
+        if (sourceOperationContext is not null && !OperationContexts.IsValid(sourceOperationContext))
+            throw new ArgumentException("Unknown accepted operation context.", nameof(sourceOperationContext));
         using var document = System.Text.Json.JsonDocument.Parse(payloadJson);
         if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object)
             throw new ArgumentException("Event payload must be a JSON object.", nameof(payloadJson));
@@ -129,6 +151,7 @@ public sealed partial class SimulatorSession
                 AppId = AppId, InstanceId = InstanceId,
                 WorkspaceScope = (sourceScope ?? _workspaceScope).Snapshot(), RequestId = requestId,
                 JobId = jobId, CaptureId = captureId, ResultId = resultId,
+                OperationContext = sourceOperationContext,
                 Payload = document.RootElement.Clone(),
             });
         }
