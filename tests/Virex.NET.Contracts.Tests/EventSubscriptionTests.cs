@@ -209,6 +209,20 @@ public sealed class EventSubscriptionTests
         Assert.Null(await reader.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(3)));
     }
 
+    [Fact]
+    public async Task UnscopedLegacySubscriptionIsAlsoClosedAtWorkspaceSwitch()
+    {
+        await using var fixture = await Fixture.CreateAsync();
+        fixture.Session.ConfigureEvents("synthetic-app", ["custom.Alpha"]);
+        var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["custom.Alpha"], _ => { });
+        try
+        {
+            await fixture.Session.SelectWorkspaceForTestsAsync(Guid.NewGuid(), Guid.NewGuid());
+            await subscription.Completion.WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        finally { await subscription.CloseAsync(); }
+    }
+
     [Theory]
     [InlineData("emitted")]
     [InlineData("acquisition")]

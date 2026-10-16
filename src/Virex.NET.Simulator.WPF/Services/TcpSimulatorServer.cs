@@ -185,7 +185,7 @@ public sealed class TcpSimulatorServer
                             if (code is null)
                             {
                                 foreach (var name in requested!) { if (unsubscribe) names.Remove(name); else names.Add(name); }
-                                if (!unsubscribe && subscription.WorkspaceScope is not null)
+                                if (!unsubscribe)
                                     pinnedScope ??= catalog.WorkspaceScope?.Snapshot();
                             }
                             SafeWrite(writer, ProtocolJson.Serialize(new EventSubscriptionResponse
