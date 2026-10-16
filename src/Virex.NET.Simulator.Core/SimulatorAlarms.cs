@@ -108,7 +108,9 @@ public sealed partial class SimulatorSession
     /// Pre-cancellation has no effects. After invocation cancellation ends only this caller's wait;
     /// admitted cleanup continues. Success is Uninitialized and never resumes old work.
     /// </summary>
-    public Task<CommandResponse> ResetAsync(CancellationToken cancellationToken = default)
+    public Task<CommandResponse> ResetAsync(CancellationToken cancellationToken = default) => ResetAsync(null, cancellationToken);
+
+    private Task<CommandResponse> ResetAsync(ControlTarget? expectedTarget, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested) return Task.FromCanceled<CommandResponse>(cancellationToken);
         if (CheckOperationSource("Reset", OperationSource.External) is { } denied) return Task.FromResult(denied);
@@ -128,7 +130,7 @@ public sealed partial class SimulatorSession
             }
             operation = _activeReset;
         }
-        if (completion is not null) _ = CompleteResetAsync(completion);
+        if (completion is not null) _ = CompleteResetAsync(completion, expectedTarget);
         return WaitForResetAsync(operation, cancellationToken);
     }
 
@@ -147,13 +149,13 @@ public sealed partial class SimulatorSession
             return await (await Task.WhenAny(operation, cancelled.Task).ConfigureAwait(false)).ConfigureAwait(false);
     }
 
-    private async Task CompleteResetAsync(TaskCompletionSource<CommandResponse> completion)
+    private async Task CompleteResetAsync(TaskCompletionSource<CommandResponse> completion, ControlTarget? expectedTarget)
     {
-        try { completion.TrySetResult(await ResetCoreAsync().ConfigureAwait(false)); }
+        try { completion.TrySetResult(await ResetCoreAsync(expectedTarget).ConfigureAwait(false)); }
         catch (Exception ex) { completion.TrySetException(ex); }
     }
 
-    private async Task<CommandResponse> ResetCoreAsync()
+    private async Task<CommandResponse> ResetCoreAsync(ControlTarget? expectedTarget)
     {
         Task[] runs;
         EventWorkScope? work;
@@ -161,6 +163,7 @@ public sealed partial class SimulatorSession
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
+            if (CheckControlTarget("Reset", expectedTarget) is { } targetDenied) return targetDenied;
             if (CheckOperationSource("Reset", OperationSource.External) is { } denied) return denied;
             if (State == SimulatorState.Uninitialized) return ResetResponse(Accept("Reset", "Already uninitialized."));
             work = SnapshotActiveWork();

@@ -24,13 +24,17 @@ public sealed partial class SimulatorSession
 
     public event EventHandler<OperationModeInfo>? OperationModeChanged;
 
-    public async Task<CommandResponse> SetOperationModeAsync(SetOperationModeRequest request, CancellationToken cancellationToken = default)
+    public Task<CommandResponse> SetOperationModeAsync(SetOperationModeRequest request, CancellationToken cancellationToken = default) =>
+        SetOperationModeCoreAsync(request, null, cancellationToken);
+
+    private async Task<CommandResponse> SetOperationModeCoreAsync(SetOperationModeRequest request, ControlTarget? expectedTarget, CancellationToken cancellationToken)
     {
         if (request is null) throw new ArgumentNullException(nameof(request));
         var mode = request.Mode;
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckControlTarget("SetOperationMode", expectedTarget) is { } targetDenied) return targetDenied;
             if (_shutdownRequested)
                 return Reject("SetOperationMode", CommandErrorCodes.InvalidState, "Simulator host is shutting down.");
 
@@ -53,6 +57,9 @@ public sealed partial class SimulatorSession
         HandleInitializeAsync(cancellationToken, source);
 
     public Task<CommandResponse> DeinitializeFromSourceAsync(OperationSource source, CancellationToken cancellationToken = default)
+        => DeinitializeFromSourceCoreAsync(source, null, cancellationToken);
+
+    private Task<CommandResponse> DeinitializeFromSourceCoreAsync(OperationSource source, ControlTarget? expectedTarget, CancellationToken cancellationToken)
     {
         if (CheckOperationSource("Deinitialize", source) is { } denied) return Task.FromResult(denied);
         lock (_deinitializationGate)
@@ -60,7 +67,7 @@ public sealed partial class SimulatorSession
             if (_activeReset is { IsCompleted: false } reset) return JoinResetAsDeinitializeAsync(reset);
             if (_activeDeinitialization is { IsCompleted: false } activeDeinitialization) return activeDeinitialization;
             // Cleanup remains a single shared operation, independent of caller cancellation.
-            _activeDeinitialization = HandleDeinitializeAsync(CancellationToken.None, source);
+            _activeDeinitialization = HandleDeinitializeAsync(CancellationToken.None, source, expectedTarget);
             return _activeDeinitialization;
         }
     }

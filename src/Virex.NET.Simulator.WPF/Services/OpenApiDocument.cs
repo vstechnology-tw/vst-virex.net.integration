@@ -10,6 +10,10 @@ internal static class OpenApiDocument
     private static readonly string[] RequiredAlarmCatalogFields = ["appId", "instanceId", "timestamp", "sources"];
     private static readonly string[] RequiredAlarmSourceFields = ["name", "source", "category"];
     private static readonly string[] RequiredAlarmNotificationFields = ["name", "source", "category", "message", "state", "timestamp", "appId", "instanceId"];
+    private static readonly string[] RequiredWorkspaceScopeFields = ["workspaceId", "registrationId", "activationId"];
+    private static readonly string[] RequiredControlTargetFields = ["appId", "instanceId", "workspaceScope"];
+    private static readonly string[] RequiredScopedControlFields = ["expectedTarget", "command"];
+    private static readonly string[] ScopedCommands = ["Initialize", "Start", "Stop", "Reset", "Deinitialize", "SetOperationMode", "SetProductInfo"];
 
     public static object Create(string baseUrl) => new
     {
@@ -22,6 +26,7 @@ internal static class OpenApiDocument
         servers = new[] { new { url = baseUrl.TrimEnd('/') } },
         paths = new Dictionary<string, object>
         {
+            [RestRoutes.ApiScopedControl] = new Dictionary<string, object> { ["post"] = CommandOperation("Control one exact App process and Workspace activation", "Target validation and action admission are atomic. Target mismatch returns 409 target_mismatch; invalid envelope/command/payload returns 400 invalid_payload without business effects. Does not authenticate or bypass operation mode. Unsupported servers return 404/405; clients must never fall back to legacy control.", Ref("ScopedControlRequest")) },
             [RestRoutes.ApiAlarms] = new Dictionary<string, object> { ["get"] = ReadQueryOperation("Discover actual Alarm producers and their exact TCP event names", "AlarmCatalog") },
             [RestRoutes.ApiSystemReset] = new Dictionary<string, object> { ["post"] = CommandOperation("Reset after stop and required cleanup", "External source; Local rejects without side effects. Concurrent requests join cleanup; successful reset returns Uninitialized, never Ready. Cleanup failure remains Faulted. Caller disconnect/cancellation does not abandon admitted cleanup; explicit Initialize is required.") },
             [RestRoutes.ApiDataSources] = new Dictionary<string, object> { ["get"] = DataSourceQueryOperation("Discover source names, kinds, JSON types and current-work availability", "DataSourceCatalog") },
@@ -76,6 +81,20 @@ internal static class OpenApiDocument
         {
             schemas = new Dictionary<string, object>
             {
+                ["WorkspaceScopeIdentity"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["workspaceId"] = StringSchema("uuid"), ["registrationId"] = StringSchema("uuid"), ["activationId"] = StringSchema("uuid"),
+                }, RequiredWorkspaceScopeFields),
+                ["ControlTarget"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["appId"] = StringSchema(), ["instanceId"] = StringSchema(), ["workspaceScope"] = Ref("WorkspaceScopeIdentity"),
+                }, RequiredControlTargetFields),
+                ["ScopedControlRequest"] = ObjectSchema(new Dictionary<string, object>
+                {
+                    ["expectedTarget"] = Ref("ControlTarget"),
+                    ["command"] = new { type = "string", @enum = ScopedCommands },
+                    ["payload"] = new { nullable = true, description = "Start: SystemStartRequest (requestId required); Stop: SystemStopRequest; SetOperationMode: SetOperationModeRequest; SetProductInfo: ProductInfo. Initialize/Reset/Deinitialize: omitted, null or empty object. Other properties, duplicate properties and mismatched command payloads are rejected." },
+                }, RequiredScopedControlFields),
                 ["AlarmCatalog"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["appId"] = StringSchema(),

@@ -40,7 +40,11 @@ Default simulator endpoints:
 
 ## Current Public RESTful API Surface
 
+Use [scoped control](docs/scoped-control.md) to bind a mutation to the exact observed
+App process and Workspace activation. Unsupported servers never trigger a legacy fallback.
+
 ```text
+POST /api/control/scoped
 GET  /api/status
 GET  /api/events
 GET  /api/alarms

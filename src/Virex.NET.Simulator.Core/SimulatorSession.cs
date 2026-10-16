@@ -178,11 +178,12 @@ public sealed partial class SimulatorSession
 
     public void WriteLog(string message) => LogMessage(message);
 
-    internal async Task<CommandResponse> HandleInitializeAsync(CancellationToken cancellationToken, OperationSource source = OperationSource.External)
+    internal async Task<CommandResponse> HandleInitializeAsync(CancellationToken cancellationToken, OperationSource source = OperationSource.External, ControlTarget? expectedTarget = null)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckControlTarget("Initialize", expectedTarget) is { } targetDenied) return targetDenied;
             if (CheckOperationSource("Initialize", source) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.Initialize))
                 return Reject("Initialize");
@@ -199,11 +200,12 @@ public sealed partial class SimulatorSession
         }
     }
 
-    internal async Task<CommandResponse> HandleDeinitializeAsync(CancellationToken cancellationToken, OperationSource source = OperationSource.External)
+    internal async Task<CommandResponse> HandleDeinitializeAsync(CancellationToken cancellationToken, OperationSource source = OperationSource.External, ControlTarget? expectedTarget = null)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckControlTarget("Deinitialize", expectedTarget) is { } targetDenied) return targetDenied;
             if (CheckOperationSource("Deinitialize", source) is { } denied) return denied;
             return await HandleDeinitializeUnderGateAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -256,13 +258,14 @@ public sealed partial class SimulatorSession
         SetError(null);
         return Accept(command, "Deinitialized.");
     }
-    internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
+    internal async Task<CommandResponse> HandleSetProductInfoAsync(ProductInfo productInfo, CancellationToken cancellationToken, OperationSource source = OperationSource.External, ControlTarget? expectedTarget = null)
     {
-        if (CheckOperationSource("SetProductInfo", source) is { } sourceDenied) return sourceDenied;
-        if (State != SimulatorState.Ready) return Reject("SetProductInfo");
+        if (expectedTarget is null && CheckOperationSource("SetProductInfo", source) is { } sourceDenied) return sourceDenied;
+        if (expectedTarget is null && State != SimulatorState.Ready) return Reject("SetProductInfo");
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckControlTarget("SetProductInfo", expectedTarget) is { } targetDenied) return targetDenied;
             if (CheckOperationSource("SetProductInfo", source) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.SetProductInfo))
                 return Reject("SetProductInfo");
@@ -292,13 +295,14 @@ public sealed partial class SimulatorSession
         }
     }
 
-    internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
+    internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External, ControlTarget? expectedTarget = null)
     {
-        if (CheckOperationSource("Start", source, request.RequestId) is { } sourceDenied) return sourceDenied;
-        if (State != SimulatorState.Ready) return Reject("Start", requestId: request.RequestId);
+        if (expectedTarget is null && CheckOperationSource("Start", source, request.RequestId) is { } sourceDenied) return sourceDenied;
+        if (expectedTarget is null && State != SimulatorState.Ready) return Reject("Start", requestId: request.RequestId);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckControlTarget("Start", expectedTarget, request.RequestId) is { } targetDenied) return targetDenied;
             if (CheckOperationSource("Start", source, request.RequestId) is { } denied) return denied;
             if (!CanFire(SimulatorTrigger.Start))
                 return Reject("Start", requestId: request.RequestId);
@@ -357,11 +361,12 @@ public sealed partial class SimulatorSession
         }
     }
 
-    internal async Task<CommandResponse> HandleStopAsync(SystemStopRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External)
+    internal async Task<CommandResponse> HandleStopAsync(SystemStopRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External, ControlTarget? expectedTarget = null)
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (CheckControlTarget("Stop", expectedTarget) is { } targetDenied) return targetDenied;
             if (CheckOperationSource("Stop", source) is { } denied) return denied;
             return await StopUnderGateAsync(request).ConfigureAwait(false);
         }

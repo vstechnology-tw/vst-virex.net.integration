@@ -80,6 +80,20 @@ public sealed class RestSimulatorServer
             {
                 await JsonAsync(context, _session.GetEventCatalog()).ConfigureAwait(false);
             }
+            else if (path == RestRoutes.ApiScopedControl)
+            {
+                if (context.Request.HttpMethod != "POST")
+                {
+                    context.Response.StatusCode = 405;
+                    context.Response.Headers["Allow"] = "POST";
+                    await TextAsync(context, "This endpoint supports POST only.", "text/plain").ConfigureAwait(false);
+                }
+                else
+                {
+                    var request = ScopedControlJson.ReadRequest(await ReadBodyAsync(context).ConfigureAwait(false));
+                    await CommandAsync(context, await _session.ExecuteScopedAsync(request).ConfigureAwait(false)).ConfigureAwait(false);
+                }
+            }
             else if (path == RestRoutes.ApiStatus && context.Request.HttpMethod == "GET")
             {
                 await JsonAsync(context, _session.Status).ConfigureAwait(false);
@@ -285,6 +299,7 @@ public sealed class RestSimulatorServer
 
     private static string CommandName(HttpListenerRequest request) => request.Url?.AbsolutePath switch
     {
+        RestRoutes.ApiScopedControl => "ScopedControl",
         RestRoutes.ApiStatus => "GetStatus",
         RestRoutes.ApiOperationMode => request.HttpMethod == "GET" ? "GetOperationMode" : "SetOperationMode",
         RestRoutes.ApiError => "GetError",
