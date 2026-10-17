@@ -20,10 +20,12 @@ public static class CommandPayloadJson
             throw new JsonException("Start requestId must be a nonempty string.");
         if (document.RootElement.TryGetProperty("source", out _) || document.RootElement.TryGetProperty("operationSource", out _))
             throw new JsonException("Operation source is assigned by the host, not a payload.");
-        var product = value is ProductInfo info ? info : (value as MqttCommandRequest)?.ProductInfo;
+        var product = value is ProductInfo info ? info : (value as MqttCommandRequest)?.ProductInfo ?? (value as SystemStartRequest)?.ProductInfo;
         if (product is not null && (product.LotID is null || product.WaferID is null || product.Recipe is null
             || product.Slot is null || product.FoupID is null || product.ChamberID is null))
             throw new JsonException("ProductInfo fields must be strings, not null.");
+        if (product?.AdditionalFields is { } fields && fields.Any(pair => string.IsNullOrWhiteSpace(pair.Key) || pair.Value is null))
+            throw new JsonException("ProductInfo additionalFields requires nonempty keys and string values.");
         return value;
     }
 

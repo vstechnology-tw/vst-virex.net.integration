@@ -16,6 +16,9 @@ public sealed class ProductInfo
 
     public string ChamberID { get; set; } = Unknown;
 
+    /// <summary>Optional application-defined string fields. Missing and empty values remain distinct.</summary>
+    public IReadOnlyDictionary<string, string>? AdditionalFields { get; set; }
+
     public string LotIDOr => string.IsNullOrWhiteSpace(LotID) ? Unknown : LotID;
 
     public string WaferIDOr => string.IsNullOrWhiteSpace(WaferID) ? Unknown : WaferID;
@@ -37,5 +40,7 @@ public sealed class ProductInfo
             Slot = Slot,
             FoupID = FoupID,
             ChamberID = ChamberID,
+            AdditionalFields = AdditionalFields is null ? null : new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(
+                AdditionalFields.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal)),
         };
 }

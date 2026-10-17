@@ -38,7 +38,7 @@ public static class ScopedControlJson
                 if (payload is { ValueKind: not JsonValueKind.Null }) Shape(payload.Value);
                 break;
             case ScopedControlCommands.Start:
-                Shape(Required(payload), "requestId", "condition", "runMode", "inspectionMode");
+                Shape(Required(payload), "requestId", "condition", "runMode", "inspectionMode", "productInfo");
                 RequireString(payload!.Value, "requestId");
                 _ = ReadPayload<SystemStartRequest>(request); break;
             case ScopedControlCommands.Stop:
@@ -48,7 +48,7 @@ public static class ScopedControlJson
                 Shape(Required(payload), "mode"); RequireString(payload!.Value, "mode");
                 _ = ReadPayload<SetOperationModeRequest>(request); break;
             case ScopedControlCommands.SetProductInfo:
-                Shape(Required(payload), "lotID", "waferID", "recipe", "slot", "foupID", "chamberID", "lotIDOr", "waferIDOr", "recipeOr", "slotOr", "foupIDOr", "chamberIDOr");
+                Shape(Required(payload), "additionalFields", "lotID", "waferID", "recipe", "slot", "foupID", "chamberID", "lotIDOr", "waferIDOr", "recipeOr", "slotOr", "foupIDOr", "chamberIDOr");
                 _ = ReadPayload<ProductInfo>(request); break;
             default: throw new JsonException("Unknown scoped command.");
         }
