@@ -65,6 +65,7 @@ public sealed class VirexMqttCommandClient
             Condition = request.Condition,
             RunMode = request.RunMode,
             InspectionMode = request.InspectionMode,
+            ProductInfo = request.ProductInfo?.Snapshot(),
         }, cancellationToken);
     }
 

@@ -217,6 +217,7 @@ internal static class OpenApiDocument
                         ["slot"] = StringSchema(),
                         ["foupID"] = StringSchema(),
                         ["chamberID"] = StringSchema(),
+                        ["additionalFields"] = new { type = "object", nullable = true, additionalProperties = new { type = "string" } },
                     },
                     RequiredProductInfoFields),
                 ["SystemStatus"] = ObjectSchema(new Dictionary<string, object>
@@ -263,6 +264,7 @@ internal static class OpenApiDocument
                 ["SystemStartRequest"] = ObjectSchema(new Dictionary<string, object>
                 {
                     ["requestId"] = new { type = "string", minLength = 1, description = "Created before sending by the SDK; correlates racing acceptance and work events." },
+                    ["productInfo"] = Ref("ProductInfo"),
                     ["condition"] = NullableStringSchema(),
                     ["runMode"] = NullableStringSchema(),
                     ["inspectionMode"] = new { type = "string", nullable = true, @enum = new[] { InspectionModes.CaptureOnly, InspectionModes.CaptureAndInspect }, description = "Optional per-start selection. Omitted/null preserves recipe behavior; independent of runMode." },
@@ -283,6 +285,7 @@ internal static class OpenApiDocument
                     ["slot"] = StringSchema(),
                     ["foupID"] = StringSchema(),
                     ["chamberID"] = StringSchema(),
+                    ["additionalFields"] = new { type = "object", nullable = true, additionalProperties = new { type = "string" } },
                     ["condition"] = StringSchema(),
                     ["overallResult"] = StringSchema(),
                     ["defectCount"] = IntSchema(),

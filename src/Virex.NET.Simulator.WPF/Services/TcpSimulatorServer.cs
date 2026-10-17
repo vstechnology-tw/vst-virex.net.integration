@@ -239,7 +239,7 @@ public sealed class TcpSimulatorServer
                         else if (message.Type == "productInfo" && message.ProductInfo is not null)
                             await _session.SetProductInfoAsync(message.ProductInfo, token).ConfigureAwait(false);
                         else if (message.Type == "start")
-                            await _session.StartAsync(new SystemStartRequest { Condition = message.Condition, RunMode = message.RunMode, InspectionMode = message.InspectionMode }, token).ConfigureAwait(false);
+                            await _session.StartAsync(new SystemStartRequest { RequestId = message.RequestId ?? Guid.NewGuid().ToString("N"), Condition = message.Condition, RunMode = message.RunMode, InspectionMode = message.InspectionMode, ProductInfo = message.ProductInfo }, token).ConfigureAwait(false);
                         else if (message.Type == "stop")
                             await _session.StopAsync(new SystemStopRequest { Reason = message.Reason }, token).ConfigureAwait(false);
                     }

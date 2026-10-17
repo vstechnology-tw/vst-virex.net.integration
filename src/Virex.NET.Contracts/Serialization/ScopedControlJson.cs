@@ -40,6 +40,7 @@ public static class ScopedControlJson
             case ScopedControlCommands.Start:
                 Shape(Required(payload), "requestId", "condition", "runMode", "inspectionMode", "productInfo");
                 RequireString(payload!.Value, "requestId");
+                if (payload.Value.TryGetProperty("productInfo", out var product) && product.ValueKind != JsonValueKind.Null) ProductShape(product);
                 _ = ReadPayload<SystemStartRequest>(request); break;
             case ScopedControlCommands.Stop:
                 Shape(Required(payload), "reason");
@@ -48,7 +49,7 @@ public static class ScopedControlJson
                 Shape(Required(payload), "mode"); RequireString(payload!.Value, "mode");
                 _ = ReadPayload<SetOperationModeRequest>(request); break;
             case ScopedControlCommands.SetProductInfo:
-                Shape(Required(payload), "additionalFields", "lotID", "waferID", "recipe", "slot", "foupID", "chamberID", "lotIDOr", "waferIDOr", "recipeOr", "slotOr", "foupIDOr", "chamberIDOr");
+                ProductShape(Required(payload));
                 _ = ReadPayload<ProductInfo>(request); break;
             default: throw new JsonException("Unknown scoped command.");
         }
@@ -56,6 +57,18 @@ public static class ScopedControlJson
 
     public static T ReadPayload<T>(ScopedControlRequest request) =>
         CommandPayloadJson.ReadObject<T>(Required(request.Payload).GetRawText()) ?? throw new JsonException("A command payload is required.");
+
+    private static void ProductShape(JsonElement product)
+    {
+        Shape(product, "additionalFields", "lotID", "waferID", "recipe", "slot", "foupID", "chamberID", "lotIDOr", "waferIDOr", "recipeOr", "slotOr", "foupIDOr", "chamberIDOr");
+        if (product.TryGetProperty("additionalFields", out var fields) && fields.ValueKind != JsonValueKind.Null)
+        {
+            if (fields.ValueKind != JsonValueKind.Object) throw new JsonException("additionalFields must be an object.");
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var field in fields.EnumerateObject())
+                if (!seen.Add(field.Name)) throw new JsonException("Duplicate additional field: " + field.Name);
+        }
+    }
 
     private static JsonElement Required(JsonElement? payload) => payload ?? throw new JsonException("A command payload is required.");
     private static void RequireString(JsonElement value, string name)

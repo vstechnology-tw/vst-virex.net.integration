@@ -76,6 +76,7 @@ public static class TcpSocketEventFormatter
             info.Slot,
             info.FoupID,
             info.ChamberID,
+            info.AdditionalFields,
         });
 
     public static string FormatProductInfoCommand(ProductInfo info) =>
@@ -88,6 +89,7 @@ public static class TcpSocketEventFormatter
             info.Slot,
             info.FoupID,
             info.ChamberID,
+            info.AdditionalFields,
         });
 
     public static string FormatImageGrabbed(ImageGrabbedInfo image) =>
@@ -117,6 +119,7 @@ public static class TcpSocketEventFormatter
             info.Slot,
             info.FoupID,
             info.ChamberID,
+            info.AdditionalFields,
         });
 
     public static string FormatResults(ResultList results) =>
@@ -215,6 +218,9 @@ public static class TcpSocketEventFormatter
     public static string FormatInitializeCommand() => FormatCommand("initialize");
 
     public static string FormatDeinitializeCommand() => FormatCommand("deinitialize");
+
+    public static string FormatStartWithOptionsCommand(SystemStartRequest request) =>
+        Format(new { type = "start", request.RequestId, request.Condition, request.RunMode, request.InspectionMode, productInfo = request.ProductInfo?.Snapshot() });
 
     public static string FormatStartCommand(string? condition = null, string? runMode = null) =>
         FormatStartCommand(condition, runMode, null);

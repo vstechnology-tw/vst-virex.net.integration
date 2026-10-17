@@ -25,6 +25,11 @@ public static class ProductInfoJsonParser
             info.Slot = GetString(root, "slot");
             info.FoupID = GetString(root, "foupID");
             info.ChamberID = GetString(root, "chamberID");
+            if (root.TryGetProperty("additionalFields", out var fields))
+            {
+                var parsed = CommandPayloadJson.ReadObject<ProductInfo>("{\"additionalFields\":" + fields.GetRawText() + "}")!;
+                info.AdditionalFields = parsed.AdditionalFields;
+            }
             return HasAny(info);
         }
         catch (JsonException ex)

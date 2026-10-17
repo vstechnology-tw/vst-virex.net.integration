@@ -71,6 +71,9 @@ public sealed partial class VirexTcpEventClient
     public async Task SendStartAsync(string? condition, string? runMode, CancellationToken cancellationToken = default) =>
         await SendFrameAsync(TcpSocketEventFormatter.FormatStartCommand(condition, runMode), cancellationToken).ConfigureAwait(false);
 
+    public Task SendStartWithOptionsAsync(SystemStartRequest request, CancellationToken cancellationToken = default) =>
+        SendFrameAsync(TcpSocketEventFormatter.FormatStartWithOptionsCommand(request ?? throw new ArgumentNullException(nameof(request))), cancellationToken);
+
     public async Task SendStopAsync(CancellationToken cancellationToken = default) =>
         await SendFrameAsync(TcpSocketEventFormatter.FormatStopCommand(), cancellationToken).ConfigureAwait(false);
 

@@ -57,6 +57,8 @@ public static class TcpSocketMessageParser
                         return false;
                     }
                 }
+                if (message.Type == "start")
+                    message.ProductInfo = CommandPayloadJson.ReadObject<SystemStartRequest>(line)?.ProductInfo;
                 message.Condition = ReadOptionalString(root, "condition");
                 message.Mode = ReadOptionalString(root, "mode");
                 message.RunMode = ReadRunMode(root);

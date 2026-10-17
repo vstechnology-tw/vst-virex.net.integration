@@ -299,6 +299,7 @@ public sealed partial class SimulatorSession
     {
         if (expectedTarget is null && CheckOperationSource("Start", source, request.RequestId) is { } sourceDenied) return sourceDenied;
         if (expectedTarget is null && State != SimulatorState.Ready) return Reject("Start", requestId: request.RequestId);
+        var suppliedProduct = request.ProductInfo?.Snapshot();
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -318,7 +319,10 @@ public sealed partial class SimulatorSession
                 LogMessage("Start condition: " + condition);
             LogMessage("Start run mode: " + runMode);
 
-            _activeRunProductInfo = ProductInfo.Snapshot();
+            var acceptedProduct = (suppliedProduct ?? ProductInfo).Snapshot();
+            // Validate direct in-process callers by the same contract as transport ingress.
+            _ = CommandPayloadJson.ReadObject<ProductInfo>(ProtocolJson.Serialize(acceptedProduct));
+            _activeRunProductInfo = acceptedProduct;
             _activeRunCondition = condition;
             _activeRunInspectionMode = request.InspectionMode;
             _pendingPersistenceFault = null;
@@ -332,6 +336,8 @@ public sealed partial class SimulatorSession
                 return Reject("Start", CommandErrorCodes.CapturePreparationFailed, "Simulated source preparation failed.", request.RequestId);
             }
             // Admission under _gate: rejected requests leave the preceding current result intact.
+            ProductInfo = acceptedProduct.Snapshot();
+            if (suppliedProduct is not null) LoadRecipe(ProductInfo.RecipeOr);
             _currentResultId = null;
             await FireAsync(SimulatorTrigger.Start).ConfigureAwait(false);
             AnnounceCaptureReady();
@@ -688,6 +694,7 @@ public sealed partial class SimulatorSession
             Slot = info.SlotOr,
             FoupID = info.FoupIDOr,
             ChamberID = info.ChamberIDOr,
+            AdditionalFields = info.AdditionalFields,
             Condition = condition,
             OverallResult = "OK",
             DefectCount = 0,

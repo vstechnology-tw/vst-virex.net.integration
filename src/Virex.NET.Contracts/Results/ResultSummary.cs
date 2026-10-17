@@ -21,6 +21,9 @@ public sealed class ResultSummary
 
     public string ChamberID { get; set; } = string.Empty;
 
+    /// <summary>Application-defined product fields captured with the accepted Start.</summary>
+    public IReadOnlyDictionary<string, string>? AdditionalFields { get; set; }
+
     public string Condition { get; set; } = string.Empty;
 
     public string OverallResult { get; set; } = string.Empty;
