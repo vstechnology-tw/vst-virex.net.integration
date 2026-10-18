@@ -27,10 +27,13 @@ public static class ScopedControlCommands
     public const string SetProductInfo = "SetProductInfo";
 }
 
-/// <summary>Additive scoped-control envelope. Payload uses the existing command DTO, or null for bodyless commands.</summary>
+/// <summary>Additive scoped-control envelope. Payload uses the existing command DTO, or null for bodyless commands.
+/// RequireRemote is an optional Start-only precondition; false/absent preserves the original command semantics.</summary>
 public sealed class ScopedControlRequest
 {
     public ControlTarget? ExpectedTarget { get; set; }
     public string Command { get; set; } = string.Empty;
     public JsonElement? Payload { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool RequireRemote { get; set; }
 }

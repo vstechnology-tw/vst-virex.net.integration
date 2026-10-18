@@ -14,7 +14,7 @@ public sealed partial class SimulatorSession
         {
             ScopedControlCommands.Initialize => HandleInitializeAsync(cancellationToken, expectedTarget: target),
             ScopedControlCommands.Deinitialize => DeinitializeScopedCoreAsync(target, cancellationToken),
-            ScopedControlCommands.Start => HandleStartAsync(ScopedControlJson.ReadPayload<SystemStartRequest>(owned), cancellationToken, expectedTarget: target),
+            ScopedControlCommands.Start => HandleStartAsync(ScopedControlJson.ReadPayload<SystemStartRequest>(owned), cancellationToken, expectedTarget: target, requireRemote: owned.RequireRemote),
             ScopedControlCommands.Stop => HandleStopAsync(ScopedControlJson.ReadPayload<SystemStopRequest>(owned), cancellationToken, expectedTarget: target),
             ScopedControlCommands.SetProductInfo => HandleSetProductInfoAsync(ScopedControlJson.ReadPayload<ProductInfo>(owned), cancellationToken, expectedTarget: target),
             ScopedControlCommands.SetOperationMode => SetOperationModeCoreAsync(ScopedControlJson.ReadPayload<SetOperationModeRequest>(owned), target, cancellationToken),

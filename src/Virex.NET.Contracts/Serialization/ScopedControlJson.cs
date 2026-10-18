@@ -9,7 +9,7 @@ public static class ScopedControlJson
     {
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
-        Shape(root, "expectedTarget", "command", "payload");
+        Shape(root, "expectedTarget", "command", "payload", "requireRemote");
         if (!root.TryGetProperty("expectedTarget", out var target)) throw new JsonException("expectedTarget is required.");
         Shape(target, "appId", "instanceId", "workspaceScope");
         RequireString(target, "appId"); RequireString(target, "instanceId");
@@ -19,6 +19,12 @@ public static class ScopedControlJson
             if (!scope.TryGetProperty(name, out var id) || id.ValueKind != JsonValueKind.String || !Guid.TryParse(id.GetString(), out var value) || value == Guid.Empty)
                 throw new JsonException("A complete Workspace identity is required.");
         RequireString(root, "command");
+        var command = root.GetProperty("command").GetString()!;
+        var hasRequireRemote = root.TryGetProperty("requireRemote", out var requireRemote);
+        if (hasRequireRemote && requireRemote.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            throw new JsonException("requireRemote must be a boolean.");
+        if (hasRequireRemote && command != ScopedControlCommands.Start)
+            throw new JsonException("requireRemote is only valid for Start.");
         var request = ProtocolJson.Deserialize<ScopedControlRequest>(json)!;
         // JsonElement must outlive the parsed document.
         request.Payload = root.TryGetProperty("payload", out var payload) ? payload.Clone() : null;
@@ -29,6 +35,8 @@ public static class ScopedControlJson
     public static void Validate(ScopedControlRequest request)
     {
         if (request is null || request.ExpectedTarget?.IsValid != true) throw new JsonException("A valid expectedTarget is required.");
+        if (request.RequireRemote && request.Command != ScopedControlCommands.Start)
+            throw new JsonException("requireRemote is only valid for Start.");
         var payload = request.Payload;
         switch (request.Command)
         {

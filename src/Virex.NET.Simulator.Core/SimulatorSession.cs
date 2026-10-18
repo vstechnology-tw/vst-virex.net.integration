@@ -295,7 +295,7 @@ public sealed partial class SimulatorSession
         }
     }
 
-    internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External, ControlTarget? expectedTarget = null)
+    internal async Task<CommandResponse> HandleStartAsync(SystemStartRequest request, CancellationToken cancellationToken, OperationSource source = OperationSource.External, ControlTarget? expectedTarget = null, bool requireRemote = false)
     {
         if (expectedTarget is null && CheckOperationSource("Start", source, request.RequestId) is { } sourceDenied) return sourceDenied;
         if (expectedTarget is null && State != SimulatorState.Ready) return Reject("Start", requestId: request.RequestId);
@@ -305,6 +305,8 @@ public sealed partial class SimulatorSession
         {
             if (CheckControlTarget("Start", expectedTarget, request.RequestId) is { } targetDenied) return targetDenied;
             if (CheckOperationSource("Start", source, request.RequestId) is { } denied) return denied;
+            if (requireRemote && _operationMode != OperationModes.Remote)
+                return Reject("Start", CommandErrorCodes.OperationNotAllowed, "Remote operation mode is required.", request.RequestId);
             if (!CanFire(SimulatorTrigger.Start))
                 return Reject("Start", requestId: request.RequestId);
 

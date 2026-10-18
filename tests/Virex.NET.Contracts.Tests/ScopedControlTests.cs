@@ -274,6 +274,61 @@ public sealed class ScopedControlTests
         Assert.Equal(SimulatorState.Uninitialized, session.State);
     }
 
+    [Fact]
+    public void RequireRemoteEnvelopeIsStartOnlyStrictAndOmittedWhenFalse()
+    {
+        var session = new SimulatorSession();
+        var target = Target(session);
+        var optional = Request(target, "Start");
+        var optionalJson = ProtocolJson.Serialize(optional);
+        Assert.DoesNotContain("requireRemote", optionalJson);
+        Assert.False(ScopedControlJson.ReadRequest(optionalJson).RequireRemote);
+
+        optional.RequireRemote = true;
+        var requiredJson = ProtocolJson.Serialize(optional);
+        Assert.Contains("\"requireRemote\":true", requiredJson);
+        Assert.True(ScopedControlJson.ReadRequest(requiredJson).RequireRemote);
+
+        var nonStart = Request(target, "Initialize");
+        nonStart.RequireRemote = true;
+        Assert.Throws<JsonException>(() => ScopedControlJson.ReadRequest(ProtocolJson.Serialize(nonStart)));
+
+        var initializeJson = ProtocolJson.Serialize(Request(target, "Initialize"));
+        Assert.Throws<JsonException>(() => ScopedControlJson.ReadRequest(initializeJson.TrimEnd('}') + ",\"requireRemote\":false}"));
+        Assert.Throws<JsonException>(() => ScopedControlJson.ReadRequest(initializeJson.TrimEnd('}') + ",\"requireRemote\":\"true\"}"));
+        Assert.Throws<JsonException>(() => ScopedControlJson.ReadRequest(initializeJson.TrimEnd('}') + ",\"requireRemote\":true,\"requireRemote\":false}"));
+    }
+
+    [Fact]
+    public async Task ScopedStartRequiresRemoteOnlyWhenRequestedAndCannotDowngrade()
+    {
+        var session = new SimulatorSession();
+        try
+        {
+            var target = Target(session);
+            Assert.True((await session.ExecuteScopedAsync(Request(target, "Initialize"))).Accepted);
+
+            var required = Request(target, "Start");
+            required.RequireRemote = true;
+            var local = await session.ExecuteScopedAsync(required);
+            Assert.False(local.Accepted);
+            Assert.Equal(CommandErrorCodes.OperationNotAllowed, local.ErrorCode);
+            Assert.Equal(SimulatorState.Ready, session.State);
+
+            // False/absent retains the simulator's existing optional-mode semantics.
+            Assert.True((await session.ExecuteScopedAsync(Request(target, "Start"))).Accepted);
+            Assert.True((await session.ExecuteScopedAsync(Request(target, "Stop"))).Accepted);
+
+            Assert.True((await session.SetOperationModeAsync(new SetOperationModeRequest { Mode = OperationModes.Remote })).Accepted);
+            var remote = Request(target, "Start");
+            remote.RequireRemote = true;
+            var accepted = await session.ExecuteScopedAsync(remote);
+            Assert.True(accepted.Accepted);
+            Assert.Equal(OperationModes.Remote, session.OperationMode.Mode);
+        }
+        finally { await session.ShutdownAsync(); }
+    }
+
     private static Task<CommandResponse> Send(VirexRestClient client, ControlTarget target, string command) => command switch
     {
         "Initialize" => client.InitializeScopedAsync(target), "Deinitialize" => client.DeinitializeScopedAsync(target), "Reset" => client.ResetScopedAsync(target),
