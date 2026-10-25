@@ -38,7 +38,7 @@ If `.NET Framework 4.8` reference assemblies or Windows desktop SDK support are 
 
 ### Issue tracker
 
-Issues and specs live in this repository's GitHub Issues; use the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Maintainers track work in Beads (`bd`, prefix `vxi`); the database is not stored in this repo. GitHub Issues remain open for external reports. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
@@ -47,3 +47,9 @@ Use the five canonical triage labels. See `docs/agents/triage-labels.md`.
 ### Domain docs
 
 This is a single-context repository using root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
+
+## Coding style
+
+- Validate untrusted input once at the boundary (parsers, transport adapters); trust typed values inside.
+- Keep `try/catch` at IO and transport boundaries; do not swallow exceptions internally.
+- Do not add abstractions, options, or defensive code for scenarios that are not used.
