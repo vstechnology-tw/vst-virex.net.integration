@@ -11,7 +11,7 @@ Issues and specs for this repo live in Beads (`bd`), served from the maintainers
 - **List issues**: `bd list --status open [--label <label>] [--parent <epic-id>] --json`.
 - **Comment on an issue**: `bd comments add <id> "<text>"`.
 - **Apply / remove labels**: `bd update <id> --add-label <label>` / `--remove-label <label>`.
-- **Close**: `bd close <id> --reason "<SHA; verification command → result>"`.
+- **Close**: `bd close <id> --reason "<SHA; verification command → result>"` (the coordinator closes after review and integration).
 
 ## Pull requests as a triage surface
 
