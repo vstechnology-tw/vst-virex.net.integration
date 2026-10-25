@@ -11,6 +11,8 @@ Issues and specs for this repo live in Beads (`bd`), served from the maintainers
 - **List issues**: `bd list --status open [--label <label>] [--parent <epic-id>] --json`.
 - **Comment on an issue**: `bd comments add <id> "<text>"`.
 - **Apply / remove labels**: `bd update <id> --add-label <label>` / `--remove-label <label>`.
+- **Blocking**: `bd dep add <blocked> <blocker>`; `bd ready` only lists beads with no open blockers.
+- **Labels skills apply** (`ready-for-agent`, `needs-info`, ...): add them as bead labels. Every implementation bead also gets one of `tier:basic`, `tier:standard`, `tier:complex`.
 - **Close**: `bd close <id> --reason "<SHA; verification command → result>"` (the coordinator closes after review and integration).
 
 ## Pull requests as a triage surface
