@@ -13,8 +13,19 @@ public sealed partial class VirexRestClient
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
+    /// <summary>Reads the producer's status without replacing a missing or invalid state with a default.</summary>
+    /// <exception cref="InvalidOperationException">The response lacks a state property.</exception>
+    /// <exception cref="JsonException">The response contains malformed JSON or an invalid state property.</exception>
     public Task<SystemStatus> GetStatusAsync(CancellationToken cancellationToken = default) =>
-        GetAsync<SystemStatus>(RestRoutes.ApiStatus, cancellationToken);
+        GetQueryAsync<SystemStatus>(RestRoutes.ApiStatus, ["state"], cancellationToken, root =>
+        {
+            var states = root.EnumerateObject()
+                .Where(property => string.Equals(property.Name, "state", StringComparison.OrdinalIgnoreCase)).Take(2).ToArray();
+            if (states.Length != 1 || states[0].Value.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(states[0].Value.GetString()))
+                throw new JsonException("Exactly one nonempty status state is required.");
+            return ProtocolJson.Deserialize<SystemStatus>(root.GetRawText())!;
+        });
 
     /// <summary>Reads the addressed App's actual software version using REST. Does not initialize or modify it.
     /// Returns an owned snapshot. Concurrent calls are supported. Caller cancellation is preserved;

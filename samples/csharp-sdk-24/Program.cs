@@ -26,11 +26,16 @@ var checks = new List<string>();
 VirexEventSubscription? subscription = null;
 try
 {
+    var softwareVersion = await client.GetSoftwareVersionAsync(token);
+    Require(!string.IsNullOrWhiteSpace(softwareVersion.Version), "software version available");
+    Require((await client.GetStatusAsync(token)).State == SystemStates.Uninitialized, "initial status");
     var events = await client.GetEventCatalogAsync(token);
     var sources = await client.GetDataSourcesAsync(token);
     var alarms = await client.GetAlarmsAsync(token);
     Require(events.AppId == sources.AppId && events.InstanceId == sources.InstanceId
         && events.AppId == alarms.AppId && events.InstanceId == alarms.InstanceId, "catalog identity");
+    var workspace = events.WorkspaceScope;
+    Require(workspace?.IsValid == true, "catalog Workspace identity");
     // These are the Simulator example's semantic bindings, not an SDK whitelist.
     var names = new[] { "captureReady", "captureCompleted", "resultCreated" };
     Require(names.All(name => events.Names.Contains(name, StringComparer.Ordinal)), "example event bindings");
@@ -48,16 +53,32 @@ try
         if (value.Name == "captureCompleted") completed.TrySetResult(value);
         if (value.Name == "resultCreated") result.TrySetResult(value);
     }, issue => Console.Error.WriteLine($"stream issue: {issue.Code}: {issue.Message}"),
-        new EventSubscriptionScope { AppId = events.AppId, InstanceId = events.InstanceId, RequestId = request.RequestId }, token);
+        new EventSubscriptionScope { AppId = events.AppId, InstanceId = events.InstanceId,
+            WorkspaceScope = workspace, RequestId = request.RequestId }, token);
+    Require(workspace!.SameAs(subscription.WorkspaceScope), "subscription Workspace identity");
     Require((await client.InitializeAsync(token)).State == SystemStates.Ready, "explicit initialization");
+    Require((await client.GetStatusAsync(token)).State == SystemStates.Ready, "ready status");
+    var product = new ProductInfo
+    {
+        LotID = "sample-lot", WaferID = "sample-wafer", Recipe = "sample-recipe",
+        Slot = "sample-slot", FoupID = "sample-foup", ChamberID = "sample-chamber",
+        AdditionalFields = new Dictionary<string, string> { ["sample-field"] = "sample-value" },
+    };
+    Require((await client.SetProductInfoAsync(product, token)).Accepted, "product info accepted");
+    Require(SameProduct(product, await client.GetProductInfoAsync(token)), "product info read back");
     var accepted = await client.StartAsync(request, token);
     Require(accepted.Accepted && accepted.RequestId == request.RequestId, "REST acceptance correlation");
+    Require(accepted.AppId == events.AppId && accepted.InstanceId == events.InstanceId
+        && workspace.SameAs(accepted.WorkspaceScope), "accepted work identity");
     // REST acceptance does not authorize scanning. Wait for the actual producer events.
     var readyEvent = await ready.Task.WaitAsync(token);
     var captureEvent = await completed.Task.WaitAsync(token);
     var resultEvent = await result.Task.WaitAsync(token);
     foreach (var value in new[] { readyEvent, captureEvent, resultEvent })
-        Require(value.JobId == accepted.JobId && value.CaptureId == accepted.CaptureId, "event work correlation: " + value.Name);
+        Require(value.AppId == events.AppId && value.InstanceId == events.InstanceId
+            && workspace.SameAs(value.WorkspaceScope) && value.ConnectionGeneration == subscription.ConnectionGeneration
+            && value.RequestId == request.RequestId && value.JobId == accepted.JobId
+            && value.CaptureId == accepted.CaptureId, "event work correlation: " + value.Name);
     var findings = await CommittedResultReader.ReadAsync(client, accepted, resultEvent, "result.findings", token);
     Require(findings.Value.ValueKind == JsonValueKind.Array, "explicit committed result");
     var next = await client.StartAsync(new SystemStartRequest
@@ -65,6 +86,17 @@ try
         RequestId = Guid.NewGuid().ToString("N"), RunMode = ControlRunModes.Continue, InspectionMode = InspectionModes.CaptureOnly,
     }, token);
     Require(next.Accepted && next.JobId != accepted.JobId, "next work acceptance");
+    Require((await client.GetStatusAsync(token)).State == SystemStates.Running, "running status");
+    try
+    {
+        await client.SetProductInfoAsync(new ProductInfo { LotID = "rejected-update" }, token);
+        throw new InvalidOperationException("ProductInfo update succeeded while running.");
+    }
+    catch (VirexClientException ex) when (ex.StatusCode == 409)
+    {
+        checks.Add("running product info update rejected");
+    }
+    Require(SameProduct(product, await client.GetProductInfoAsync(token)), "rejected update preserves product info");
     try { await client.GetCurrentResultAsync(token); throw new InvalidOperationException("Previous result remained current."); }
     catch (VirexQueryException ex) when (ex.ErrorCode == QueryErrorCodes.NoCurrentResult) { checks.Add("current result invalidated"); }
     var historical = await CommittedResultReader.ReadAsync(client, accepted, resultEvent, "result.findings", token);
@@ -72,6 +104,7 @@ try
     var live = await client.ReadDataSourceAsync("system.state", cancellationToken: token);
     Require(live.Kind == DataSourceKinds.Live && live.State == SystemStates.Running && live.ResultId is null, "live state during next work");
     await client.StopAsync(token);
+    Require((await client.GetStatusAsync(token)).State == SystemStates.Ready, "status after stop");
     Require((await client.ResetAsync(token)).State == SystemStates.Uninitialized, "reset completes cleanup to Uninitialized");
     Require((await client.InitializeAsync(token)).State == SystemStates.Ready, "explicit initialization after reset");
     Require((await client.DeinitializeAsync(token)).State == SystemStates.Uninitialized, "final deinitialization");
@@ -81,7 +114,8 @@ try
     {
         success = true, checks, targetFramework = Assembly.GetExecutingAssembly().GetCustomAttribute<TargetFrameworkAttribute>()?.FrameworkName,
         actualFramework = RuntimeInformation.FrameworkDescription, environmentVersion = Environment.Version.ToString(),
-        restEndpoint = uri.AbsoluteUri, tcpHost = args[1], tcpPort, events.AppId, events.InstanceId,
+        restEndpoint = uri.AbsoluteUri, tcpHost = args[1], tcpPort, softwareVersion.Version,
+        events.AppId, events.InstanceId, events.WorkspaceScope,
         accepted, resultId = findings.ResultId, next,
         loaded = new[] { Describe(typeof(VirexClient).Assembly), Describe(typeof(CommandResponse).Assembly), Describe(Assembly.GetExecutingAssembly()) },
         scope = "Synthetic SDK to REST/TCP Simulator only; real App, equipment and release acceptance are separate.",
@@ -107,6 +141,12 @@ void Require(bool value, string check)
     checks.Add(check);
 }
 static TaskCompletionSource<EventEnvelope> NewArrival() => new(TaskCreationOptions.RunContinuationsAsynchronously);
+static bool SameProduct(ProductInfo expected, ProductInfo actual) =>
+    expected.LotID == actual.LotID && expected.WaferID == actual.WaferID && expected.Recipe == actual.Recipe
+    && expected.Slot == actual.Slot && expected.FoupID == actual.FoupID && expected.ChamberID == actual.ChamberID
+    && expected.AdditionalFields?.Count == actual.AdditionalFields?.Count
+    && (expected.AdditionalFields is null || expected.AdditionalFields.All(pair =>
+        actual.AdditionalFields is not null && actual.AdditionalFields.TryGetValue(pair.Key, out var value) && value == pair.Value));
 static object Describe(Assembly assembly) => new
 {
     name = assembly.GetName().Name, path = assembly.Location,

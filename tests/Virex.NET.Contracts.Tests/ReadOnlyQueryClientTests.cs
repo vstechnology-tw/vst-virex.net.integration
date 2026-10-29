@@ -7,6 +7,39 @@ namespace Virex.NET.Contracts.Tests;
 
 public sealed class ReadOnlyQueryClientTests
 {
+    [Fact]
+    public async Task MissingStatusStateDoesNotBecomeUninitialized()
+    {
+        using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, "{}")) { BaseAddress = new Uri("http://localhost/") };
+        await Assert.ThrowsAsync<InvalidOperationException>(() => new VirexRestClient(http).GetStatusAsync());
+    }
+
+    [Theory]
+    [InlineData("{broken}")]
+    [InlineData("{\"state\":null}")]
+    [InlineData("{\"state\":0}")]
+    [InlineData("{\"state\":\"\"}")]
+    [InlineData("{\"state\":\" \"}")]
+    [InlineData("{\"state\":\"Ready\",\"State\":\"Running\"}")]
+    public async Task InvalidStatusStateDoesNotBecomeASuccess(string body)
+    {
+        using var http = new HttpClient(new StubHandler(HttpStatusCode.OK, body)) { BaseAddress = new Uri("http://localhost/") };
+        await Assert.ThrowsAnyAsync<JsonException>(() => new VirexRestClient(http).GetStatusAsync());
+    }
+
+    [Fact]
+    public async Task StatusKeepsProducerStateAndPreservesHttpFailureAndCancellation()
+    {
+        using var success = new HttpClient(new StubHandler(HttpStatusCode.OK, "{\"state\":\"FutureState\"}")) { BaseAddress = new Uri("http://localhost/") };
+        Assert.Equal("FutureState", (await new VirexRestClient(success).GetStatusAsync()).State);
+        using var failed = new HttpClient(new StubHandler(HttpStatusCode.ServiceUnavailable, "unavailable")) { BaseAddress = new Uri("http://localhost/") };
+        var error = await Assert.ThrowsAsync<VirexClientException>(() => new VirexRestClient(failed).GetStatusAsync());
+        Assert.Equal(503, error.StatusCode);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new VirexRestClient(success).GetStatusAsync(cancellation.Token));
+    }
+
     [Theory]
     [InlineData("{}")]
     [InlineData("{\"version\":null}")]
