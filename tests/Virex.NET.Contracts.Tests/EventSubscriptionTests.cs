@@ -511,14 +511,26 @@ public sealed class EventSubscriptionTests
         await fixture.Client.InitializeAsync();
         var request = new SystemStartRequest { RequestId = "request-before-rest", RunMode = ControlRunModes.Continue };
         var observed = new ConcurrentQueue<EventEnvelope>();
+        var ready = new TaskCompletionSource<EventEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
         var complete = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var subscription = await fixture.Client.TcpEvents.SubscribeAsync(["captureReady", "captureCompleted", "resultCreated"], value =>
         {
-            observed.Enqueue(value); if (value.Name == "resultCreated") complete.TrySetResult();
+            observed.Enqueue(value);
+            if (value.Name == "captureReady") ready.TrySetResult(value);
+            if (value.Name == "resultCreated") complete.TrySetResult();
         }, scope: new EventSubscriptionScope { RequestId = request.RequestId });
+        using var handler = new HoldStartResponseHandler();
+        using var http = new HttpClient(handler);
+        using var delayedClient = new VirexClient(fixture.Client.Options, http);
         try
         {
-            var start = await fixture.Client.StartAsync(request);
+            var startTask = delayedClient.StartAsync(request);
+            await handler.ResponseReceived.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            var first = await ready.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.Equal(request.RequestId, first.RequestId);
+            Assert.False(startTask.IsCompleted);
+            handler.Release.TrySetResult();
+            var start = await startTask.WaitAsync(TimeSpan.FromSeconds(3));
             await fixture.Session.RunCompletedAsync();
             await complete.Task.WaitAsync(TimeSpan.FromSeconds(3));
             var events = observed.ToArray();
@@ -537,7 +549,7 @@ public sealed class EventSubscriptionTests
             Assert.Equal(events[2].ResultId, events[2].Payload.GetProperty("resultId").GetString());
             Assert.NotNull(events[2].ResultId);
         }
-        finally { await subscription.CloseAsync(); }
+        finally { handler.Release.TrySetResult(); await subscription.CloseAsync(); }
     }
 
     [Fact]
@@ -660,6 +672,24 @@ public sealed class EventSubscriptionTests
         var openApi = await http.GetStringAsync("openapi/v1.json");
         using var document = System.Text.Json.JsonDocument.Parse(openApi);
         Assert.True(document.RootElement.GetProperty("paths").TryGetProperty("/api/events", out _));
+    }
+
+    private sealed class HoldStartResponseHandler : DelegatingHandler
+    {
+        public HoldStartResponseHandler() => InnerHandler = new HttpClientHandler();
+        public TaskCompletionSource ResponseReceived { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = await base.SendAsync(request, cancellationToken);
+            if (request.Method == HttpMethod.Post && request.RequestUri?.AbsolutePath == RestRoutes.ApiSystemStart)
+            {
+                ResponseReceived.TrySetResult();
+                await Release.Task.WaitAsync(cancellationToken);
+            }
+            return response;
+        }
     }
 
     private sealed class Fixture : IAsyncDisposable
